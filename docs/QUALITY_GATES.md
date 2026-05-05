@@ -16,6 +16,7 @@ Last verified: 2026-05-05
 | Backend container build | `docker build -q backend` | built image `sha256:6fafce8f97eeeb5c6b0bcd32479eb30c1133b4d5083a6399a76aa4c571082320` |
 | Production Compose config | `make deploy-config` | passed |
 | Deploy preflight | `make deploy-preflight` | 17 passed, 0 warnings, 0 failed |
+| Skillbox overlay template | `make deploy-overlay-template` | passed |
 | SwiftUI drift scan | `make drift` | 0 Swift findings |
 | CRAP score | `make crap` | `FINAL_SCORE: 7.00` |
 | MMDX preflight | `python3 ../opensource/skills/mmdx/scripts/mmd.py docs/architecture.mmdx --preflight-only` | 3 charts passed |
@@ -47,6 +48,7 @@ Last verified: 2026-05-05
 - `POST /v1/admin/vendor/menus/refresh` is admin-scoped, refreshes stale vendor menu snapshots in bounded batches, reports checked/refreshed/failed counts, and the iOS Admin tab can trigger the refresh.
 - Configured admins can list pending vendor submissions, approve one into discovery, reject one, request edits with a review note, and production preflight requires `DOGSWIPE_ADMIN_USER_IDS` when SPAPS auth is enabled.
 - Production deploy artifacts define the Compose stack, env contract, preflight checks, post-deploy verification, reverse-proxy template, and CI workflow.
+- A DogSwipe skillbox overlay template and validator exist so live deploy setup can be checked without committing host secrets.
 
 ## Known Blocks
 

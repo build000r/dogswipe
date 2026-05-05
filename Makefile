@@ -5,7 +5,7 @@ PIP := $(VENV)/bin/pip
 PYTEST := $(VENV)/bin/pytest
 ALEMBIC := $(VENV)/bin/alembic
 
-.PHONY: generate-ios ios-build swift-test backend-install backend-install-local backend-test coverage lint typecheck migrate migration-current test drift crap deploy-config deploy-preflight deploy-post-verify
+.PHONY: generate-ios ios-build swift-test backend-install backend-install-local backend-test coverage lint typecheck migrate migration-current test drift crap deploy-config deploy-preflight deploy-overlay-template deploy-post-verify
 
 generate-ios:
 	cd apps/ios/DogSwipe && xcodegen generate
@@ -59,6 +59,9 @@ deploy-config:
 
 deploy-preflight:
 	ENV_FILE=deploy/prod.env.example DOGSWIPE_ENV_FILE=prod.env.example DOGSWIPE_IMAGE=dogswipe-api:local POSTGRES_PASSWORD=postgres bash deploy/pre-deploy-checks.sh
+
+deploy-overlay-template:
+	bash deploy/validate-skillbox-overlay.sh deploy/skillbox-overlay.example.yaml --allow-placeholders
 
 deploy-post-verify:
 	bash deploy/post-deploy-verify.sh

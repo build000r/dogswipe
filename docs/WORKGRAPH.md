@@ -32,6 +32,7 @@ Status key: `done`, `active`, `ready`, `blocked`.
 | WG-026 Admin stale menu refresh | done | WG-023, WG-025 | `backend/**`, `packages/DogSwipeCore/**`, `apps/ios/DogSwipe/**`, `docs/**` | Admins can refresh stale vendor menu snapshots in bounded batches, see refreshed/error counts, and update pending review rows from the iOS Admin tab |
 | WG-027 Autonomous menu refresh worker | done | WG-026 | `backend/**`, `deploy/**`, `docs/**` | Production can opt into a cancellable API-process worker that periodically runs the same bounded stale-menu refresh contract, with env controls and runtime tests |
 | WG-028 Walking-time estimates | done | WG-022, WG-024 | `backend/**`, `packages/DogSwipeCore/**`, `apps/ios/DogSwipe/**`, `docs/**` | Hotdog profile responses include deterministic walking-time estimates from resolved distance, and iOS discovery/matches display the estimate alongside distance |
+| WG-029 Deploy overlay template | done | WG-016, WG-028 | `deploy/**`, `.github/**`, `Makefile`, `docs/**` | Repo includes a DogSwipe skillbox overlay template, overlay validator, CI deploy preflight, and migration smoke now checks the actual Alembic head |
 
 ## Ready Frontier
 

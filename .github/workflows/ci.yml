@@ -31,13 +31,21 @@ jobs:
       - name: Migration smoke
         env:
           DATABASE_URL: sqlite+aiosqlite:////tmp/dogswipe-ci-migrate.sqlite
-        run: cd backend && alembic upgrade head && alembic current | grep '0003 (head)'
+        run: cd backend && alembic upgrade head && alembic current | grep '(head)'
       - name: Production compose config
         env:
           DOGSWIPE_IMAGE: dogswipe-api:ci
           DOGSWIPE_ENV_FILE: prod.env.example
           POSTGRES_PASSWORD: ci-postgres
         run: docker compose --env-file deploy/prod.env.example -f deploy/docker-compose.prod.yml config >/dev/null
+      - name: Deploy preflight
+        env:
+          DOGSWIPE_IMAGE: dogswipe-api:ci
+          DOGSWIPE_ENV_FILE: prod.env.example
+          POSTGRES_PASSWORD: ci-postgres
+        run: make deploy-preflight
+      - name: Skillbox overlay template
+        run: make deploy-overlay-template
       - name: Docker image build
         run: docker build -q backend
 

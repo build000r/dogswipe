@@ -1,0 +1,42 @@
+version: 1
+client:
+  id: dogswipe
+  label: DogSwipe
+  default_cwd: ~/repos/dogswipe
+  repos: []
+  logs: []
+  context:
+    cwd_match:
+      - ~/repos/dogswipe
+
+    deploy:
+      droplet_ssh: replace-me@dogswipe-host
+      droplet_ip: replace-me
+      ssh_key: tailscale
+      reverse_proxy_root: /opt/reverse-proxy
+      storage_root: /mnt/dogswipe
+
+      services:
+        dogswipe_api:
+          repo_root: ~/repos/dogswipe
+          mode_name: dogswipe
+          surface: docker_compose
+          repo_slug: build000r/dogswipe
+          deploy_root: /opt/dogswipe
+          compose_file: deploy/docker-compose.prod.yml
+          compose_project: dogswipe
+          compose_service: api
+          domain: dogswipe-api.example.com
+          production_domain: https://dogswipe-api.example.com
+          health_url: https://dogswipe-api.example.com/health
+          env_file: /opt/dogswipe/prod.env
+          ci_workflow: .github/workflows/ci.yml
+
+  checks:
+    - id: dogswipe-repo-root
+      type: path_exists
+      path: ~/repos/dogswipe
+      required: true
+      profiles:
+        - core
+      notes: DogSwipe repo must be mounted or cloned before deploy operations.

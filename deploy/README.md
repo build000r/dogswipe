@@ -22,6 +22,15 @@ A live `deploy.services.dogswipe_api` entry should provide:
 | `health_url` | `https://<domain>/health` |
 | `env_file` | remote `prod.env` path |
 
+Start from [`deploy/skillbox-overlay.example.yaml`](skillbox-overlay.example.yaml),
+copy it into `skillbox-config/clients/dogswipe/overlay.yaml`, replace the
+host/domain/env placeholders, and validate it before attempting live rollout:
+
+```bash
+bash deploy/validate-skillbox-overlay.sh deploy/skillbox-overlay.example.yaml --allow-placeholders
+bash deploy/validate-skillbox-overlay.sh /path/to/skillbox-config/clients/dogswipe/overlay.yaml
+```
+
 ## Production Env
 
 Create `deploy/prod.env` from `deploy/prod.env.example` on the deployment host.
