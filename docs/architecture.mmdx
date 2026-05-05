@@ -38,6 +38,7 @@ flowchart LR
   menu["MenuSnapshot contract"]
   admin["AdminReview contract"]
   api["FastAPI backend"]
+  worker["Menu refresh worker"]
   principal["Principal resolver"]
   migrations["Alembic migrations"]
   deploy["Deploy contract"]
@@ -67,12 +68,15 @@ flowchart LR
   api --> preferences
   api --> vendor
   api --> menu
+  worker --> menu
+  worker --> db
   api --> admin
   api --> principal
   principal --> spaps
   api --> db
   migrations --> db
   deploy --> api
+  deploy --> worker
   deploy --> db
   core --> gates
   api --> gates
@@ -101,6 +105,7 @@ sequenceDiagram
   participant AuthLink as dogswipe auth link
   participant Maps as Apple Maps
   participant API as DogSwipe API
+  participant Worker as menu refresh worker
   participant Menu as Menu URL
   participant SPAPS as Sweet Potato/SPAPS
   participant DB as PostgreSQL
@@ -134,6 +139,11 @@ sequenceDiagram
   Menu-->>API: Menu text or fetch errors
   API->>DB: Store refreshed menu statuses and timestamps
   API-->>App: Checked/refreshed/failed counts and updated profiles
+  Worker->>Worker: Wake on configured interval when enabled
+  Worker->>DB: Load stale vendor-owned menu candidates
+  Worker->>Menu: Fetch bounded HTML/text snapshots
+  Menu-->>Worker: Menu text or fetch errors
+  Worker->>DB: Store refreshed menu statuses and timestamps
   App->>API: Admin approve / reject / request edits
   API->>DB: Store review status, note, and timestamps
   API-->>App: Moderated hotdog profile

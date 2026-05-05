@@ -41,6 +41,13 @@ Required runtime values:
 - `SPAPS_APPLICATION_ID`
 - `DOGSWIPE_ADMIN_USER_IDS`
 
+Optional bounded menu refresh values:
+
+- `DOGSWIPE_MENU_REFRESH_ENABLED=false` by default
+- `DOGSWIPE_MENU_REFRESH_INTERVAL_SECONDS=3600`
+- `DOGSWIPE_MENU_REFRESH_BATCH_SIZE=20`
+- `DOGSWIPE_MENU_REFRESH_MAX_AGE_HOURS=24`
+
 ## Preflight
 
 ```bash
@@ -51,8 +58,8 @@ bash deploy/pre-deploy-checks.sh
 ```
 
 The preflight checks Docker availability, Compose config, required env values,
-SPAPS auth requirements, local-only flags, and the shared `reverse-proxy`
-network.
+SPAPS auth requirements, local-only flags, optional menu-refresh controls, and
+the shared `reverse-proxy` network.
 
 ## Rollout Shape
 

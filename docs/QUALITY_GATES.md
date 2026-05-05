@@ -7,15 +7,15 @@ Last verified: 2026-05-05
 | Swift package tests | `make swift-test` | 29 tests passed |
 | iOS smoke build | `xcodebuild -quiet -project apps/ios/DogSwipe/DogSwipe.xcodeproj -scheme DogSwipe -destination 'generic/platform=iOS' build` | passed |
 | iOS unit tests | `xcodebuild -quiet -project apps/ios/DogSwipe/DogSwipe.xcodeproj -scheme DogSwipe -destination 'platform=iOS Simulator,name=iPhone 17' test` | passed |
-| Backend API tests | `make backend-test` | 65 tests passed |
-| Backend coverage | `make coverage` | 90.35% total coverage |
+| Backend API tests | `make backend-test` | 68 tests passed |
+| Backend coverage | `make coverage` | 90.40% total coverage |
 | Clean backend install | `python3.12 -m venv /tmp/... && pip install -e 'backend[test]'` | passed |
 | Backend lint | `make lint` | passed |
 | Backend typecheck | `make typecheck` | passed |
 | Alembic migration smoke | `make backend-test` | migration test upgraded to `0008` and downgraded to `base` |
 | Backend container build | `docker build -q backend` | built image `sha256:6fafce8f97eeeb5c6b0bcd32479eb30c1133b4d5083a6399a76aa4c571082320` |
 | Production Compose config | `make deploy-config` | passed |
-| Deploy preflight | `make deploy-preflight` | 16 passed, 0 warnings, 0 failed |
+| Deploy preflight | `make deploy-preflight` | 17 passed, 0 warnings, 0 failed |
 | SwiftUI drift scan | `make drift` | 0 Swift findings |
 | CRAP score | `make crap` | `FINAL_SCORE: 7.00` |
 | MMDX preflight | `python3 ../opensource/skills/mmdx/scripts/mmd.py docs/architecture.mmdx --preflight-only` | 3 charts passed |
@@ -31,6 +31,7 @@ Last verified: 2026-05-05
 - `DiscoverViewModel` loads profiles from the backend client and falls back to sample profiles when offline.
 - `MatchesViewModel` fetches matches from the backend client and exposes a visible empty/loading/failure state.
 - Local backend startup can create the starter schema and idempotently seed sample profiles when explicit local-only env flags are enabled.
+- Optional backend menu refresh startup stays disabled by default; when enabled, the worker runs the same bounded stale-menu refresh contract with env-controlled interval, batch size, and max age.
 - User-scoped backend routes prefer `AuthenticatedUser.user_id` from SPAPS middleware and reject forged `user_id` fields in swipe requests.
 - Alembic owns the production schema path with a tested initial upgrade/downgrade migration.
 - Hotdog cards render a local SwiftUI product visual when `image_url` is absent, and the profile tab exposes interactive craving controls backed by shared ranking preferences.

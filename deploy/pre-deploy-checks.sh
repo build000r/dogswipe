@@ -91,6 +91,19 @@ if [[ -f "$ENV_FILE" ]]; then
       fail "$var must stay false in production"
     fi
   done
+
+  menu_refresh_enabled="$(env_value DOGSWIPE_MENU_REFRESH_ENABLED | tr '[:upper:]' '[:lower:]')"
+  if [[ "$menu_refresh_enabled" == "true" || "$menu_refresh_enabled" == "1" ]]; then
+    for var in DOGSWIPE_MENU_REFRESH_INTERVAL_SECONDS DOGSWIPE_MENU_REFRESH_BATCH_SIZE DOGSWIPE_MENU_REFRESH_MAX_AGE_HOURS; do
+      if [[ -n "$(env_value "$var")" ]]; then
+        pass "$var is set for autonomous menu refresh"
+      else
+        fail "$var is required when DOGSWIPE_MENU_REFRESH_ENABLED=true"
+      fi
+    done
+  else
+    pass "DOGSWIPE_MENU_REFRESH_ENABLED is disabled unless explicitly enabled"
+  fi
 fi
 
 if docker network inspect reverse-proxy >/dev/null 2>&1; then
