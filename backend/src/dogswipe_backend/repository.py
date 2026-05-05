@@ -2,9 +2,11 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from datetime import UTC, datetime
+from math import cos, radians
 
-from sqlalchemy import Select, select
+from sqlalchemy import Select, and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.sql.elements import ColumnElement
 
 from .models import HotdogProfileRecord, SwipeEventRecord, UserPreferenceRecord
 from .schemas import CravingPreferences, HotdogProfile, SwipeDecision, VendorSubmissionRequest
@@ -16,6 +18,8 @@ class HotdogRepository:
         *,
         limit: int = 20,
         max_distance_miles: float | None = None,
+        latitude: float | None = None,
+        longitude: float | None = None,
     ) -> list[HotdogProfile]:
         raise NotImplementedError
 
@@ -99,12 +103,20 @@ class SqlAlchemyHotdogRepository(HotdogRepository):
         *,
         limit: int = 20,
         max_distance_miles: float | None = None,
+        latitude: float | None = None,
+        longitude: float | None = None,
     ) -> list[HotdogProfile]:
         statement = select(HotdogProfileRecord).where(
             HotdogProfileRecord.availability_status == "available"
         )
         if max_distance_miles is not None:
-            statement = statement.where(HotdogProfileRecord.distance_miles <= max_distance_miles)
+            statement = statement.where(
+                self._distance_candidate_filter(
+                    max_distance_miles=max_distance_miles,
+                    latitude=latitude,
+                    longitude=longitude,
+                )
+            )
         statement = statement.order_by(
             HotdogProfileRecord.crave_score.desc(),
             HotdogProfileRecord.name.asc(),
@@ -320,6 +332,8 @@ class SqlAlchemyHotdogRepository(HotdogRepository):
         record.price_dollars = submission.price_dollars
         record.signature_notes = submission.signature_notes
         record.distance_miles = submission.distance_miles
+        record.latitude = submission.latitude
+        record.longitude = submission.longitude
         record.vendor_name = submission.vendor_name
         record.image_url = self._blank_to_none(submission.image_url)
         record.menu_url = self._blank_to_none(submission.menu_url)
@@ -331,3 +345,36 @@ class SqlAlchemyHotdogRepository(HotdogRepository):
             return None
         stripped = value.strip()
         return stripped or None
+
+    @staticmethod
+    def _distance_candidate_filter(
+        *,
+        max_distance_miles: float,
+        latitude: float | None,
+        longitude: float | None,
+    ) -> ColumnElement[bool]:
+        if latitude is None or longitude is None:
+            return HotdogProfileRecord.distance_miles <= max_distance_miles
+
+        latitude_delta = max_distance_miles / 69.0
+        longitude_delta = max_distance_miles / (69.0 * max(cos(radians(latitude)), 0.01))
+        coordinate_window = and_(
+            HotdogProfileRecord.latitude.is_not(None),
+            HotdogProfileRecord.longitude.is_not(None),
+            HotdogProfileRecord.latitude.between(
+                latitude - latitude_delta,
+                latitude + latitude_delta,
+            ),
+            HotdogProfileRecord.longitude.between(
+                longitude - longitude_delta,
+                longitude + longitude_delta,
+            ),
+        )
+        stored_distance_fallback = and_(
+            or_(
+                HotdogProfileRecord.latitude.is_(None),
+                HotdogProfileRecord.longitude.is_(None),
+            ),
+            HotdogProfileRecord.distance_miles <= max_distance_miles,
+        )
+        return or_(coordinate_window, stored_distance_fallback)

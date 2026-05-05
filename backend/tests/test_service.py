@@ -22,6 +22,8 @@ def _profile(
     style: str = "Classic",
     signature_notes: str = "Gentle",
     distance_miles: float = 1,
+    latitude: float | None = None,
+    longitude: float | None = None,
     crave_score: float = 0.8,
 ) -> HotdogProfile:
     return HotdogProfile(
@@ -31,6 +33,8 @@ def _profile(
         price_dollars=1,
         signature_notes=signature_notes,
         distance_miles=distance_miles,
+        latitude=latitude,
+        longitude=longitude,
         vendor_name="Test Cart",
         crave_score=crave_score,
         availability_status="available",
@@ -41,6 +45,8 @@ class FakeRepository(HotdogRepository):
     def __init__(self) -> None:
         self.limit_seen = 0
         self.max_distance_seen: float | None = None
+        self.latitude_seen: float | None = None
+        self.longitude_seen: float | None = None
         self.available_profiles = [_profile("hotdog-test")]
         self.swipes: list[tuple[str, str, SwipeDecision]] = []
         self.preferences_by_user: dict[str, CravingPreferences] = {}
@@ -51,9 +57,13 @@ class FakeRepository(HotdogRepository):
         *,
         limit: int = 20,
         max_distance_miles: float | None = None,
+        latitude: float | None = None,
+        longitude: float | None = None,
     ) -> list[HotdogProfile]:
         self.limit_seen = limit
         self.max_distance_seen = max_distance_miles
+        self.latitude_seen = latitude
+        self.longitude_seen = longitude
         profiles = self.available_profiles
         if max_distance_miles is not None:
             profiles = [
@@ -102,6 +112,8 @@ class FakeRepository(HotdogRepository):
             price_dollars=submission.price_dollars,
             signature_notes=submission.signature_notes,
             distance_miles=submission.distance_miles,
+            latitude=submission.latitude,
+            longitude=submission.longitude,
             vendor_name=submission.vendor_name,
             image_url=submission.image_url,
             menu_url=submission.menu_url,
@@ -136,6 +148,8 @@ class FakeRepository(HotdogRepository):
                 price_dollars=submission.price_dollars,
                 signature_notes=submission.signature_notes,
                 distance_miles=submission.distance_miles,
+                latitude=submission.latitude,
+                longitude=submission.longitude,
                 vendor_name=submission.vendor_name,
                 image_url=submission.image_url,
                 menu_url=submission.menu_url,
@@ -172,6 +186,8 @@ class FakeRepository(HotdogRepository):
                     price_dollars=profile.price_dollars,
                     signature_notes=profile.signature_notes,
                     distance_miles=profile.distance_miles,
+                    latitude=profile.latitude,
+                    longitude=profile.longitude,
                     vendor_name=profile.vendor_name,
                     image_url=profile.image_url,
                     menu_url=profile.menu_url,
@@ -226,6 +242,8 @@ class FakeRepository(HotdogRepository):
                     price_dollars=profile.price_dollars,
                     signature_notes=profile.signature_notes,
                     distance_miles=profile.distance_miles,
+                    latitude=profile.latitude,
+                    longitude=profile.longitude,
                     vendor_name=profile.vendor_name,
                     image_url=profile.image_url,
                     menu_url=profile.menu_url,
@@ -246,6 +264,8 @@ async def test_discovery_clamps_limit() -> None:
     response = await service.discovery(user_id="u1", limit=1000)
     assert repository.limit_seen == 50
     assert repository.max_distance_seen == 10
+    assert repository.latitude_seen is None
+    assert repository.longitude_seen is None
     assert response.profiles[0].id == "hotdog-test"
 
 
@@ -284,6 +304,43 @@ async def test_discovery_filters_by_classic_preference() -> None:
     response = await service.discovery(user_id="u1", limit=10)
 
     assert [profile.id for profile in response.profiles] == ["classic"]
+
+
+@pytest.mark.asyncio
+async def test_discovery_reranks_with_query_location_distance() -> None:
+    repository = FakeRepository()
+    repository.available_profiles = [
+        _profile(
+            "near-classic",
+            name="Near Classic",
+            distance_miles=9,
+            latitude=43.6539,
+            longitude=-79.3843,
+            crave_score=0.8,
+        ),
+        _profile(
+            "far-classic",
+            name="Far Classic",
+            distance_miles=1,
+            latitude=44,
+            longitude=-80,
+            crave_score=0.99,
+        ),
+    ]
+    service = DogSwipeService(repository)
+
+    response = await service.discovery(
+        user_id="u1",
+        limit=10,
+        latitude=43.6532,
+        longitude=-79.3832,
+    )
+
+    assert repository.limit_seen == 200
+    assert repository.latitude_seen == 43.6532
+    assert repository.longitude_seen == -79.3832
+    assert [profile.id for profile in response.profiles] == ["near-classic"]
+    assert response.profiles[0].distance_miles < 0.1
 
 
 @pytest.mark.asyncio

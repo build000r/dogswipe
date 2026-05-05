@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import StrEnum
-from typing import Annotated
+from typing import Annotated, Self
 
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
 
 ReviewNote = Annotated[
     str,
@@ -27,6 +27,8 @@ class HotdogProfile(BaseModel):
     price_dollars: float = Field(ge=0)
     signature_notes: str
     distance_miles: float = Field(ge=0)
+    latitude: float | None = Field(default=None, ge=-90, le=90)
+    longitude: float | None = Field(default=None, ge=-180, le=180)
     vendor_name: str
     image_url: str | None = None
     menu_url: str | None = None
@@ -75,10 +77,18 @@ class VendorSubmissionRequest(BaseModel):
     price_dollars: float = Field(ge=0, le=50)
     signature_notes: str = Field(min_length=1, max_length=120)
     distance_miles: float = Field(ge=0, le=25)
+    latitude: float | None = Field(default=None, ge=-90, le=90)
+    longitude: float | None = Field(default=None, ge=-180, le=180)
     vendor_name: str = Field(min_length=1, max_length=160)
     image_url: str | None = Field(default=None, max_length=2048)
     menu_url: str | None = Field(default=None, max_length=2048)
     media_alt_text: str | None = Field(default=None, max_length=160)
+
+    @model_validator(mode="after")
+    def coordinates_are_complete(self) -> Self:
+        if (self.latitude is None) != (self.longitude is None):
+            raise ValueError("latitude and longitude must be provided together")
+        return self
 
 
 class VendorSubmissionResponse(BaseModel):

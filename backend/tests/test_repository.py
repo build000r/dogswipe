@@ -7,6 +7,26 @@ from dogswipe_backend.schemas import VendorSubmissionRequest
 
 
 @pytest.mark.asyncio
+async def test_repository_filters_available_profiles_by_coordinate_window(database) -> None:
+    async with database.session_factory() as session:
+        repository = SqlAlchemyHotdogRepository(session)
+
+        profiles = await repository.list_available_profiles(
+            limit=20,
+            max_distance_miles=1,
+            latitude=43.6532,
+            longitude=-79.3832,
+        )
+
+        assert [profile.id for profile in profiles] == [
+            "hotdog-coney",
+            "hotdog-kimchi",
+            "hotdog-nightcap",
+        ]
+        assert all(profile.latitude is not None for profile in profiles)
+
+
+@pytest.mark.asyncio
 async def test_repository_approves_pending_vendor_submission_once(database) -> None:
     async with database.session_factory() as session:
         repository = SqlAlchemyHotdogRepository(session)

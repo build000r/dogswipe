@@ -19,6 +19,8 @@ class HotdogProfileRecord(Base):
     price_dollars: Mapped[float] = mapped_column(Float, nullable=False)
     signature_notes: Mapped[str] = mapped_column(String(120), nullable=False)
     distance_miles: Mapped[float] = mapped_column(Float, nullable=False)
+    latitude: Mapped[float | None] = mapped_column(Float)
+    longitude: Mapped[float | None] = mapped_column(Float)
     vendor_name: Mapped[str] = mapped_column(String(160), nullable=False)
     image_url: Mapped[str | None] = mapped_column(Text)
     menu_url: Mapped[str | None] = mapped_column(Text)

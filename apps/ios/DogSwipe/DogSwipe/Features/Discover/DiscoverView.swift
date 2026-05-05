@@ -66,7 +66,9 @@ struct DiscoverView: View {
         case .idle, .loading:
             "Refreshing local hotdogs"
         case .ready:
-            "\(viewModel.remainingCount) hotdogs ready for review"
+            viewModel.isUsingCurrentLocation
+                ? "\(viewModel.remainingCount) hotdogs near you"
+                : "\(viewModel.remainingCount) hotdogs ready for review"
         case .failed:
             "Showing saved local picks"
         }

@@ -35,6 +35,14 @@ private final class InMemoryBearerTokenStore: BearerTokenStoring, @unchecked Sen
     }
 }
 
+private struct StaticLocationProvider: UserLocationProviding {
+    let location: DiscoveryLocation?
+
+    func currentLocation() async -> DiscoveryLocation? {
+        location
+    }
+}
+
 final class DogSwipeSmokeTests: XCTestCase {
     func testRootViewCanBeCreated() {
         _ = RootView(
@@ -124,6 +132,34 @@ final class DogSwipeSmokeTests: XCTestCase {
     }
 
     @MainActor
+    func testDiscoverViewModelSendsCurrentLocationToDiscovery() async throws {
+        let http = MockHTTPClient()
+        http.responses = [#"{"profiles":[]}"#.data(using: .utf8)!]
+        let apiClient = DogSwipeAPIClient(
+            baseURL: URL(string: "http://localhost:8000")!,
+            httpClient: http
+        )
+        let viewModel = DiscoverViewModel(
+            apiClient: apiClient,
+            locationProvider: StaticLocationProvider(
+                location: DiscoveryLocation(latitude: 43.6532, longitude: -79.3832)
+            )
+        )
+
+        await viewModel.load()
+
+        let components = try XCTUnwrap(
+            URLComponents(url: http.requests.first!.url!, resolvingAgainstBaseURL: false)
+        )
+        let locationQuery = Dictionary(uniqueKeysWithValues: (components.queryItems ?? []).map {
+            ($0.name, $0.value ?? "")
+        })
+        XCTAssertEqual(locationQuery["latitude"], "43.6532")
+        XCTAssertEqual(locationQuery["longitude"], "-79.3832")
+        XCTAssertTrue(viewModel.isUsingCurrentLocation)
+    }
+
+    @MainActor
     func testVendorSubmissionStoreSubmitsDraftViaAPI() async throws {
         let http = MockHTTPClient()
         http.responses = [
@@ -139,6 +175,8 @@ final class DogSwipeSmokeTests: XCTestCase {
         store.price = "6.25"
         store.signatureNotes = "Mustard, relish, and onion."
         store.distance = "1.8"
+        store.latitude = "43.6532"
+        store.longitude = "-79.3832"
         store.vendorName = "Boardwalk Dogs"
         store.imageURL = "https://cdn.example.com/boardwalk.jpg"
         store.menuURL = "https://boardwalk.example.com/menu"
@@ -155,6 +193,8 @@ final class DogSwipeSmokeTests: XCTestCase {
         let body = try jsonBody(request)
         XCTAssertEqual(body["name"] as? String, "Boardwalk Snap")
         XCTAssertEqual(body["price_dollars"] as? Double, 6.25)
+        XCTAssertEqual(body["latitude"] as? Double, 43.6532)
+        XCTAssertEqual(body["longitude"] as? Double, -79.3832)
         XCTAssertEqual(body["menu_url"] as? String, "https://boardwalk.example.com/menu")
         XCTAssertNil(body["user_id"])
     }

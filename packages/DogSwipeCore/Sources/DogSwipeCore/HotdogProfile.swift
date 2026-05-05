@@ -7,6 +7,8 @@ public struct HotdogProfile: Identifiable, Codable, Equatable, Sendable {
     public let priceDollars: Double
     public let signatureNotes: String
     public let distanceMiles: Double
+    public let latitude: Double?
+    public let longitude: Double?
     public let vendorName: String
     public let imageURL: URL?
     public let menuURL: URL?
@@ -24,6 +26,8 @@ public struct HotdogProfile: Identifiable, Codable, Equatable, Sendable {
         priceDollars: Double,
         signatureNotes: String,
         distanceMiles: Double,
+        latitude: Double? = nil,
+        longitude: Double? = nil,
         vendorName: String,
         imageURL: URL? = nil,
         menuURL: URL? = nil,
@@ -40,6 +44,8 @@ public struct HotdogProfile: Identifiable, Codable, Equatable, Sendable {
         self.priceDollars = priceDollars
         self.signatureNotes = signatureNotes
         self.distanceMiles = distanceMiles
+        self.latitude = latitude
+        self.longitude = longitude
         self.vendorName = vendorName
         self.imageURL = imageURL
         self.menuURL = menuURL
@@ -65,6 +71,8 @@ public struct HotdogProfile: Identifiable, Codable, Equatable, Sendable {
         case priceDollars = "price_dollars"
         case signatureNotes = "signature_notes"
         case distanceMiles = "distance_miles"
+        case latitude
+        case longitude
         case vendorName = "vendor_name"
         case imageURL = "image_url"
         case menuURL = "menu_url"
@@ -103,48 +111,56 @@ public struct MatchResponse: Codable, Equatable, Sendable {
 }
 
 public struct VendorSubmissionRequest: Codable, Equatable, Sendable {
-    public let name: String
-    public let style: String
-    public let priceDollars: Double
-    public let signatureNotes: String
-    public let distanceMiles: Double
     public let vendorName: String
-    public let imageURL: URL?
+    public let name: String
+    public let signatureNotes: String
+    public let style: String
     public let menuURL: URL?
+    public let priceDollars: Double
+    public let distanceMiles: Double
+    public let imageURL: URL?
+    public let latitude: Double?
     public let mediaAltText: String?
+    public let longitude: Double?
 
     public init(
-        name: String,
-        style: String,
-        priceDollars: Double,
-        signatureNotes: String,
-        distanceMiles: Double,
         vendorName: String,
-        imageURL: URL? = nil,
+        name: String,
+        signatureNotes: String,
+        style: String,
         menuURL: URL? = nil,
-        mediaAltText: String? = nil
+        priceDollars: Double,
+        distanceMiles: Double,
+        imageURL: URL? = nil,
+        latitude: Double? = nil,
+        mediaAltText: String? = nil,
+        longitude: Double? = nil
     ) {
-        self.name = name
-        self.style = style
-        self.priceDollars = priceDollars
-        self.signatureNotes = signatureNotes
-        self.distanceMiles = distanceMiles
         self.vendorName = vendorName
-        self.imageURL = imageURL
+        self.name = name
+        self.signatureNotes = signatureNotes
+        self.style = style
         self.menuURL = menuURL
+        self.priceDollars = priceDollars
+        self.distanceMiles = distanceMiles
+        self.imageURL = imageURL
+        self.latitude = latitude
         self.mediaAltText = mediaAltText
+        self.longitude = longitude
     }
 
     enum CodingKeys: String, CodingKey {
-        case name
-        case style
-        case priceDollars = "price_dollars"
-        case signatureNotes = "signature_notes"
-        case distanceMiles = "distance_miles"
         case vendorName = "vendor_name"
-        case imageURL = "image_url"
+        case name
+        case signatureNotes = "signature_notes"
+        case style
         case menuURL = "menu_url"
+        case priceDollars = "price_dollars"
+        case distanceMiles = "distance_miles"
+        case imageURL = "image_url"
+        case latitude
         case mediaAltText = "media_alt_text"
+        case longitude
     }
 }
 
@@ -221,6 +237,8 @@ public extension HotdogProfile {
             priceDollars: 6.5,
             signatureNotes: "Beef frank, snap casing, chili, onion, and yellow mustard.",
             distanceMiles: 1.2,
+            latitude: 43.6539,
+            longitude: -79.3843,
             vendorName: "Franklin Cart",
             craveScore: 0.91
         ),
@@ -231,6 +249,8 @@ public extension HotdogProfile {
             priceDollars: 8.75,
             signatureNotes: "Gochujang mayo, kimchi, scallion, and sesame crunch.",
             distanceMiles: 2.4,
+            latitude: 43.6555,
+            longitude: -79.38,
             vendorName: "Bun Signal",
             craveScore: 0.88
         ),
@@ -241,6 +261,8 @@ public extension HotdogProfile {
             priceDollars: 7.25,
             signatureNotes: "Sport peppers, relish, tomato, pickle spear, and celery salt.",
             distanceMiles: 3.1,
+            latitude: 43.665,
+            longitude: -79.407,
             vendorName: "Northside Stand",
             craveScore: 0.82
         ),
@@ -251,6 +273,8 @@ public extension HotdogProfile {
             priceDollars: 9,
             signatureNotes: "Sharp cheddar, late-night chili, grilled onions, and jalapeno dust.",
             distanceMiles: 4.8,
+            latitude: 43.647,
+            longitude: -79.395,
             vendorName: "Depot Dogs",
             craveScore: 0.69
         )

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from math import asin, cos, radians, sin, sqrt
+
 from fastapi import HTTPException, status
 
 from .repository import HotdogRepository
@@ -20,18 +22,31 @@ from .schemas import (
     VendorSubmissionResponse,
 )
 
+EARTH_RADIUS_MILES = 3958.8
+
 
 class DogSwipeService:
     def __init__(self, repository: HotdogRepository) -> None:
         self.repository = repository
 
-    async def discovery(self, *, user_id: str, limit: int = 20) -> DiscoveryResponse:
+    async def discovery(
+        self,
+        *,
+        user_id: str,
+        limit: int = 20,
+        latitude: float | None = None,
+        longitude: float | None = None,
+    ) -> DiscoveryResponse:
         preferences = await self.repository.get_preferences(user_id=user_id)
         max_distance_miles = max(preferences.max_distance_miles, 1)
+        location = (latitude, longitude) if latitude is not None and longitude is not None else None
         profiles = await self.repository.list_available_profiles(
-            limit=50,
+            limit=200 if location is not None else 50,
             max_distance_miles=max_distance_miles,
+            latitude=latitude,
+            longitude=longitude,
         )
+        profiles = [self._profile_with_location_distance(profile, location) for profile in profiles]
         ranked = sorted(
             (profile for profile in profiles if self._is_eligible(profile, preferences)),
             key=lambda profile: self._score(profile, preferences),
@@ -197,3 +212,36 @@ class DogSwipeService:
     @staticmethod
     def _flavor_text(profile: HotdogProfile) -> str:
         return f"{profile.name} {profile.style} {profile.signature_notes}".lower()
+
+    @staticmethod
+    def _profile_with_location_distance(
+        profile: HotdogProfile,
+        location: tuple[float, float] | None,
+    ) -> HotdogProfile:
+        if location is None or profile.latitude is None or profile.longitude is None:
+            return profile
+        distance_miles = DogSwipeService._haversine_miles(
+            latitude=location[0],
+            longitude=location[1],
+            target_latitude=profile.latitude,
+            target_longitude=profile.longitude,
+        )
+        return profile.model_copy(update={"distance_miles": distance_miles})
+
+    @staticmethod
+    def _haversine_miles(
+        *,
+        latitude: float,
+        longitude: float,
+        target_latitude: float,
+        target_longitude: float,
+    ) -> float:
+        latitude_1 = radians(latitude)
+        latitude_2 = radians(target_latitude)
+        latitude_delta = radians(target_latitude - latitude)
+        longitude_delta = radians(target_longitude - longitude)
+        haversine = (
+            sin(latitude_delta / 2) ** 2
+            + cos(latitude_1) * cos(latitude_2) * sin(longitude_delta / 2) ** 2
+        )
+        return 2 * EARTH_RADIUS_MILES * asin(min(1.0, sqrt(haversine)))

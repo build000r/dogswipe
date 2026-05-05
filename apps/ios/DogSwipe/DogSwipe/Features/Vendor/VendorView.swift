@@ -62,6 +62,18 @@ struct VendorView: View {
                 }
             }
 
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: .dsSpace3) {
+                    numericField("Latitude", text: $store.latitude, icon: "mappin.and.ellipse")
+                    numericField("Longitude", text: $store.longitude, icon: "map")
+                }
+
+                VStack(spacing: .dsSpace3) {
+                    numericField("Latitude", text: $store.latitude, icon: "mappin.and.ellipse")
+                    numericField("Longitude", text: $store.longitude, icon: "map")
+                }
+            }
+
             field("Vendor name", text: $store.vendorName, icon: "storefront")
             field("Signature notes", text: $store.signatureNotes, icon: "text.quote")
             field("Image URL", text: $store.imageURL, icon: "photo")

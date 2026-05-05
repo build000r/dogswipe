@@ -8,6 +8,8 @@ final class VendorSubmissionStore: ObservableObject {
     @Published var price = ""
     @Published var signatureNotes = ""
     @Published var distance = ""
+    @Published var latitude = ""
+    @Published var longitude = ""
     @Published var vendorName = ""
     @Published var imageURL = ""
     @Published var menuURL = ""
@@ -78,6 +80,8 @@ final class VendorSubmissionStore: ObservableObject {
         price = String(format: "%.2f", profile.priceDollars)
         signatureNotes = profile.signatureNotes
         distance = String(profile.distanceMiles)
+        latitude = coordinateString(profile.latitude)
+        longitude = coordinateString(profile.longitude)
         vendorName = profile.vendorName
         imageURL = profile.imageURL?.absoluteString ?? ""
         menuURL = profile.menuURL?.absoluteString ?? ""
@@ -97,16 +101,31 @@ final class VendorSubmissionStore: ObservableObject {
         guard let distanceMiles = Double(trimmed(distance)) else {
             throw VendorSubmissionDraftError.invalidDistance
         }
+        let latitude = try optionalCoordinate(
+            self.latitude,
+            range: -90...90,
+            error: .invalidLatitude
+        )
+        let longitude = try optionalCoordinate(
+            self.longitude,
+            range: -180...180,
+            error: .invalidLongitude
+        )
+        if (latitude == nil) != (longitude == nil) {
+            throw VendorSubmissionDraftError.incompleteCoordinates
+        }
         return VendorSubmissionRequest(
-            name: trimmed(name),
-            style: trimmed(style),
-            priceDollars: priceDollars,
-            signatureNotes: trimmed(signatureNotes),
-            distanceMiles: distanceMiles,
             vendorName: trimmed(vendorName),
-            imageURL: try optionalURL(imageURL, error: .invalidImageURL),
+            name: trimmed(name),
+            signatureNotes: trimmed(signatureNotes),
+            style: trimmed(style),
             menuURL: try optionalURL(menuURL, error: .invalidMenuURL),
-            mediaAltText: optionalString(mediaAltText)
+            priceDollars: priceDollars,
+            distanceMiles: distanceMiles,
+            imageURL: try optionalURL(imageURL, error: .invalidImageURL),
+            latitude: latitude,
+            mediaAltText: optionalString(mediaAltText),
+            longitude: longitude
         )
     }
 
@@ -116,6 +135,8 @@ final class VendorSubmissionStore: ObservableObject {
         price = ""
         signatureNotes = ""
         distance = ""
+        latitude = ""
+        longitude = ""
         vendorName = ""
         imageURL = ""
         menuURL = ""
@@ -147,6 +168,28 @@ final class VendorSubmissionStore: ObservableObject {
         return value.isEmpty ? nil : value
     }
 
+    private func optionalCoordinate(
+        _ value: String,
+        range: ClosedRange<Double>,
+        error: VendorSubmissionDraftError
+    ) throws -> Double? {
+        let value = trimmed(value)
+        guard !value.isEmpty else {
+            return nil
+        }
+        guard let coordinate = Double(value), range.contains(coordinate) else {
+            throw error
+        }
+        return coordinate
+    }
+
+    private func coordinateString(_ value: Double?) -> String {
+        guard let value else {
+            return ""
+        }
+        return String(value)
+    }
+
     private func trimmed(_ value: String) -> String {
         value.trimmingCharacters(in: .whitespacesAndNewlines)
     }
@@ -155,6 +198,9 @@ final class VendorSubmissionStore: ObservableObject {
 private enum VendorSubmissionDraftError: LocalizedError {
     case invalidPrice
     case invalidDistance
+    case invalidLatitude
+    case invalidLongitude
+    case incompleteCoordinates
     case invalidImageURL
     case invalidMenuURL
 
@@ -164,6 +210,12 @@ private enum VendorSubmissionDraftError: LocalizedError {
             "Price is required."
         case .invalidDistance:
             "Distance is required."
+        case .invalidLatitude:
+            "Latitude must be between -90 and 90."
+        case .invalidLongitude:
+            "Longitude must be between -180 and 180."
+        case .incompleteCoordinates:
+            "Latitude and longitude must be provided together."
         case .invalidImageURL:
             "Image URL is invalid."
         case .invalidMenuURL:

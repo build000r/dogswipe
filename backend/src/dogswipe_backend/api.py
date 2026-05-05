@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from spaps_server_quickstart.api.health import HealthRouterFactory
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -51,10 +51,22 @@ def build_api_router() -> APIRouter:
     @v1.get("/discovery", response_model=DiscoveryResponse)
     async def discovery(
         limit: int = Query(default=20, ge=1, le=50),
+        latitude: float | None = Query(default=None, ge=-90, le=90),
+        longitude: float | None = Query(default=None, ge=-180, le=180),
         service: DogSwipeService = Depends(get_service),
         user_id: str = Depends(get_current_user_id),
     ) -> DiscoveryResponse:
-        return await service.discovery(user_id=user_id, limit=limit)
+        if (latitude is None) != (longitude is None):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail="latitude and longitude must be provided together",
+            )
+        return await service.discovery(
+            user_id=user_id,
+            limit=limit,
+            latitude=latitude,
+            longitude=longitude,
+        )
 
     @v1.post("/swipes", response_model=SwipeResponse)
     async def swipe(

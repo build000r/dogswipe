@@ -65,6 +65,33 @@ async def test_discovery_uses_saved_classic_preference(async_client) -> None:
 
 
 @pytest.mark.asyncio
+async def test_discovery_can_compute_distance_from_query_location(async_client) -> None:
+    response = await async_client.get(
+        "/v1/discovery",
+        params={
+            "limit": 1,
+            "latitude": 43.6532,
+            "longitude": -79.3832,
+        },
+    )
+
+    assert response.status_code == 200
+    profile = response.json()["profiles"][0]
+    assert profile["id"] == "hotdog-coney"
+    assert profile["latitude"] == 43.6539
+    assert profile["longitude"] == -79.3843
+    assert profile["distance_miles"] < 0.1
+
+
+@pytest.mark.asyncio
+async def test_discovery_rejects_partial_query_location(async_client) -> None:
+    response = await async_client.get("/v1/discovery", params={"latitude": 43.6532})
+
+    assert response.status_code == 422
+    assert response.json()["detail"] == "latitude and longitude must be provided together"
+
+
+@pytest.mark.asyncio
 async def test_swipe_like_can_create_match(async_client) -> None:
     response = await async_client.post(
         "/v1/swipes",
@@ -234,6 +261,8 @@ async def test_vendor_submission_is_pending_and_user_scoped(async_client) -> Non
             "price_dollars": 6.25,
             "signature_notes": "Griddled bun, beef frank, mustard, relish, and onion.",
             "distance_miles": 1.8,
+            "latitude": 43.6532,
+            "longitude": -79.3832,
             "vendor_name": "Boardwalk Dogs",
             "image_url": "https://cdn.example.com/boardwalk.jpg",
             "menu_url": "https://boardwalk.example.com/menu",
@@ -247,6 +276,8 @@ async def test_vendor_submission_is_pending_and_user_scoped(async_client) -> Non
     assert profile["name"] == "Boardwalk Snap"
     assert profile["availability_status"] == "pending_review"
     assert profile["crave_score"] == 0.5
+    assert profile["latitude"] == 43.6532
+    assert profile["longitude"] == -79.3832
     assert profile["menu_url"] == "https://boardwalk.example.com/menu"
     assert profile["media_alt_text"] == "Classic hotdog on a paper tray"
 

@@ -32,6 +32,8 @@ final class DogSwipeAPIClientTests: XCTestCase {
               "price_dollars": 6.5,
               "signature_notes": "Beef frank, snap casing, chili, onion, and yellow mustard.",
               "distance_miles": 1.2,
+              "latitude": 43.6539,
+              "longitude": -79.3843,
               "vendor_name": "Franklin Cart",
               "image_url": null,
               "menu_url": "https://franklin.example.com/menu",
@@ -50,10 +52,32 @@ final class DogSwipeAPIClientTests: XCTestCase {
         XCTAssertEqual(profiles.map(\.id), ["hotdog-coney"])
         XCTAssertEqual(profiles.first?.priceLabel, "$6.50")
         XCTAssertEqual(profiles.first?.vendorName, "Franklin Cart")
+        XCTAssertEqual(profiles.first?.latitude, 43.6539)
+        XCTAssertEqual(profiles.first?.longitude, -79.3843)
         XCTAssertEqual(profiles.first?.menuURL?.absoluteString, "https://franklin.example.com/menu")
         XCTAssertEqual(profiles.first?.mediaAltText, "Coney hotdog with chili and onion")
         XCTAssertEqual(http.requests.first?.url?.path, "/v1/discovery")
         XCTAssertEqual(http.requests.first?.url?.query, "limit=10")
+    }
+
+    func testDiscoveryEncodesLocationQuery() async throws {
+        let http = MockHTTPClient()
+        http.nextData = #"{"profiles":[]}"#.data(using: .utf8)!
+        let client = DogSwipeAPIClient(baseURL: URL(string: "http://localhost:8000")!, httpClient: http)
+
+        _ = try await client.discovery(
+            limit: 12,
+            location: DiscoveryLocation(latitude: 43.6532, longitude: -79.3832)
+        )
+
+        let components = try XCTUnwrap(URLComponents(url: http.requests.first!.url!, resolvingAgainstBaseURL: false))
+        XCTAssertEqual(components.path, "/v1/discovery")
+        let query = Dictionary(uniqueKeysWithValues: (components.queryItems ?? []).map {
+            ($0.name, $0.value ?? "")
+        })
+        XCTAssertEqual(query["limit"], "12")
+        XCTAssertEqual(query["latitude"], "43.6532")
+        XCTAssertEqual(query["longitude"], "-79.3832")
     }
 
     func testSwipeEncodesBackendContract() async throws {
@@ -141,6 +165,8 @@ final class DogSwipeAPIClientTests: XCTestCase {
               "price_dollars": 6.25,
               "signature_notes": "Mustard, relish, and onion.",
               "distance_miles": 1.8,
+              "latitude": 43.6532,
+              "longitude": -79.3832,
               "vendor_name": "Boardwalk Dogs",
               "image_url": null,
               "menu_url": "https://boardwalk.example.com/menu",
@@ -187,15 +213,17 @@ final class DogSwipeAPIClientTests: XCTestCase {
 
         let profile = try await client.submitVendorProfile(
             VendorSubmissionRequest(
-                name: "Boardwalk Snap",
-                style: "Classic cart dog",
-                priceDollars: 6.25,
-                signatureNotes: "Mustard, relish, and onion.",
-                distanceMiles: 1.8,
                 vendorName: "Boardwalk Dogs",
-                imageURL: URL(string: "https://cdn.example.com/boardwalk.jpg"),
+                name: "Boardwalk Snap",
+                signatureNotes: "Mustard, relish, and onion.",
+                style: "Classic cart dog",
                 menuURL: URL(string: "https://boardwalk.example.com/menu"),
-                mediaAltText: "Classic hotdog on a paper tray"
+                priceDollars: 6.25,
+                distanceMiles: 1.8,
+                imageURL: URL(string: "https://cdn.example.com/boardwalk.jpg"),
+                latitude: 43.6532,
+                mediaAltText: "Classic hotdog on a paper tray",
+                longitude: -79.3832
             )
         )
 
@@ -206,6 +234,8 @@ final class DogSwipeAPIClientTests: XCTestCase {
         XCTAssertFalse(body.contains("user_id"))
         XCTAssertTrue(body.contains("\"name\":\"Boardwalk Snap\""))
         XCTAssertTrue(body.contains("\"price_dollars\":6.25"))
+        XCTAssertTrue(body.contains("\"latitude\":43.6532"))
+        XCTAssertTrue(body.contains("\"longitude\":-79.3832"))
         XCTAssertTrue(body.contains("\"menu_url\":\"https:\\/\\/boardwalk.example.com\\/menu\""))
     }
 
@@ -237,13 +267,14 @@ final class DogSwipeAPIClientTests: XCTestCase {
         let profile = try await client.updateVendorSubmission(
             profileID: "submitted-hotdog",
             submission: VendorSubmissionRequest(
-                name: "Edited Snap",
-                style: "Classic cart dog",
-                priceDollars: 6.5,
-                signatureNotes: "Mustard, relish, onion, and celery salt.",
-                distanceMiles: 1.9,
                 vendorName: "Boardwalk Dogs",
-                menuURL: URL(string: "https://boardwalk.example.com/menu")
+                name: "Edited Snap",
+                signatureNotes: "Mustard, relish, onion, and celery salt.",
+                style: "Classic cart dog",
+                menuURL: URL(string: "https://boardwalk.example.com/menu"),
+                priceDollars: 6.5,
+                distanceMiles: 1.9,
+                longitude: nil
             )
         )
 

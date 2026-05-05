@@ -20,11 +20,11 @@ The repo is intentionally split into three testable surfaces:
 
 | Surface | Implemented behavior |
 | --- | --- |
-| Discovery | `GET /v1/discovery` returns available `HotdogProfile` records filtered by the user's saved max-distance/classic preferences and ranked by crave/distance fit. |
+| Discovery | `GET /v1/discovery` returns available `HotdogProfile` records filtered by the user's saved max-distance/classic preferences and ranked by crave/distance fit; optional `latitude`/`longitude` query params recompute card distance from the user's current location. |
 | Swipe state | Swift package owns deterministic deck advancement, undo, and positive-signal tracking. |
 | Matches | `POST /v1/swipes` records likes/passes/super-likes; `GET /v1/matches` returns high-crave liked hotdogs. |
 | Preferences | `GET /v1/preferences` and `PUT /v1/preferences` persist user-scoped craving controls under the same backend-owned identity boundary; the backend discovery route and Swift local deck scorer both consume the same contract. |
-| Vendor submissions | `POST /v1/vendor/submissions` stores vendor-owned hotdog listings as `pending_review`; `GET /v1/vendor/submissions` returns only the current user's submissions; `PUT /v1/vendor/submissions/{id}` lets owners resubmit change-requested drafts. |
+| Vendor submissions | `POST /v1/vendor/submissions` stores vendor-owned hotdog listings with optional coordinates as `pending_review`; `GET /v1/vendor/submissions` returns only the current user's submissions; `PUT /v1/vendor/submissions/{id}` lets owners resubmit change-requested drafts. |
 | Admin review | Configured admins can list `GET /v1/admin/vendor/submissions`, approve reviewed hotdogs into discovery, reject bad listings, or request vendor edits with review notes. |
 | Auth boundary | User-scoped backend routes derive identity from SPAPS auth when enabled, with a local-only header fallback while auth is disabled. |
 | iOS transport | The Profile tab can request and verify SPAPS magic links with a publishable key, stores access/refresh JWTs in Keychain, and sends only the access bearer to the DogSwipe API. |
@@ -39,6 +39,8 @@ Hotdog profile payloads use this snake_case backend contract:
   "price_dollars": 6.5,
   "signature_notes": "Beef frank, snap casing, chili, onion, and yellow mustard.",
   "distance_miles": 1.2,
+  "latitude": 43.6539,
+  "longitude": -79.3843,
   "vendor_name": "Franklin Cart",
   "image_url": null,
   "menu_url": null,
@@ -90,7 +92,7 @@ DATABASE_URL=postgresql+asyncpg://... make migration-current
 
 Production deploy artifacts live in [deploy/README.md](deploy/README.md). The repo now includes a production Compose file, env template, pre/post deploy verification scripts, and a reverse-proxy site template. A live rollout still requires a skillbox overlay with the concrete host, deploy root, env source, domain, and health URL.
 
-The iOS target reads `DOGSWIPE_API_BASE_URL` from its generated Info.plist and defaults to `http://localhost:8000`, which works for simulator-local backend development. It also reads `DOGSWIPE_SPAPS_API_BASE_URL`, `DOGSWIPE_SPAPS_PUBLISHABLE_KEY`, and `DOGSWIPE_SPAPS_ORIGIN` for native magic-link sign-in. For auth-enabled environments, configure a `spaps_pub_...` publishable key and matching origin; the app requests/verifies magic links through SPAPS, stores access/refresh JWTs in Keychain, and injects only the access bearer through `DogSwipeAPIClient`. Secret SPAPS API keys remain server-only.
+The iOS target reads `DOGSWIPE_API_BASE_URL` from its generated Info.plist and defaults to `http://localhost:8000`, which works for simulator-local backend development. It also reads `DOGSWIPE_SPAPS_API_BASE_URL`, `DOGSWIPE_SPAPS_PUBLISHABLE_KEY`, and `DOGSWIPE_SPAPS_ORIGIN` for native magic-link sign-in. For auth-enabled environments, configure a `spaps_pub_...` publishable key and matching origin; the app requests/verifies magic links through SPAPS, stores access/refresh JWTs in Keychain, and injects only the access bearer through `DogSwipeAPIClient`. Discovery can request iOS when-in-use location permission and pass current coordinates to the backend so response distances reflect the user position. Secret SPAPS API keys remain server-only.
 
 ## Verification Gates
 
@@ -117,13 +119,13 @@ The placement decision is `NEW REPO`: this app owns a durable product boundary r
 
 ## Current Scope
 
-The current app can load local hotdog profiles, render cards with a local product visual when no image URL is available, request and verify SPAPS magic links, store access/refresh JWTs in Keychain, record swipes, persist shared craving controls that filter/rank discovery, submit and revise vendor-owned hotdog listings, approve/reject/request edits as an admin, and fetch matches through the shared Swift API client. Backend migrations are managed through Alembic up to `0005`, local Docker development can auto-create and seed the starter data with explicit local-only flags, and production deploy artifacts are ready for a concrete skillbox target.
+The current app can load local hotdog profiles, render cards with a local product visual when no image URL is available, request and verify SPAPS magic links, store access/refresh JWTs in Keychain, record swipes, persist shared craving controls that filter/rank discovery, use CoreLocation-backed coordinates for live distance ranking, submit and revise vendor-owned hotdog listings, approve/reject/request edits as an admin, and fetch matches through the shared Swift API client. Backend migrations are managed through Alembic up to `0006`, local Docker development can auto-create and seed the starter data with explicit local-only flags, and production deploy artifacts are ready for a concrete skillbox target.
 
 ## Known Limits
 
 - Live deployment is blocked until a skillbox deploy overlay names a host, service, production origin, env source, deploy root, and health URL.
 - Final visual parity with the original reference image remains blocked because the image is not available in this context.
-- Live menu ingestion, deep-link handoff polish, GPS/geocoding-backed proximity, and App Store/TestFlight release assets are future slices.
+- Live menu ingestion, deep-link handoff polish, address geocoding/travel-time routing, and App Store/TestFlight release assets are future slices.
 
 ## About Contributions
 

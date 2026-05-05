@@ -14,16 +14,20 @@ final class DiscoverViewModel: ObservableObject {
     @Published private(set) var allProfiles: [HotdogProfile] = []
     @Published private(set) var deck = SwipeDeckState(profiles: [])
     @Published private(set) var lastMatch: SwipeResponse?
+    @Published private(set) var isUsingCurrentLocation = false
 
     private let apiClient: DogSwipeAPIClient
     private let preferencesStore: CravingPreferencesStore
+    private let locationProvider: UserLocationProviding
 
     init(
         apiClient: DogSwipeAPIClient = AppEnvironment.apiClient(),
-        preferencesStore: CravingPreferencesStore = CravingPreferencesStore()
+        preferencesStore: CravingPreferencesStore = CravingPreferencesStore(),
+        locationProvider: UserLocationProviding? = nil
     ) {
         self.apiClient = apiClient
         self.preferencesStore = preferencesStore
+        self.locationProvider = locationProvider ?? CoreLocationUserLocationProvider()
     }
 
     var currentProfile: HotdogProfile? {
@@ -41,12 +45,15 @@ final class DiscoverViewModel: ObservableObject {
     func load() async {
         state = .loading
         do {
-            let profiles = try await apiClient.discovery(limit: 20)
+            let location = await locationProvider.currentLocation()
+            isUsingCurrentLocation = location != nil
+            let profiles = try await apiClient.discovery(limit: 20, location: location)
             allProfiles = rank(profiles)
             deck = SwipeDeckState(profiles: allProfiles)
             lastMatch = nil
             state = .ready
         } catch {
+            isUsingCurrentLocation = false
             if allProfiles.isEmpty {
                 allProfiles = rank(HotdogProfile.samples)
                 deck = SwipeDeckState(profiles: allProfiles)
@@ -56,6 +63,7 @@ final class DiscoverViewModel: ObservableObject {
     }
 
     func resetToSamples() {
+        isUsingCurrentLocation = false
         allProfiles = rank(HotdogProfile.samples)
         deck = SwipeDeckState(profiles: allProfiles)
         lastMatch = nil

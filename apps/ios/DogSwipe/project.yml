@@ -26,6 +26,7 @@ targets:
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
         INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: YES
         INFOPLIST_KEY_UIRequiresFullScreen: YES
+        INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: DogSwipe uses your location to sort nearby hotdogs by distance.
         INFOPLIST_KEY_DOGSWIPE_API_BASE_URL: http://localhost:8000
         INFOPLIST_KEY_DOGSWIPE_SPAPS_API_BASE_URL: https://api.sweetpotato.dev
         INFOPLIST_KEY_DOGSWIPE_SPAPS_PUBLISHABLE_KEY: ""

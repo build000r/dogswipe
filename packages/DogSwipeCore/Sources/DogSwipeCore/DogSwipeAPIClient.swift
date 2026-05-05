@@ -37,6 +37,16 @@ public enum DogSwipeAPIError: Error, Equatable, LocalizedError, Sendable {
     }
 }
 
+public struct DiscoveryLocation: Equatable, Sendable {
+    public let latitude: Double
+    public let longitude: Double
+
+    public init(latitude: Double, longitude: Double) {
+        self.latitude = latitude
+        self.longitude = longitude
+    }
+}
+
 public struct DogSwipeAPIClient: Sendable {
     public typealias AuthorizationTokenProvider = @Sendable () async throws -> String?
 
@@ -60,9 +70,14 @@ public struct DogSwipeAPIClient: Sendable {
         self.authorizationTokenProvider = authorizationTokenProvider
     }
 
-    public func discovery(limit: Int = 20) async throws -> [HotdogProfile] {
+    public func discovery(limit: Int = 20, location: DiscoveryLocation? = nil) async throws -> [HotdogProfile] {
         var components = components(path: "/v1/discovery")
-        components.queryItems = [URLQueryItem(name: "limit", value: String(limit))]
+        var queryItems = [URLQueryItem(name: "limit", value: String(limit))]
+        if let location {
+            queryItems.append(URLQueryItem(name: "latitude", value: String(location.latitude)))
+            queryItems.append(URLQueryItem(name: "longitude", value: String(location.longitude)))
+        }
+        components.queryItems = queryItems
         let response: DiscoveryResponse = try await send(components: components)
         return response.profiles
     }

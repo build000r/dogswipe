@@ -14,7 +14,7 @@ make backend-test
 | Method | Path | Purpose |
 | --- | --- | --- |
 | `GET` | `/health` | Shared quickstart health endpoint |
-| `GET` | `/v1/discovery` | Preference-filtered local hotdogs available for the swipe deck |
+| `GET` | `/v1/discovery` | Preference-filtered local hotdogs available for the swipe deck; accepts optional `latitude` and `longitude` query params |
 | `POST` | `/v1/swipes` | Record a swipe decision for the authenticated/local user |
 | `GET` | `/v1/matches` | Return high-crave liked hotdogs for the authenticated/local user |
 | `GET` | `/v1/preferences` | Return user-scoped craving preferences |
@@ -39,6 +39,8 @@ make backend-test
   "price_dollars": 6.5,
   "signature_notes": "Beef frank, snap casing, chili, onion, and yellow mustard.",
   "distance_miles": 1.2,
+  "latitude": 43.6539,
+  "longitude": -79.3843,
   "vendor_name": "Franklin Cart",
   "image_url": null,
   "menu_url": null,
@@ -67,7 +69,7 @@ make backend-test
 
 Client-supplied `user_id` fields are rejected here too.
 
-`GET /v1/discovery` resolves the same current user, loads saved preferences, removes hotdogs beyond `max_distance_miles`, removes non-classic items when `classic_only` is true, then ranks the remaining cards by crave score, distance fit, and spicy/classic fit. That keeps backend discovery aligned with the Swift `MatchScorer` used by the local deck and offline fallback data.
+`GET /v1/discovery` resolves the same current user, loads saved preferences, removes hotdogs beyond `max_distance_miles`, removes non-classic items when `classic_only` is true, then ranks the remaining cards by crave score, distance fit, and spicy/classic fit. If the client supplies `latitude` and `longitude`, the backend recomputes each coordinate-backed profile's `distance_miles` from that user location before filtering/ranking. Profiles without coordinates keep their stored fallback distance. That keeps backend discovery aligned with the Swift `MatchScorer` used by the local deck and offline fallback data.
 
 ## Vendor Submission Contract
 
@@ -80,6 +82,8 @@ Client-supplied `user_id` fields are rejected here too.
   "price_dollars": 6.25,
   "signature_notes": "Griddled bun, beef frank, mustard, relish, and onion.",
   "distance_miles": 1.8,
+  "latitude": 43.6532,
+  "longitude": -79.3832,
   "vendor_name": "Boardwalk Dogs",
   "image_url": "https://cdn.example.com/boardwalk.jpg",
   "menu_url": "https://boardwalk.example.com/menu",
@@ -120,4 +124,4 @@ DATABASE_URL=postgresql+asyncpg://... make migrate
 DATABASE_URL=postgresql+asyncpg://... make migration-current
 ```
 
-Current head is `0005`, which adds review notes and review timestamps after vendor-owned hotdog submissions and menu/media metadata.
+Current head is `0006`, which adds optional latitude/longitude coordinates after vendor-owned hotdog submissions, menu/media metadata, and moderation review notes.
