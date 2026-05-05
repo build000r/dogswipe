@@ -6,9 +6,9 @@ Last verified: 2026-05-05
 | --- | --- | --- |
 | Swift package tests | `make swift-test` | 30 tests passed |
 | iOS smoke build | `xcodebuild -quiet -project apps/ios/DogSwipe/DogSwipe.xcodeproj -scheme DogSwipe -destination 'generic/platform=iOS' build` | passed |
-| iOS unit tests | `xcodebuild -quiet -project apps/ios/DogSwipe/DogSwipe.xcodeproj -scheme DogSwipe -destination 'platform=iOS Simulator,name=iPhone 17' test` | passed |
+| iOS unit tests | `xcodebuild -quiet -project apps/ios/DogSwipe/DogSwipe.xcodeproj -scheme DogSwipe -destination 'platform=iOS Simulator,id=<available iPhone simulator UDID>' test` | passed |
 | Backend API tests | `make backend-test` | 68 tests passed |
-| Backend coverage | `make coverage` | 90.47% total coverage |
+| Backend coverage | `make coverage` | 89.67% total coverage |
 | Clean backend install | `python3.12 -m venv /tmp/... && pip install -e 'backend[test]'` | passed |
 | Backend lint | `make lint` | passed |
 | Backend typecheck | `make typecheck` | passed |
@@ -20,7 +20,7 @@ Last verified: 2026-05-05
 | SwiftUI drift scan | `make drift` | 0 Swift findings |
 | CRAP score | `make crap` | `FINAL_SCORE: 7.00` |
 | MMDX preflight | `make mmdx-preflight` | 3 charts passed |
-| CI quality enforcement | GitHub Actions `backend` and `swift-package` jobs | coverage XML feeds blocking CRAP; MMDX and SwiftUI drift gates fail on regressions |
+| CI quality enforcement | GitHub Actions `backend`, `swift-package`, and `ios` jobs | coverage XML feeds blocking CRAP; MMDX, SwiftUI drift, deploy, Swift package, and iOS gates fail on regressions |
 | SPAPS usage audit | `python3 ../sweet-potato/skills/sweet-potato-usage-audit/scripts/audit_sweet_potato_usage.py --sweet-potato-root ../sweet-potato .` | 0 high, 0 medium, 0 low |
 
 ## Current Product Evidence

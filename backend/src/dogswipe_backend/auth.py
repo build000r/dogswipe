@@ -3,7 +3,19 @@ from __future__ import annotations
 from typing import Annotated, cast
 
 from fastapi import Depends, HTTPException, Request, status
-from spaps_server_quickstart.auth.dependencies import optional_authenticated_user
+from spaps_server_quickstart.auth import AuthenticatedUser
+
+try:
+    from spaps_server_quickstart.auth.dependencies import optional_authenticated_user
+except ImportError as exc:
+    if "optional_authenticated_user" not in str(exc):
+        raise
+
+    def optional_authenticated_user(request: Request) -> AuthenticatedUser | None:
+        user = getattr(request.state, "authenticated_user", None)
+        if isinstance(user, AuthenticatedUser):
+            return user
+        return None
 
 from .settings import get_settings
 

@@ -15,6 +15,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Checkout quality skills
         run: git clone --depth 1 https://github.com/build000r/skills.git "$RUNNER_TEMP/quality-skills"
+      - name: Install quality dependencies
+        run: sudo apt-get update && sudo apt-get install -y jq ripgrep
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -30,6 +32,8 @@ jobs:
         run: make crap SKILLS_ROOT="$RUNNER_TEMP/quality-skills"
       - name: MMDX preflight
         run: make mmdx-preflight SKILLS_ROOT="$RUNNER_TEMP/quality-skills"
+      - name: SwiftUI drift gate
+        run: make drift SKILLS_ROOT="$RUNNER_TEMP/quality-skills"
       - name: Lint
         run: cd backend && ruff check src tests migrations
       - name: Typecheck
@@ -59,16 +63,8 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Checkout quality skills
-        run: git clone --depth 1 https://github.com/build000r/skills.git "$RUNNER_TEMP/quality-skills"
-      - name: Install drift dependencies
-        run: |
-          brew list jq >/dev/null 2>&1 || brew install jq
-          brew list ripgrep >/dev/null 2>&1 || brew install ripgrep
       - name: Swift package tests
         run: swift test --package-path packages/DogSwipeCore
-      - name: SwiftUI drift gate
-        run: make drift SKILLS_ROOT="$RUNNER_TEMP/quality-skills"
 
   ios:
     runs-on: macos-latest
@@ -83,5 +79,6 @@ jobs:
       - name: Unit tests
         run: |
           set -euo pipefail
-          simulator="$(xcrun simctl list devices available | awk -F '[()]' '/iPhone/ {print $1}' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | tail -1)"
-          xcodebuild -quiet -project apps/ios/DogSwipe/DogSwipe.xcodeproj -scheme DogSwipe -destination "platform=iOS Simulator,name=${simulator}" test
+          simulator_id="$(xcrun simctl list devices available --json | python3 -c 'import json, sys; data = json.load(sys.stdin); devices = [device for runtime_devices in data["devices"].values() for device in runtime_devices if device.get("isAvailable") and device.get("name", "").startswith("iPhone")]; print(devices[-1]["udid"] if devices else "", end="")')"
+          test -n "$simulator_id"
+          xcodebuild -quiet -project apps/ios/DogSwipe/DogSwipe.xcodeproj -scheme DogSwipe -destination "platform=iOS Simulator,id=${simulator_id}" test
