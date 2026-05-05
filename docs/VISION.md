@@ -18,7 +18,7 @@ The first production slice must prove three things:
 
 - Discovery cards represent hotdogs, not venues: the primary object is a specific item from a vendor.
 - A card must show name, style, price, signature notes, distance, vendor, and a crave score.
-- Cards without remote media still need a product-specific hotdog visual, and craving controls should feed the same ranking preferences across discovery and matches.
+- Cards without remote media still need a product-specific hotdog visual, and craving controls should persist as user-scoped preferences that feed the same ranking logic across discovery and matches.
 - Positive swipes are intent signals. Matches are high-crave liked items, not social matches.
 - Production identity is backend-owned through SPAPS; the app may send a bearer token but never a SPAPS API key.
 - Local sample data is intentionally food-like and vendor-like so screenshots, demos, and API examples stay anchored to the hotdog product.

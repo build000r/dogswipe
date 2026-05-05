@@ -45,3 +45,11 @@ class SwipeResponse(BaseModel):
 
 class MatchResponse(BaseModel):
     matches: list[HotdogProfile]
+
+
+class CravingPreferences(BaseModel):
+    model_config = ConfigDict(from_attributes=True, extra="forbid")
+
+    max_distance_miles: float = Field(default=10, ge=1, le=25)
+    spicy_friendly: bool = True
+    classic_only: bool = False

@@ -17,10 +17,11 @@ Status key: `done`, `active`, `ready`, `blocked`.
 | WG-011 iOS bearer auth transport | done | WG-007, WG-009 | `packages/DogSwipeCore/**`, `apps/ios/DogSwipe/**` | Swift API calls can attach trimmed user bearer tokens through an injected provider without embedding SPAPS secrets |
 | WG-012 Hotdog discovery pivot | done | WG-002, WG-004, WG-010 | `backend/**`, `packages/DogSwipeCore/**`, `apps/ios/DogSwipe/**`, `docs/**` | Product contracts, sample data, migrations, tests, and app copy describe local hotdogs instead of the previous mistaken domain |
 | WG-013 Hotdog UI hardening | done | WG-012 | `apps/ios/DogSwipe/**`, `docs/**` | Cards render a local hotdog visual when no image URL exists and the profile tab exposes shared craving controls covered by an iOS unit test |
+| WG-014 User preference persistence | done | WG-009, WG-011, WG-013 | `backend/**`, `packages/DogSwipeCore/**`, `apps/ios/DogSwipe/**`, `docs/**` | Craving controls round-trip through user-scoped backend preferences with migration, API, Swift client, and tests |
 
 ## Ready Frontier
 
-The next ready work is to create a skillbox deploy overlay or continue deeper product slices: sign-in/session persistence, live menu media, and vendor workflows.
+The next ready work is to create a skillbox deploy overlay or continue deeper product slices: auth session bootstrap, live menu media, and vendor workflows.
 
 ## Risks
 

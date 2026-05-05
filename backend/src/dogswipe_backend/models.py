@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from uuid import uuid4
 
-from sqlalchemy import DateTime, Float, Index, String, Text, func
+from sqlalchemy import Boolean, DateTime, Float, Index, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .db import Base
@@ -41,4 +41,19 @@ class SwipeEventRecord(Base):
         DateTime(timezone=True),
         default=lambda: datetime.now(UTC),
         nullable=False,
+    )
+
+
+class UserPreferenceRecord(Base):
+    __tablename__ = "user_preferences"
+
+    user_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    max_distance_miles: Mapped[float] = mapped_column(Float, nullable=False, default=10)
+    spicy_friendly: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    classic_only: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
     )

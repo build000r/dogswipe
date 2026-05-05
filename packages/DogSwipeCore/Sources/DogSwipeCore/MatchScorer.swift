@@ -1,6 +1,6 @@
 import Foundation
 
-public struct DiscoveryPreferences: Equatable, Sendable {
+public struct DiscoveryPreferences: Codable, Equatable, Sendable {
     public var maxDistanceMiles: Double
     public var spicyFriendly: Bool
     public var classicOnly: Bool
@@ -13,6 +13,12 @@ public struct DiscoveryPreferences: Equatable, Sendable {
         self.maxDistanceMiles = maxDistanceMiles
         self.spicyFriendly = spicyFriendly
         self.classicOnly = classicOnly
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case maxDistanceMiles = "max_distance_miles"
+        case spicyFriendly = "spicy_friendly"
+        case classicOnly = "classic_only"
     }
 }
 

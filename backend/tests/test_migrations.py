@@ -27,7 +27,7 @@ def test_migrations_upgrade_and_downgrade(clear_settings, tmp_path, monkeypatch)
     engine = create_engine(f"sqlite:///{database_path}")
     try:
         inspector = inspect(engine)
-        assert {"alembic_version", "hotdog_profiles", "swipe_events"}.issubset(
+        assert {"alembic_version", "hotdog_profiles", "swipe_events", "user_preferences"}.issubset(
             set(inspector.get_table_names())
         )
         assert {column["name"] for column in inspector.get_columns("hotdog_profiles")} == {
@@ -42,6 +42,14 @@ def test_migrations_upgrade_and_downgrade(clear_settings, tmp_path, monkeypatch)
             "crave_score",
             "availability_status",
             "created_at",
+        }
+        assert {column["name"] for column in inspector.get_columns("user_preferences")} == {
+            "user_id",
+            "max_distance_miles",
+            "spicy_friendly",
+            "classic_only",
+            "created_at",
+            "updated_at",
         }
     finally:
         engine.dispose()

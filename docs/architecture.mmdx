@@ -27,6 +27,7 @@ flowchart LR
   core["DogSwipeCore package"]
   client["DogSwipeAPIClient"]
   profiles["HotdogProfile contract"]
+  preferences["CravingPreferences contract"]
   api["FastAPI backend"]
   principal["Principal resolver"]
   migrations["Alembic migrations"]
@@ -39,8 +40,10 @@ flowchart LR
   vm --> core
   vm --> client
   core --> profiles
+  core --> preferences
   client --> api
   api --> profiles
+  api --> preferences
   api --> principal
   principal --> spaps
   api --> db
@@ -75,6 +78,6 @@ sequenceDiagram
   App->>API: Authorization: Bearer JWT
   API->>SPAPS: Validate user/session
   SPAPS-->>API: AuthenticatedUser.user_id
-  API->>DB: Read hotdog profiles or record swipes
-  API-->>App: Hotdog discovery/match response
+  API->>DB: Read hotdog profiles, swipes, or preferences
+  API-->>App: Hotdog discovery, match, or preference response
 ```

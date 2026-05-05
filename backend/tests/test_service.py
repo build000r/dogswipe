@@ -3,7 +3,12 @@ from __future__ import annotations
 import pytest
 
 from dogswipe_backend.repository import HotdogRepository
-from dogswipe_backend.schemas import HotdogProfile, SwipeDecision, SwipeRequest
+from dogswipe_backend.schemas import (
+    CravingPreferences,
+    HotdogProfile,
+    SwipeDecision,
+    SwipeRequest,
+)
 from dogswipe_backend.service import DogSwipeService
 
 
@@ -11,6 +16,7 @@ class FakeRepository(HotdogRepository):
     def __init__(self) -> None:
         self.limit_seen = 0
         self.swipes: list[tuple[str, str, SwipeDecision]] = []
+        self.preferences_by_user: dict[str, CravingPreferences] = {}
 
     async def list_available_profiles(self, *, limit: int = 20) -> list[HotdogProfile]:
         self.limit_seen = limit
@@ -42,6 +48,18 @@ class FakeRepository(HotdogRepository):
         assert user_id
         return await self.list_available_profiles()
 
+    async def get_preferences(self, *, user_id: str) -> CravingPreferences:
+        return self.preferences_by_user.get(user_id, CravingPreferences())
+
+    async def upsert_preferences(
+        self,
+        *,
+        user_id: str,
+        preferences: CravingPreferences,
+    ) -> CravingPreferences:
+        self.preferences_by_user[user_id] = preferences
+        return preferences
+
 
 @pytest.mark.asyncio
 async def test_discovery_clamps_limit() -> None:
@@ -62,3 +80,19 @@ async def test_swipe_returns_repository_match_signal() -> None:
     )
     assert response.matched is True
     assert repository.swipes == [("u1", "hotdog-test", SwipeDecision.super_like)]
+
+
+@pytest.mark.asyncio
+async def test_preferences_round_trip_through_repository() -> None:
+    repository = FakeRepository()
+    service = DogSwipeService(repository)
+    preferences = CravingPreferences(
+        max_distance_miles=5,
+        spicy_friendly=False,
+        classic_only=True,
+    )
+
+    updated = await service.update_preferences(user_id="u1", preferences=preferences)
+
+    assert updated == preferences
+    assert await service.preferences(user_id="u1") == preferences

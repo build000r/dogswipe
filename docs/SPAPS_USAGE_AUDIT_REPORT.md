@@ -6,15 +6,13 @@ Date: 2026-05-05
 
 | Repo | Signals | Findings |
 | --- | --- | --- |
-| `../htma_server` | `spaps`, `spaps-python-client`, `spaps-server-quickstart`, direct SPAPS API, local dev | One low-severity dependency drift finding |
+| `dogswipe` | direct SPAPS API, SPAPS local-dev docs, `spaps-server-quickstart` | No scanner findings |
 
 ## Findings
 
-### Low: `spaps-server-quickstart` Version Drift
+### None: DogSwipe Matches The Current Quickstart Contract
 
-`../htma_server/pyproject.toml` declares `spaps-server-quickstart~=0.5.0`, while the active Sweet Potato checkout reports `0.5.1`.
-
-Recommendation: DogSwipe should start on `spaps-server-quickstart~=0.5.1` and avoid copying older auth scaffolding.
+The audit scanner reports `dogswipe` on `spaps-server-quickstart` with no high-, medium-, or low-severity findings. The active Sweet Potato checkout reports `spaps-server-quickstart` `0.5.1`, and DogSwipe declares `spaps-server-quickstart~=0.5.1`.
 
 ## Applied Contract
 
@@ -24,3 +22,4 @@ DogSwipe follows the current quickstart contract:
 - production auth should use `Authorization: Bearer <jwt>` via `SpapsAuthMiddleware`
 - local dev may disable SPAPS auth explicitly
 - no browser/client code should send a secret SPAPS API key
+- user-scoped swipes, matches, and craving preferences derive identity from backend auth context

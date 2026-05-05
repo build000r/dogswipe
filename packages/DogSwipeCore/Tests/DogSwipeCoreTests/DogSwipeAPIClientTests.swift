@@ -83,6 +83,47 @@ final class DogSwipeAPIClientTests: XCTestCase {
         XCTAssertNil(http.requests.first?.url?.query)
     }
 
+    func testPreferencesDecodeBackendContract() async throws {
+        let http = MockHTTPClient()
+        http.nextData = """
+        {"max_distance_miles":7,"spicy_friendly":false,"classic_only":true}
+        """.data(using: .utf8)!
+        let client = DogSwipeAPIClient(baseURL: URL(string: "http://localhost:8000")!, httpClient: http)
+
+        let preferences = try await client.preferences()
+
+        XCTAssertEqual(
+            preferences,
+            DiscoveryPreferences(maxDistanceMiles: 7, spicyFriendly: false, classicOnly: true)
+        )
+        XCTAssertEqual(http.requests.first?.url?.path, "/v1/preferences")
+        XCTAssertEqual(http.requests.first?.httpMethod, "GET")
+    }
+
+    func testUpdatePreferencesEncodesBackendContract() async throws {
+        let http = MockHTTPClient()
+        http.nextData = """
+        {"max_distance_miles":12,"spicy_friendly":true,"classic_only":false}
+        """.data(using: .utf8)!
+        let client = DogSwipeAPIClient(baseURL: URL(string: "http://localhost:8000")!, httpClient: http)
+
+        let response = try await client.updatePreferences(
+            DiscoveryPreferences(maxDistanceMiles: 12, spicyFriendly: true, classicOnly: false)
+        )
+
+        XCTAssertEqual(
+            response,
+            DiscoveryPreferences(maxDistanceMiles: 12, spicyFriendly: true, classicOnly: false)
+        )
+        XCTAssertEqual(http.requests.first?.url?.path, "/v1/preferences")
+        XCTAssertEqual(http.requests.first?.httpMethod, "PUT")
+        let body = String(data: http.requests.first!.httpBody!, encoding: .utf8)!
+        XCTAssertFalse(body.contains("user_id"))
+        XCTAssertTrue(body.contains("\"max_distance_miles\":12"))
+        XCTAssertTrue(body.contains("\"spicy_friendly\":true"))
+        XCTAssertTrue(body.contains("\"classic_only\":false"))
+    }
+
     func testAddsBearerTokenWhenProviderReturnsToken() async throws {
         let http = MockHTTPClient()
         http.nextData = #"{"profiles":[]}"#.data(using: .utf8)!

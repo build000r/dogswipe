@@ -20,10 +20,10 @@ struct ProfileView: View {
                 }
 
                 VStack(alignment: .leading, spacing: .dsSpace4) {
-                    Toggle(isOn: $preferencesStore.spicyFriendly) {
+                    Toggle(isOn: spicyFriendlyBinding) {
                         preferenceLabel(icon: "flame", title: "Spicy friendly")
                     }
-                    Toggle(isOn: $preferencesStore.classicOnly) {
+                    Toggle(isOn: classicOnlyBinding) {
                         preferenceLabel(icon: "checkmark.seal", title: "Classic only")
                     }
                     VStack(alignment: .leading, spacing: .dsSpace3) {
@@ -34,8 +34,25 @@ struct ProfileView: View {
                                 .font(.headline.monospacedDigit())
                                 .foregroundStyle(Color.dsMuted)
                         }
-                        Slider(value: $preferencesStore.maxDistanceMiles, in: 1...25, step: 1)
+                        Slider(
+                            value: maxDistanceBinding,
+                            in: 1...25,
+                            step: 1
+                        ) { isEditing in
+                            guard !isEditing else {
+                                return
+                            }
+                            Task {
+                                await preferencesStore.save()
+                            }
+                        }
                             .tint(.dsPrimary)
+                    }
+
+                    if let syncMessage = preferencesStore.syncMessage {
+                        Text(syncMessage)
+                            .font(.footnote)
+                            .foregroundStyle(Color.dsMuted)
                     }
                 }
                 .toggleStyle(.switch)
@@ -47,8 +64,47 @@ struct ProfileView: View {
             }
             .padding(.dsSpace5)
             .navigationTitle("Profile")
+            .toolbar {
+                if preferencesStore.isSyncing {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        ProgressView()
+                            .controlSize(.small)
+                    }
+                }
+            }
             .dsPageBackground()
         }
+    }
+
+    private var spicyFriendlyBinding: Binding<Bool> {
+        Binding(
+            get: { preferencesStore.spicyFriendly },
+            set: { value in
+                preferencesStore.spicyFriendly = value
+                Task {
+                    await preferencesStore.save()
+                }
+            }
+        )
+    }
+
+    private var classicOnlyBinding: Binding<Bool> {
+        Binding(
+            get: { preferencesStore.classicOnly },
+            set: { value in
+                preferencesStore.classicOnly = value
+                Task {
+                    await preferencesStore.save()
+                }
+            }
+        )
+    }
+
+    private var maxDistanceBinding: Binding<Double> {
+        Binding(
+            get: { preferencesStore.maxDistanceMiles },
+            set: { preferencesStore.maxDistanceMiles = $0 }
+        )
     }
 
     private func preferenceLabel(icon: String, title: String) -> some View {

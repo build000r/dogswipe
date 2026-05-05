@@ -1,7 +1,13 @@
 from __future__ import annotations
 
 from .repository import HotdogRepository
-from .schemas import DiscoveryResponse, MatchResponse, SwipeRequest, SwipeResponse
+from .schemas import (
+    CravingPreferences,
+    DiscoveryResponse,
+    MatchResponse,
+    SwipeRequest,
+    SwipeResponse,
+)
 
 
 class DogSwipeService:
@@ -26,3 +32,14 @@ class DogSwipeService:
 
     async def matches(self, *, user_id: str) -> MatchResponse:
         return MatchResponse(matches=await self.repository.list_matches(user_id=user_id))
+
+    async def preferences(self, *, user_id: str) -> CravingPreferences:
+        return await self.repository.get_preferences(user_id=user_id)
+
+    async def update_preferences(
+        self,
+        *,
+        user_id: str,
+        preferences: CravingPreferences,
+    ) -> CravingPreferences:
+        return await self.repository.upsert_preferences(user_id=user_id, preferences=preferences)

@@ -96,3 +96,85 @@ async def test_local_matches_use_default_user_when_auth_disabled(async_client) -
     response = await async_client.get("/v1/matches")
     assert response.status_code == 200
     assert [match["id"] for match in response.json()["matches"]] == ["hotdog-coney"]
+
+
+@pytest.mark.asyncio
+async def test_preferences_return_default_for_new_user(async_client) -> None:
+    response = await async_client.get(
+        "/v1/preferences",
+        headers={"X-DogSwipe-User-ID": "new-user"},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "max_distance_miles": 10,
+        "spicy_friendly": True,
+        "classic_only": False,
+    }
+
+
+@pytest.mark.asyncio
+async def test_preferences_can_be_saved_for_authenticated_user(async_client) -> None:
+    response = await async_client.put(
+        "/v1/preferences",
+        headers={"X-DogSwipe-User-ID": "preference-user"},
+        json={
+            "max_distance_miles": 6,
+            "spicy_friendly": False,
+            "classic_only": True,
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "max_distance_miles": 6,
+        "spicy_friendly": False,
+        "classic_only": True,
+    }
+
+    saved = await async_client.get(
+        "/v1/preferences",
+        headers={"X-DogSwipe-User-ID": "preference-user"},
+    )
+    assert saved.json() == response.json()
+
+
+@pytest.mark.asyncio
+async def test_preferences_are_user_scoped(async_client) -> None:
+    await async_client.put(
+        "/v1/preferences",
+        headers={"X-DogSwipe-User-ID": "spicy-user"},
+        json={
+            "max_distance_miles": 4,
+            "spicy_friendly": False,
+            "classic_only": True,
+        },
+    )
+
+    response = await async_client.get(
+        "/v1/preferences",
+        headers={"X-DogSwipe-User-ID": "classic-user"},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "max_distance_miles": 10,
+        "spicy_friendly": True,
+        "classic_only": False,
+    }
+
+
+@pytest.mark.asyncio
+async def test_preferences_reject_client_supplied_user_id(async_client) -> None:
+    response = await async_client.put(
+        "/v1/preferences",
+        headers={"X-DogSwipe-User-ID": "honest-user"},
+        json={
+            "user_id": "forged",
+            "max_distance_miles": 6,
+            "spicy_friendly": False,
+            "classic_only": True,
+        },
+    )
+
+    assert response.status_code == 422

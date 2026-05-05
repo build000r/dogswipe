@@ -23,6 +23,7 @@ The repo is intentionally split into three testable surfaces:
 | Discovery | `GET /v1/discovery` returns ranked `HotdogProfile` records from PostgreSQL. |
 | Swipe state | Swift package owns deterministic deck advancement, undo, and positive-signal tracking. |
 | Matches | `POST /v1/swipes` records likes/passes/super-likes; `GET /v1/matches` returns high-crave liked hotdogs. |
+| Preferences | `GET /v1/preferences` and `PUT /v1/preferences` persist user-scoped craving controls under the same backend-owned identity boundary. |
 | Auth boundary | User-scoped backend routes derive identity from SPAPS auth when enabled, with a local-only header fallback while auth is disabled. |
 | iOS transport | `DogSwipeAPIClient` can attach user bearer tokens through an injected provider without embedding SPAPS API keys. |
 
@@ -40,6 +41,16 @@ Hotdog profile payloads use this snake_case backend contract:
   "image_url": null,
   "crave_score": 0.91,
   "availability_status": "available"
+}
+```
+
+Craving preferences use the same snake_case API contract:
+
+```json
+{
+  "max_distance_miles": 10,
+  "spicy_friendly": true,
+  "classic_only": false
 }
 ```
 
@@ -96,7 +107,7 @@ The placement decision is `NEW REPO`: this app owns a durable product boundary r
 
 ## Current Scope
 
-The current app can load local hotdog profiles, render cards with a local product visual when no image URL is available, record swipes, adjust shared craving controls, and fetch matches through the shared Swift API client. Backend migrations are managed through Alembic up to `0002`, and local Docker development can auto-create and seed the starter data with explicit local-only flags.
+The current app can load local hotdog profiles, render cards with a local product visual when no image URL is available, record swipes, persist shared craving controls, and fetch matches through the shared Swift API client. Backend migrations are managed through Alembic up to `0003`, and local Docker development can auto-create and seed the starter data with explicit local-only flags.
 
 ## Known Limits
 

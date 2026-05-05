@@ -7,7 +7,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from .auth import get_current_user_id
 from .db import get_db_session
 from .repository import HotdogRepository, SqlAlchemyHotdogRepository
-from .schemas import DiscoveryResponse, MatchResponse, SwipeRequest, SwipeResponse
+from .schemas import (
+    CravingPreferences,
+    DiscoveryResponse,
+    MatchResponse,
+    SwipeRequest,
+    SwipeResponse,
+)
 from .service import DogSwipeService
 from .settings import get_settings
 
@@ -55,6 +61,21 @@ def build_api_router() -> APIRouter:
         user_id: str = Depends(get_current_user_id),
     ) -> MatchResponse:
         return await service.matches(user_id=user_id)
+
+    @v1.get("/preferences", response_model=CravingPreferences)
+    async def preferences(
+        service: DogSwipeService = Depends(get_service),
+        user_id: str = Depends(get_current_user_id),
+    ) -> CravingPreferences:
+        return await service.preferences(user_id=user_id)
+
+    @v1.put("/preferences", response_model=CravingPreferences)
+    async def update_preferences(
+        request: CravingPreferences,
+        service: DogSwipeService = Depends(get_service),
+        user_id: str = Depends(get_current_user_id),
+    ) -> CravingPreferences:
+        return await service.update_preferences(user_id=user_id, preferences=request)
 
     router.include_router(v1)
     return router

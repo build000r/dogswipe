@@ -82,6 +82,17 @@ public struct DogSwipeAPIClient: Sendable {
         return response.matches
     }
 
+    public func preferences() async throws -> DiscoveryPreferences {
+        try await send(path: "/v1/preferences")
+    }
+
+    @discardableResult
+    public func updatePreferences(
+        _ preferences: DiscoveryPreferences
+    ) async throws -> DiscoveryPreferences {
+        try await send(path: "/v1/preferences", method: "PUT", body: preferences)
+    }
+
     private func send<Response: Decodable>(
         path: String,
         method: String = "GET",

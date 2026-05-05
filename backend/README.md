@@ -17,6 +17,8 @@ make backend-test
 | `GET` | `/v1/discovery` | Ranked local hotdogs available for the swipe deck |
 | `POST` | `/v1/swipes` | Record a swipe decision for the authenticated/local user |
 | `GET` | `/v1/matches` | Return high-crave liked hotdogs for the authenticated/local user |
+| `GET` | `/v1/preferences` | Return user-scoped craving preferences |
+| `PUT` | `/v1/preferences` | Save user-scoped craving preferences |
 
 ## Hotdog Profile Contract
 
@@ -39,6 +41,20 @@ make backend-test
 
 `POST /v1/swipes` accepts only `profile_id` and `decision`. Client-supplied `user_id` fields are rejected; production identity comes from SPAPS middleware, and local development can use `X-DogSwipe-User-ID` only while auth is disabled.
 
+## Preference Contract
+
+`GET /v1/preferences` and `PUT /v1/preferences` are user-scoped through the same backend-owned identity path as swipes and matches:
+
+```json
+{
+  "max_distance_miles": 10,
+  "spicy_friendly": true,
+  "classic_only": false
+}
+```
+
+Client-supplied `user_id` fields are rejected here too.
+
 ## Migrations
 
 Production schema changes are managed by Alembic:
@@ -48,4 +64,4 @@ DATABASE_URL=postgresql+asyncpg://... make migrate
 DATABASE_URL=postgresql+asyncpg://... make migration-current
 ```
 
-Current head is `0002`, which pivots the original starter profile table to `hotdog_profiles`.
+Current head is `0003`, which adds user-scoped craving preferences after the hotdog profile pivot.

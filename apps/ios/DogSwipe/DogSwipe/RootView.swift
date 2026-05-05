@@ -21,6 +21,9 @@ struct RootView: View {
                 }
         }
         .tint(.dsPrimary)
+        .task {
+            await preferencesStore.load()
+        }
     }
 }
 
