@@ -25,26 +25,22 @@ final class DogSwipeScreenshotUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Coney Classic"].waitForExistence(timeout: 3))
         attachScreenshot(named: "01-discover")
 
-        tapTab("Matches")
-        waitFor(identifier: "dogswipe.matches.screen")
+        tapTab("Matches", screenIdentifier: "dogswipe.matches.screen")
         XCTAssertTrue(app.staticTexts["Coney Classic"].waitForExistence(timeout: 3))
         XCTAssertTrue(app.staticTexts["Garden Snap"].exists)
         attachScreenshot(named: "02-matches")
 
-        tapTab("Vendor")
-        waitFor(identifier: "dogswipe.vendor.screen")
+        tapTab("Vendor", screenIdentifier: "dogswipe.vendor.screen")
         XCTAssertTrue(app.staticTexts["Submit a hotdog"].waitForExistence(timeout: 3))
         XCTAssertTrue(app.staticTexts["Your submissions"].exists)
         attachScreenshot(named: "03-vendor")
 
-        tapTab("Review")
-        waitFor(identifier: "dogswipe.review.screen")
+        tapTab("Review", screenIdentifier: "dogswipe.review.screen")
         XCTAssertTrue(app.staticTexts["Pending vendor hotdogs"].waitForExistence(timeout: 3))
         XCTAssertTrue(app.buttons["Approve"].exists)
         attachScreenshot(named: "04-review")
 
-        tapTab("Profile")
-        waitFor(identifier: "dogswipe.profile.screen")
+        tapTab("Profile", screenIdentifier: "dogswipe.profile.screen")
         XCTAssertTrue(app.staticTexts["Your cravings"].waitForExistence(timeout: 3))
         XCTAssertTrue(app.staticTexts["Signed out"].exists)
         attachScreenshot(named: "05-profile")
@@ -57,10 +53,25 @@ final class DogSwipeScreenshotUITests: XCTestCase {
         return element
     }
 
-    private func tapTab(_ title: String) {
-        let tab = app.tabBars.buttons[title]
-        XCTAssertTrue(tab.waitForExistence(timeout: 3), "\(title) tab did not appear")
-        tab.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+    private func tapTab(_ title: String, screenIdentifier: String) {
+        let screen = app.descendants(matching: .any)[screenIdentifier]
+        if screen.exists {
+            return
+        }
+
+        for _ in 0..<3 {
+            let tab = app.tabBars.buttons[title]
+            XCTAssertTrue(tab.waitForExistence(timeout: 3), "\(title) tab did not appear")
+            tab.tap()
+            if screen.waitForExistence(timeout: 3) {
+                return
+            }
+            tab.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+            if screen.waitForExistence(timeout: 3) {
+                return
+            }
+        }
+        XCTFail("\(title) tab did not open \(screenIdentifier)")
     }
 
     private func attachScreenshot(named name: String) {
