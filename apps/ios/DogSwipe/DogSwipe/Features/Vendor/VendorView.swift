@@ -20,7 +20,7 @@ struct VendorView: View {
             }
             .navigationTitle("Vendor")
             .toolbar {
-                if store.isSyncing {
+                if store.isBusy {
                     ToolbarItem(placement: .topBarTrailing) {
                         ProgressView()
                             .controlSize(.small)
@@ -62,6 +62,28 @@ struct VendorView: View {
                 }
             }
 
+            field("Vendor name", text: $store.vendorName, icon: "storefront")
+            field("Pickup address", text: $store.addressText, icon: "map")
+
+            HStack(spacing: .dsSpace3) {
+                Button {
+                    Task {
+                        await store.geocodeAddress()
+                    }
+                } label: {
+                    Label("Find coordinates", systemImage: "mappin.and.ellipse")
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+                .disabled(!store.canGeocodeAddress)
+
+                if store.isGeocoding {
+                    ProgressView()
+                        .controlSize(.small)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+
             ViewThatFits(in: .horizontal) {
                 HStack(spacing: .dsSpace3) {
                     numericField("Latitude", text: $store.latitude, icon: "mappin.and.ellipse")
@@ -74,8 +96,6 @@ struct VendorView: View {
                 }
             }
 
-            field("Vendor name", text: $store.vendorName, icon: "storefront")
-            field("Pickup address", text: $store.addressText, icon: "map")
             field("Signature notes", text: $store.signatureNotes, icon: "text.quote")
             field("Image URL", text: $store.imageURL, icon: "photo")
                 .textInputAutocapitalization(.never)
@@ -97,7 +117,7 @@ struct VendorView: View {
                     )
                 }
                 .buttonStyle(.borderedProminent)
-                .disabled(!store.canSubmit || store.isSyncing)
+                .disabled(!store.canSubmit || store.isBusy)
 
                 if store.isEditing {
                     Button {
@@ -106,7 +126,7 @@ struct VendorView: View {
                         Label("Cancel", systemImage: "xmark")
                     }
                     .buttonStyle(.bordered)
-                    .disabled(store.isSyncing)
+                    .disabled(store.isBusy)
                 }
             }
 
@@ -171,7 +191,7 @@ struct VendorView: View {
                 Label("Edit", systemImage: "pencil")
             }
             .buttonStyle(.bordered)
-            .disabled(store.isSyncing)
+            .disabled(store.isBusy)
         }
 
         if profile.menuURL != nil {
@@ -183,7 +203,7 @@ struct VendorView: View {
                 Label("Refresh menu", systemImage: "arrow.clockwise")
             }
             .buttonStyle(.bordered)
-            .disabled(store.isSyncing)
+            .disabled(store.isBusy)
         }
     }
 

@@ -19,11 +19,17 @@ final class VendorSubmissionStore: ObservableObject {
     @Published private(set) var isSyncing = false
     @Published private(set) var message: String?
     @Published private(set) var editingSubmissionID: String?
+    @Published private(set) var isGeocoding = false
 
     private let apiClient: DogSwipeAPIClient
+    private let addressGeocoder: VendorAddressGeocoding
 
-    init(apiClient: DogSwipeAPIClient = AppEnvironment.apiClient()) {
+    init(
+        apiClient: DogSwipeAPIClient = AppEnvironment.apiClient(),
+        addressGeocoder: VendorAddressGeocoding? = nil
+    ) {
         self.apiClient = apiClient
+        self.addressGeocoder = addressGeocoder ?? CoreLocationVendorAddressGeocoder()
     }
 
     var canSubmit: Bool {
@@ -37,6 +43,14 @@ final class VendorSubmissionStore: ObservableObject {
 
     var isEditing: Bool {
         editingSubmissionID != nil
+    }
+
+    var isBusy: Bool {
+        isSyncing || isGeocoding
+    }
+
+    var canGeocodeAddress: Bool {
+        !trimmed(addressText).isEmpty && !isBusy
     }
 
     func load() async {
@@ -109,6 +123,24 @@ final class VendorSubmissionStore: ObservableObject {
             message = menuIngestionMessage(updated)
         } catch {
             message = "Menu could not be refreshed."
+        }
+    }
+
+    func geocodeAddress() async {
+        let address = trimmed(addressText)
+        guard !address.isEmpty else {
+            message = "Pickup address is required before finding coordinates."
+            return
+        }
+        isGeocoding = true
+        defer { isGeocoding = false }
+        do {
+            let coordinate = try await addressGeocoder.coordinate(for: address)
+            latitude = coordinateString(coordinate.latitude)
+            longitude = coordinateString(coordinate.longitude)
+            message = "Coordinates added from pickup address."
+        } catch {
+            message = "Pickup address could not be located. Check the address or enter coordinates manually."
         }
     }
 
@@ -224,7 +256,11 @@ final class VendorSubmissionStore: ObservableObject {
         guard let value else {
             return ""
         }
-        return String(value)
+        return String(
+            format: "%.6f",
+            locale: Locale(identifier: "en_US_POSIX"),
+            value
+        )
     }
 
     private func trimmed(_ value: String) -> String {

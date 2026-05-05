@@ -98,7 +98,7 @@ Client-supplied `user_id` fields are rejected here too.
 }
 ```
 
-`address_text` is optional display text for the pickup location. If coordinates are present, iOS prefers those for Apple Maps directions; otherwise it falls back to the address text.
+`address_text` is optional display text for the pickup location. If coordinates are present, iOS prefers those for Apple Maps directions; otherwise it falls back to the address text. The backend treats geocoding as a client/provider concern; the iOS Vendor form can resolve pickup address text into coordinates before submission.
 
 `GET /v1/vendor/submissions` returns only submissions owned by the authenticated/local user. `PUT /v1/vendor/submissions/{id}` lets that owner revise `pending_review` or `changes_requested` listings and returns the listing to `pending_review`. Client-supplied `user_id` fields are rejected.
 

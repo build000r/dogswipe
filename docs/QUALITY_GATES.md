@@ -42,6 +42,7 @@ Last verified: 2026-05-05
 - Hotdog profile payloads include deterministic walking-time estimates derived from resolved distance; Swift decodes the field and falls back to local distance-based estimates for offline samples.
 - iOS discovery can pass a CoreLocation coordinate to the backend, and vendor submissions can include optional hotdog coordinates for dynamic response distances.
 - Hotdog profiles can include pickup address text, `DogSwipeCore` derives Apple Maps directions URLs from coordinates or address text, and iOS discovery/matches expose directions actions.
+- The iOS Vendor form can resolve pickup address text into latitude/longitude through an injected CoreLocation geocoder with covered success/failure states.
 - Hotdog profile payloads derive short `menu_highlights` from bounded menu snapshots; Swift decodes the array and iOS discovery/vendor summaries display those menu signals.
 - iOS native sign-in stores SPAPS access/refresh JWTs in Keychain, refreshes sessions, and injects only the access bearer into the shared API client.
 - iOS registers `dogswipe://auth`, parses returned magic-link tokens, and verifies deep links through `AuthSessionStore`.

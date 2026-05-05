@@ -43,6 +43,25 @@ private struct StaticLocationProvider: UserLocationProviding {
     }
 }
 
+private enum TestGeocodingError: Error {
+    case failed
+}
+
+@MainActor
+private final class RecordingVendorAddressGeocoder: VendorAddressGeocoding {
+    var addresses: [String] = []
+    var result: Result<VendorCoordinate, Error>
+
+    init(result: Result<VendorCoordinate, Error>) {
+        self.result = result
+    }
+
+    func coordinate(for address: String) async throws -> VendorCoordinate {
+        addresses.append(address)
+        return try result.get()
+    }
+}
+
 final class DogSwipeSmokeTests: XCTestCase {
     func testRootViewCanBeCreated() {
         _ = RootView(
@@ -167,6 +186,59 @@ final class DogSwipeSmokeTests: XCTestCase {
         XCTAssertEqual(locationQuery["latitude"], "43.6532")
         XCTAssertEqual(locationQuery["longitude"], "-79.3832")
         XCTAssertTrue(viewModel.isUsingCurrentLocation)
+    }
+
+    @MainActor
+    func testVendorSubmissionStoreGeocodesPickupAddress() async {
+        let geocoder = RecordingVendorAddressGeocoder(
+            result: .success(
+                VendorCoordinate(latitude: 43.6532, longitude: -79.3832)
+            )
+        )
+        let apiClient = DogSwipeAPIClient(
+            baseURL: URL(string: "http://localhost:8000")!,
+            httpClient: MockHTTPClient()
+        )
+        let store = VendorSubmissionStore(
+            apiClient: apiClient,
+            addressGeocoder: geocoder
+        )
+        store.addressText = " 100 Queen St W, Toronto, ON "
+
+        await store.geocodeAddress()
+
+        XCTAssertEqual(geocoder.addresses, ["100 Queen St W, Toronto, ON"])
+        XCTAssertEqual(store.latitude, "43.653200")
+        XCTAssertEqual(store.longitude, "-79.383200")
+        XCTAssertEqual(store.message, "Coordinates added from pickup address.")
+        XCTAssertFalse(store.isGeocoding)
+    }
+
+    @MainActor
+    func testVendorSubmissionStoreReportsGeocodingFailure() async {
+        let geocoder = RecordingVendorAddressGeocoder(
+            result: .failure(TestGeocodingError.failed)
+        )
+        let apiClient = DogSwipeAPIClient(
+            baseURL: URL(string: "http://localhost:8000")!,
+            httpClient: MockHTTPClient()
+        )
+        let store = VendorSubmissionStore(
+            apiClient: apiClient,
+            addressGeocoder: geocoder
+        )
+        store.addressText = "Nowhere"
+
+        await store.geocodeAddress()
+
+        XCTAssertEqual(geocoder.addresses, ["Nowhere"])
+        XCTAssertEqual(store.latitude, "")
+        XCTAssertEqual(store.longitude, "")
+        XCTAssertEqual(
+            store.message,
+            "Pickup address could not be located. Check the address or enter coordinates manually."
+        )
+        XCTAssertFalse(store.isGeocoding)
     }
 
     @MainActor

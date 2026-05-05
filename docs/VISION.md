@@ -20,7 +20,7 @@ The first production slice must prove three things:
 - A card must show name, style, price, signature notes, distance, walking time, vendor, crave score, and compact menu highlights when a bounded menu snapshot exists; when the app has current location permission, distance should be recomputed from profile coordinates rather than relying on static sample mileage, and users should be able to hand off to Apple Maps from coordinates or pickup address text.
 - Cards without remote media still need a product-specific hotdog visual, and craving controls should persist as user-scoped preferences that filter/rank both backend discovery and the local Swift deck.
 - Positive swipes are intent signals. Matches are high-crave liked items, not social matches.
-- Vendors can submit hotdog listings with menu/media metadata, optional coordinates, and pickup address text, refresh a bounded menu URL snapshot for their own listings, and revise change-requested listings back into review; configured admins can approve/reject/request edits and refresh stale vendor menu snapshots in bounded batches. Production can opt into the same stale-menu refresh as a bounded background worker, and the API can derive short menu highlights from those snapshots without turning DogSwipe into a full crawler.
+- Vendors can submit hotdog listings with menu/media metadata, optional coordinates, and pickup address text, use the iOS Vendor form to resolve pickup addresses into coordinates, refresh a bounded menu URL snapshot for their own listings, and revise change-requested listings back into review; configured admins can approve/reject/request edits and refresh stale vendor menu snapshots in bounded batches. Production can opt into the same stale-menu refresh as a bounded background worker, and the API can derive short menu highlights from those snapshots without turning DogSwipe into a full crawler.
 - Production identity is backend-owned through SPAPS; the app may use a publishable key for native magic-link auth, handle `dogswipe://auth` link returns, store access/refresh JWTs in Keychain, and send only user bearer tokens to the DogSwipe API.
 - Local sample data is intentionally food-like and vendor-like so screenshots, demos, and API examples stay anchored to the hotdog product.
 
@@ -31,7 +31,7 @@ The first production slice must prove three things:
 - Recommendation ML
 - App Store release assets
 - Universal-link handoff polish
-- Provider-backed address geocoding and live routing
+- Live routing beyond Apple Maps handoff
 - Crawler-based menu indexing
 
 These are valuable later, but they would dilute the core loop before the app has a reliable discovery contract.
