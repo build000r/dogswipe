@@ -80,9 +80,69 @@ jobs:
       - name: Unit tests
         run: |
           set -euo pipefail
-          simulator_id="$(xcrun simctl list devices available --json | python3 -c 'import json, sys; data = json.load(sys.stdin); devices = [device for runtime_devices in data["devices"].values() for device in runtime_devices if device.get("isAvailable") and device.get("name", "").startswith("iPhone")]; print(devices[-1]["udid"] if devices else "", end="")')"
+          selection="$(python3 <<'PY'
+          import json
+          import re
+          import subprocess
+
+          data = json.loads(
+              subprocess.check_output(
+                  ["xcrun", "simctl", "list", "devices", "available", "--json"],
+                  text=True,
+              )
+          )
+          devices = []
+          for runtime, runtime_devices in data["devices"].items():
+              for device in runtime_devices:
+                  if device.get("isAvailable") and device.get("name", "").startswith("iPhone"):
+                      devices.append((runtime, device))
+
+          if not devices:
+              raise SystemExit("No available iPhone simulators found")
+
+          def runtime_version(runtime):
+              match = re.search(r"iOS-(\d+(?:-\d+)*)$", runtime)
+              if not match:
+                  return ()
+              return tuple(int(part) for part in match.group(1).split("-"))
+
+          devices.sort(key=lambda item: runtime_version(item[0]), reverse=True)
+          preferred_names = [
+              "iPhone 17 Pro",
+              "iPhone 17",
+              "iPhone 16 Pro",
+              "iPhone 16",
+              "iPhone 16e",
+              "iPhone 15 Pro",
+              "iPhone 15",
+              "iPhone 14 Pro",
+              "iPhone 14",
+          ]
+
+          selected = None
+          for name in preferred_names:
+              selected = next((item for item in devices if item[1]["name"] == name), None)
+              if selected:
+                  break
+          if selected is None:
+              selected = next((item for item in devices if "SE" not in item[1]["name"]), devices[0])
+
+          runtime, device = selected
+          print(f"{device['udid']}|{device['name']}|{runtime}", end="")
+          PY
+          )"
+          IFS='|' read -r simulator_id simulator_name simulator_runtime <<< "$selection"
           test -n "$simulator_id"
-          echo "Selected iOS simulator: ${simulator_id}"
+          echo "Selected iOS simulator: ${simulator_name} (${simulator_id}) on ${simulator_runtime}"
           xcrun simctl boot "$simulator_id" || true
           xcrun simctl bootstatus "$simulator_id" -b
-          xcodebuild -quiet -destination-timeout 120 -project apps/ios/DogSwipe/DogSwipe.xcodeproj -scheme DogSwipe -destination "platform=iOS Simulator,id=${simulator_id},arch=arm64" test
+          xcodebuild \
+            -destination-timeout 120 \
+            -parallel-testing-enabled NO \
+            -test-timeouts-enabled YES \
+            -default-test-execution-time-allowance 30 \
+            -maximum-test-execution-time-allowance 60 \
+            -project apps/ios/DogSwipe/DogSwipe.xcodeproj \
+            -scheme DogSwipe \
+            -destination "platform=iOS Simulator,id=${simulator_id},arch=arm64" \
+            test
