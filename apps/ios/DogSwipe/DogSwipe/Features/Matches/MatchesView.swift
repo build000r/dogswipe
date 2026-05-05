@@ -5,8 +5,13 @@ struct MatchesView: View {
     @StateObject private var viewModel: MatchesViewModel
 
     @MainActor
-    init(viewModel: MatchesViewModel? = nil) {
-        _viewModel = StateObject(wrappedValue: viewModel ?? MatchesViewModel())
+    init(
+        preferencesStore: CravingPreferencesStore = CravingPreferencesStore(),
+        viewModel: MatchesViewModel? = nil
+    ) {
+        _viewModel = StateObject(
+            wrappedValue: viewModel ?? MatchesViewModel(preferencesStore: preferencesStore)
+        )
     }
 
     var body: some View {

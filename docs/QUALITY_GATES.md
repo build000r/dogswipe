@@ -6,6 +6,7 @@ Last verified: 2026-05-05
 | --- | --- | --- |
 | Swift package tests | `make swift-test` | 14 tests passed |
 | iOS smoke build | `xcodebuild -quiet -project apps/ios/DogSwipe/DogSwipe.xcodeproj -scheme DogSwipe -destination 'generic/platform=iOS' build` | passed |
+| iOS unit tests | `xcodebuild -quiet -project apps/ios/DogSwipe/DogSwipe.xcodeproj -scheme DogSwipe -destination 'platform=iOS Simulator,name=iPhone 17' test` | passed |
 | Backend API tests | `make backend-test` | 20 tests passed |
 | Backend coverage | `make coverage` | 93.28% total coverage |
 | Backend lint | `make lint` | passed |
@@ -27,6 +28,7 @@ Last verified: 2026-05-05
 - Local backend startup can create the starter schema and idempotently seed sample profiles when explicit local-only env flags are enabled.
 - User-scoped backend routes prefer `AuthenticatedUser.user_id` from SPAPS middleware and reject forged `user_id` fields in swipe requests.
 - Alembic owns the production schema path with a tested initial upgrade/downgrade migration.
+- Hotdog cards render a local SwiftUI product visual when `image_url` is absent, and the profile tab exposes interactive craving controls backed by shared ranking preferences.
 
 ## Known Blocks
 

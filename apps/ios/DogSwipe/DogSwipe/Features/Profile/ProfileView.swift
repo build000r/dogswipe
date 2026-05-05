@@ -1,6 +1,12 @@
 import SwiftUI
 
 struct ProfileView: View {
+    @ObservedObject private var preferencesStore: CravingPreferencesStore
+
+    init(preferencesStore: CravingPreferencesStore = CravingPreferencesStore()) {
+        self.preferencesStore = preferencesStore
+    }
+
     var body: some View {
         NavigationStack {
             VStack(alignment: .leading, spacing: .dsSpace5) {
@@ -13,11 +19,27 @@ struct ProfileView: View {
                         .foregroundStyle(Color.dsMuted)
                 }
 
-                VStack(spacing: .dsSpace4) {
-                    preferenceRow(icon: "flame", title: "Spicy friendly", value: "On")
-                    preferenceRow(icon: "checkmark.seal", title: "Classic only", value: "Off")
-                    preferenceRow(icon: "location", title: "Search radius", value: "10 mi")
+                VStack(alignment: .leading, spacing: .dsSpace4) {
+                    Toggle(isOn: $preferencesStore.spicyFriendly) {
+                        preferenceLabel(icon: "flame", title: "Spicy friendly")
+                    }
+                    Toggle(isOn: $preferencesStore.classicOnly) {
+                        preferenceLabel(icon: "checkmark.seal", title: "Classic only")
+                    }
+                    VStack(alignment: .leading, spacing: .dsSpace3) {
+                        HStack {
+                            preferenceLabel(icon: "location", title: "Search radius")
+                            Spacer()
+                            Text("\(Int(preferencesStore.maxDistanceMiles)) mi")
+                                .font(.headline.monospacedDigit())
+                                .foregroundStyle(Color.dsMuted)
+                        }
+                        Slider(value: $preferencesStore.maxDistanceMiles, in: 1...25, step: 1)
+                            .tint(.dsPrimary)
+                    }
                 }
+                .toggleStyle(.switch)
+                .tint(.dsPrimary)
                 .padding(.dsSpace5)
                 .dsCardSurface()
 
@@ -29,17 +51,13 @@ struct ProfileView: View {
         }
     }
 
-    private func preferenceRow(icon: String, title: String, value: String) -> some View {
+    private func preferenceLabel(icon: String, title: String) -> some View {
         HStack(spacing: .dsSpace3) {
             Image(systemName: icon)
                 .foregroundStyle(Color.dsPrimary)
                 .frame(width: .dsSpace6)
             Text(title)
                 .foregroundStyle(Color.dsInk)
-            Spacer()
-            Text(value)
-                .font(.headline.monospacedDigit())
-                .foregroundStyle(Color.dsMuted)
         }
     }
 }

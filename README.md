@@ -96,7 +96,7 @@ The placement decision is `NEW REPO`: this app owns a durable product boundary r
 
 ## Current Scope
 
-The current app can load local hotdog profiles, record swipes, and fetch matches through the shared Swift API client. Backend migrations are managed through Alembic up to `0002`, and local Docker development can auto-create and seed the starter data with explicit local-only flags.
+The current app can load local hotdog profiles, render cards with a local product visual when no image URL is available, record swipes, adjust shared craving controls, and fetch matches through the shared Swift API client. Backend migrations are managed through Alembic up to `0002`, and local Docker development can auto-create and seed the starter data with explicit local-only flags.
 
 ## Known Limits
 

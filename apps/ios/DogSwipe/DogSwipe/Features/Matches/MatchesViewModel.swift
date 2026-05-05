@@ -14,11 +14,14 @@ final class MatchesViewModel: ObservableObject {
     @Published private(set) var matches: [HotdogProfile] = []
 
     private let apiClient: DogSwipeAPIClient
+    private let preferencesStore: CravingPreferencesStore
 
     init(
-        apiClient: DogSwipeAPIClient = AppEnvironment.apiClient()
+        apiClient: DogSwipeAPIClient = AppEnvironment.apiClient(),
+        preferencesStore: CravingPreferencesStore = CravingPreferencesStore()
     ) {
         self.apiClient = apiClient
+        self.preferencesStore = preferencesStore
     }
 
     func load() async {
@@ -29,7 +32,7 @@ final class MatchesViewModel: ObservableObject {
         } catch {
             matches = MatchScorer.ranked(
                 profiles: HotdogProfile.samples,
-                preferences: DiscoveryPreferences()
+                preferences: preferencesStore.preferences
             )
             state = .failed("Could not refresh matches.")
         }

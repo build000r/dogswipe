@@ -16,10 +16,11 @@ Status key: `done`, `active`, `ready`, `blocked`.
 | WG-010 Managed database migrations | done | WG-004, WG-008 | `backend/alembic.ini`, `backend/migrations/**`, `backend/Dockerfile`, `Makefile` | Alembic can upgrade/downgrade the initial schema and production deploys have a migration command |
 | WG-011 iOS bearer auth transport | done | WG-007, WG-009 | `packages/DogSwipeCore/**`, `apps/ios/DogSwipe/**` | Swift API calls can attach trimmed user bearer tokens through an injected provider without embedding SPAPS secrets |
 | WG-012 Hotdog discovery pivot | done | WG-002, WG-004, WG-010 | `backend/**`, `packages/DogSwipeCore/**`, `apps/ios/DogSwipe/**`, `docs/**` | Product contracts, sample data, migrations, tests, and app copy describe local hotdogs instead of the previous mistaken domain |
+| WG-013 Hotdog UI hardening | done | WG-012 | `apps/ios/DogSwipe/**`, `docs/**` | Cards render a local hotdog visual when no image URL exists and the profile tab exposes shared craving controls covered by an iOS unit test |
 
 ## Ready Frontier
 
-The next ready work is to create a skillbox deploy overlay or continue deeper product slices: sign-in/session persistence, richer menu media, and vendor workflows.
+The next ready work is to create a skillbox deploy overlay or continue deeper product slices: sign-in/session persistence, live menu media, and vendor workflows.
 
 ## Risks
 

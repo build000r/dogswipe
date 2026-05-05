@@ -1,19 +1,21 @@
 import SwiftUI
 
 struct RootView: View {
+    @StateObject private var preferencesStore = CravingPreferencesStore()
+
     var body: some View {
         TabView {
-            DiscoverView()
+            DiscoverView(preferencesStore: preferencesStore)
                 .tabItem {
                     Label("Discover", systemImage: "fork.knife.circle.fill")
                 }
 
-            MatchesView()
+            MatchesView(preferencesStore: preferencesStore)
                 .tabItem {
                     Label("Matches", systemImage: "heart.fill")
                 }
 
-            ProfileView()
+            ProfileView(preferencesStore: preferencesStore)
                 .tabItem {
                     Label("Profile", systemImage: "person.crop.circle")
                 }

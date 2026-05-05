@@ -22,6 +22,15 @@ extension CGFloat {
     static let dsRadius2: CGFloat = 8
     static let dsRadius3: CGFloat = 12
     static let dsRadius4: CGFloat = 16
+    static let dsHotdogBunHeight: CGFloat = 118
+    static let dsHotdogFrankHeight: CGFloat = 58
+    static let dsHotdogFrankOffset: CGFloat = -2
+    static let dsHotdogToppingHeight: CGFloat = 20
+    static let dsHotdogPrimaryToppingOffset: CGFloat = -10
+    static let dsHotdogSecondaryToppingOffset: CGFloat = 4
+    static let dsHotdogToppingLineWidth: CGFloat = 5
+    static let dsHotdogToppingDash: CGFloat = 10
+    static let dsHotdogToppingDashGap: CGFloat = 9
 }
 
 extension View {

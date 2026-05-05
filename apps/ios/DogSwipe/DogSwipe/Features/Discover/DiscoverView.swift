@@ -2,11 +2,18 @@ import DogSwipeCore
 import SwiftUI
 
 struct DiscoverView: View {
+    @ObservedObject private var preferencesStore: CravingPreferencesStore
     @StateObject private var viewModel: DiscoverViewModel
 
     @MainActor
-    init(viewModel: DiscoverViewModel? = nil) {
-        _viewModel = StateObject(wrappedValue: viewModel ?? DiscoverViewModel())
+    init(
+        preferencesStore: CravingPreferencesStore = CravingPreferencesStore(),
+        viewModel: DiscoverViewModel? = nil
+    ) {
+        self.preferencesStore = preferencesStore
+        _viewModel = StateObject(
+            wrappedValue: viewModel ?? DiscoverViewModel(preferencesStore: preferencesStore)
+        )
     }
 
     var body: some View {
@@ -34,6 +41,9 @@ struct DiscoverView: View {
                 if case .idle = viewModel.state {
                     await viewModel.load()
                 }
+            }
+            .onChange(of: preferencesStore.preferences) {
+                viewModel.applyPreferences()
             }
         }
     }

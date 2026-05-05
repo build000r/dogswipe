@@ -32,23 +32,24 @@ struct HotdogCardView: View {
 
     private var hero: some View {
         ZStack {
-            AsyncImage(url: profile.imageURL) { phase in
-                switch phase {
-                case .success(let image):
-                    image.resizable().scaledToFill()
-                case .failure:
-                    fallbackHero
-                case .empty:
-                    fallbackHero.overlay {
-                        ProgressView()
+            if let imageURL = profile.imageURL {
+                AsyncImage(url: imageURL) { phase in
+                    switch phase {
+                    case .success(let image):
+                        image.resizable().scaledToFill()
+                    case .failure:
+                        fallbackHero
+                    case .empty:
+                        fallbackHero.overlay {
+                            ProgressView()
+                        }
+                    @unknown default:
+                        fallbackHero
                     }
-                @unknown default:
-                    fallbackHero
                 }
+            } else {
+                fallbackHero
             }
-            .frame(maxWidth: .infinity)
-            .aspectRatio(0.86, contentMode: .fit)
-            .clipped()
 
             VStack {
                 Spacer()
@@ -64,16 +65,14 @@ struct HotdogCardView: View {
                 .padding(.dsSpace4)
             }
         }
+        .frame(maxWidth: .infinity)
+        .aspectRatio(0.86, contentMode: .fit)
+        .clipped()
         .clipShape(RoundedRectangle(cornerRadius: .dsRadius4, style: .continuous))
     }
 
     private var fallbackHero: some View {
-        ZStack {
-            Color.dsPrimarySoft
-            Image(systemName: "fork.knife.circle.fill")
-                .font(.largeTitle)
-                .foregroundStyle(Color.dsPrimary)
-        }
+        HotdogIllustrationView(profile: profile)
     }
 
     private var titleRow: some View {

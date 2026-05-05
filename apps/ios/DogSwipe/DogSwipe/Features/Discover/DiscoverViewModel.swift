@@ -16,11 +16,14 @@ final class DiscoverViewModel: ObservableObject {
     @Published private(set) var lastMatch: SwipeResponse?
 
     private let apiClient: DogSwipeAPIClient
+    private let preferencesStore: CravingPreferencesStore
 
     init(
-        apiClient: DogSwipeAPIClient = AppEnvironment.apiClient()
+        apiClient: DogSwipeAPIClient = AppEnvironment.apiClient(),
+        preferencesStore: CravingPreferencesStore = CravingPreferencesStore()
     ) {
         self.apiClient = apiClient
+        self.preferencesStore = preferencesStore
     }
 
     var currentProfile: HotdogProfile? {
@@ -39,13 +42,13 @@ final class DiscoverViewModel: ObservableObject {
         state = .loading
         do {
             let profiles = try await apiClient.discovery(limit: 20)
-            allProfiles = profiles
-            deck = SwipeDeckState(profiles: profiles)
+            allProfiles = rank(profiles)
+            deck = SwipeDeckState(profiles: allProfiles)
             lastMatch = nil
             state = .ready
         } catch {
             if allProfiles.isEmpty {
-                allProfiles = HotdogProfile.samples
+                allProfiles = rank(HotdogProfile.samples)
                 deck = SwipeDeckState(profiles: allProfiles)
             }
             state = .failed("Could not refresh profiles.")
@@ -53,10 +56,18 @@ final class DiscoverViewModel: ObservableObject {
     }
 
     func resetToSamples() {
-        allProfiles = HotdogProfile.samples
+        allProfiles = rank(HotdogProfile.samples)
         deck = SwipeDeckState(profiles: allProfiles)
         lastMatch = nil
         state = .ready
+    }
+
+    func applyPreferences() {
+        guard !allProfiles.isEmpty, deck.history.isEmpty else {
+            return
+        }
+        allProfiles = rank(allProfiles)
+        deck = SwipeDeckState(profiles: allProfiles)
     }
 
     func record(_ decision: SwipeDecision) {
@@ -74,5 +85,9 @@ final class DiscoverViewModel: ObservableObject {
                 lastMatch = nil
             }
         }
+    }
+
+    private func rank(_ profiles: [HotdogProfile]) -> [HotdogProfile] {
+        MatchScorer.ranked(profiles: profiles, preferences: preferencesStore.preferences)
     }
 }
