@@ -38,6 +38,7 @@ flowchart LR
   routepreview["MapKit route preview"]
   geocoder["CLGeocoder address lookup"]
   walk["Walking ETA"]
+  menuquery["Menu query"]
   preferences["CravingPreferences contract"]
   vendor["VendorSubmission contract"]
   menu["MenuSnapshot contract"]
@@ -70,6 +71,8 @@ flowchart LR
   routepreview --> walk
   ios --> geocoder
   geocoder --> vendor
+  ios --> menuquery
+  menuquery --> client
   core --> walk
   core --> preferences
   core --> vendor
@@ -139,9 +142,9 @@ sequenceDiagram
   App->>API: Keychain-backed Authorization: Bearer access JWT
   API->>SPAPS: Validate user/session
   SPAPS-->>API: AuthenticatedUser.user_id
-  App->>API: Discovery request with optional current coordinates
+  App->>API: Discovery request with optional current coordinates and menu_query
   API->>DB: Read preferences and coordinate-backed hotdog profiles
-  API-->>App: Preference-filtered discovery with resolved distance and walking ETA
+  API-->>App: Preference/menu-filtered discovery with resolved distance and walking ETA
   App->>App: Preview MapKit walking route from current location to hotdog coordinates
   App->>Maps: Open directions from coordinates or address_text
   App->>API: Matches request with optional current coordinates

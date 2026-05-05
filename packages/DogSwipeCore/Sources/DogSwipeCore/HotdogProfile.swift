@@ -347,6 +347,7 @@ public extension HotdogProfile {
             longitude: -79.3843,
             vendorName: "Franklin Cart",
             addressText: "100 Queen St W, Toronto, ON",
+            menuExcerpt: "Coney Classic with chili, onion, and mustard.",
             menuHighlights: ["Chili", "Mustard", "Onion"],
             craveScore: 0.91
         ),
@@ -361,6 +362,7 @@ public extension HotdogProfile {
             longitude: -79.38,
             vendorName: "Bun Signal",
             addressText: "200 King St W, Toronto, ON",
+            menuExcerpt: "Kimchi Crunch with fermented cabbage, gochujang mayo, and sesame.",
             menuHighlights: ["Kimchi", "Spicy", "Sesame"],
             craveScore: 0.88
         ),
@@ -375,6 +377,8 @@ public extension HotdogProfile {
             longitude: -79.407,
             vendorName: "Northside Stand",
             addressText: "860 Bloor St W, Toronto, ON",
+            menuExcerpt: "Garden Snap with relish, pickle, sport peppers, and celery salt.",
+            menuHighlights: ["Relish", "Pickle", "Sport peppers"],
             craveScore: 0.82
         ),
         HotdogProfile(
@@ -388,6 +392,8 @@ public extension HotdogProfile {
             longitude: -79.395,
             vendorName: "Depot Dogs",
             addressText: "65 Front St W, Toronto, ON",
+            menuExcerpt: "Nightcap Melt with sharp cheddar, chili, grilled onions, and jalapeno.",
+            menuHighlights: ["Cheddar", "Chili", "Jalapeno"],
             craveScore: 0.69
         )
     ]

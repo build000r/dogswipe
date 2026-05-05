@@ -56,6 +56,7 @@ def build_api_router() -> APIRouter:
         limit: int = Query(default=20, ge=1, le=50),
         latitude: float | None = Query(default=None, ge=-90, le=90),
         longitude: float | None = Query(default=None, ge=-180, le=180),
+        menu_query: str | None = Query(default=None, max_length=64),
         service: DogSwipeService = Depends(get_service),
         user_id: str = Depends(get_current_user_id),
     ) -> DiscoveryResponse:
@@ -69,6 +70,7 @@ def build_api_router() -> APIRouter:
             limit=limit,
             latitude=latitude,
             longitude=longitude,
+            menu_query=menu_query,
         )
 
     @v1.post("/swipes", response_model=SwipeResponse)

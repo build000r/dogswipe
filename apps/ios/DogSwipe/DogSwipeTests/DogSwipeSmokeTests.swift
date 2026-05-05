@@ -257,6 +257,29 @@ final class DogSwipeSmokeTests: XCTestCase {
     }
 
     @MainActor
+    func testDiscoverViewModelSendsMenuQueryToDiscovery() async throws {
+        let http = MockHTTPClient()
+        http.responses = [#"{"profiles":[]}"#.data(using: .utf8)!]
+        let apiClient = DogSwipeAPIClient(
+            baseURL: URL(string: "http://localhost:8000")!,
+            httpClient: http
+        )
+        let viewModel = DiscoverViewModel(apiClient: apiClient)
+        viewModel.menuQuery = "  kimchi   sesame  "
+
+        await viewModel.load()
+
+        let components = try XCTUnwrap(
+            URLComponents(url: http.requests.first!.url!, resolvingAgainstBaseURL: false)
+        )
+        let query = Dictionary(uniqueKeysWithValues: (components.queryItems ?? []).map {
+            ($0.name, $0.value ?? "")
+        })
+        XCTAssertEqual(components.path, "/v1/discovery")
+        XCTAssertEqual(query["menu_query"], "kimchi sesame")
+    }
+
+    @MainActor
     func testMatchesViewModelSendsCurrentLocationToMatches() async throws {
         let http = MockHTTPClient()
         http.responses = [#"{"matches":[]}"#.data(using: .utf8)!]

@@ -91,6 +91,22 @@ final class DogSwipeAPIClientTests: XCTestCase {
         XCTAssertEqual(query["longitude"], "-79.3832")
     }
 
+    func testDiscoveryEncodesMenuQuery() async throws {
+        let http = MockHTTPClient()
+        http.nextData = #"{"profiles":[]}"#.data(using: .utf8)!
+        let client = DogSwipeAPIClient(baseURL: URL(string: "http://localhost:8000")!, httpClient: http)
+
+        _ = try await client.discovery(limit: 8, menuQuery: "  kimchi   sesame  ")
+
+        let components = try XCTUnwrap(URLComponents(url: http.requests.first!.url!, resolvingAgainstBaseURL: false))
+        XCTAssertEqual(components.path, "/v1/discovery")
+        let query = Dictionary(uniqueKeysWithValues: (components.queryItems ?? []).map {
+            ($0.name, $0.value ?? "")
+        })
+        XCTAssertEqual(query["limit"], "8")
+        XCTAssertEqual(query["menu_query"], "kimchi sesame")
+    }
+
     func testSwipeEncodesBackendContract() async throws {
         let http = MockHTTPClient()
         http.nextData = """

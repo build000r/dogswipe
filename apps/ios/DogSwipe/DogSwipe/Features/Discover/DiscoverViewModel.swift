@@ -16,6 +16,7 @@ final class DiscoverViewModel: ObservableObject {
     @Published private(set) var lastMatch: SwipeResponse?
     @Published private(set) var isUsingCurrentLocation = false
     @Published private(set) var currentLocation: DiscoveryLocation?
+    @Published var menuQuery = ""
 
     private let apiClient: DogSwipeAPIClient
     private let preferencesStore: CravingPreferencesStore
@@ -43,13 +44,21 @@ final class DiscoverViewModel: ObservableObject {
         currentProfile != nil && state != .loading
     }
 
+    var hasMenuQuery: Bool {
+        menuQueryParameter != nil
+    }
+
     func load() async {
         state = .loading
         do {
             let location = await locationProvider.currentLocation()
             currentLocation = location
             isUsingCurrentLocation = location != nil
-            let profiles = try await apiClient.discovery(limit: 20, location: location)
+            let profiles = try await apiClient.discovery(
+                limit: 20,
+                location: location,
+                menuQuery: menuQueryParameter
+            )
             allProfiles = rank(profiles)
             deck = SwipeDeckState(profiles: allProfiles)
             lastMatch = nil
@@ -57,7 +66,7 @@ final class DiscoverViewModel: ObservableObject {
         } catch {
             currentLocation = nil
             isUsingCurrentLocation = false
-            if allProfiles.isEmpty {
+            if allProfiles.isEmpty || hasMenuQuery {
                 allProfiles = rank(HotdogProfile.samples)
                 deck = SwipeDeckState(profiles: allProfiles)
             }
@@ -65,7 +74,22 @@ final class DiscoverViewModel: ObservableObject {
         }
     }
 
+    func searchMenu() async {
+        menuQuery = menuQueryParameter ?? ""
+        await load()
+    }
+
+    func clearMenuQuery() async {
+        guard hasMenuQuery else {
+            menuQuery = ""
+            return
+        }
+        menuQuery = ""
+        await load()
+    }
+
     func resetToSamples() {
+        menuQuery = ""
         currentLocation = nil
         isUsingCurrentLocation = false
         allProfiles = rank(HotdogProfile.samples)
@@ -100,7 +124,20 @@ final class DiscoverViewModel: ObservableObject {
     }
 
     private func rank(_ profiles: [HotdogProfile]) -> [HotdogProfile] {
-        MatchScorer.ranked(profiles: profiles, preferences: preferencesStore.preferences)
+        MatchScorer.ranked(
+            profiles: profiles,
+            preferences: preferencesStore.preferences,
+            menuQuery: menuQueryParameter
+        )
     }
 
+    private var menuQueryParameter: String? {
+        let normalized = menuQuery
+            .split(whereSeparator: \.isWhitespace)
+            .joined(separator: " ")
+        guard !normalized.isEmpty else {
+            return nil
+        }
+        return String(normalized.prefix(64))
+    }
 }

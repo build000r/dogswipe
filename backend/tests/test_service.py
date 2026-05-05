@@ -30,6 +30,7 @@ def _profile(
     longitude: float | None = None,
     address_text: str | None = None,
     menu_url: str | None = None,
+    menu_excerpt: str | None = None,
     crave_score: float = 0.8,
 ) -> HotdogProfile:
     return HotdogProfile(
@@ -44,6 +45,7 @@ def _profile(
         vendor_name="Test Cart",
         address_text=address_text,
         menu_url=menu_url,
+        menu_excerpt=menu_excerpt,
         crave_score=crave_score,
         availability_status="available",
     )
@@ -435,6 +437,34 @@ async def test_discovery_reranks_with_query_location_distance() -> None:
     assert repository.longitude_seen == -79.3832
     assert [profile.id for profile in response.profiles] == ["near-classic"]
     assert response.profiles[0].distance_miles < 0.1
+
+
+@pytest.mark.asyncio
+async def test_discovery_filters_by_menu_query() -> None:
+    repository = FakeRepository()
+    repository.available_profiles = [
+        _profile(
+            "classic",
+            name="Boardwalk Snap",
+            signature_notes="Mustard and onion.",
+            menu_excerpt="Classic dog with relish and celery salt.",
+            crave_score=0.95,
+        ),
+        _profile(
+            "kimchi",
+            name="Fermented Crunch",
+            style="Korean street dog",
+            signature_notes="Scallion and sesame.",
+            menu_excerpt="Kimchi crunch with gochujang mayo.",
+            crave_score=0.72,
+        ),
+    ]
+    service = DogSwipeService(repository)
+
+    response = await service.discovery(user_id="u1", limit=10, menu_query="kimchi gochujang")
+
+    assert repository.limit_seen == 200
+    assert [profile.id for profile in response.profiles] == ["kimchi"]
 
 
 @pytest.mark.asyncio

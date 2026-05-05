@@ -70,12 +70,19 @@ public struct DogSwipeAPIClient: Sendable {
         self.authorizationTokenProvider = authorizationTokenProvider
     }
 
-    public func discovery(limit: Int = 20, location: DiscoveryLocation? = nil) async throws -> [HotdogProfile] {
+    public func discovery(
+        limit: Int = 20,
+        location: DiscoveryLocation? = nil,
+        menuQuery: String? = nil
+    ) async throws -> [HotdogProfile] {
         var components = components(path: "/v1/discovery")
         var queryItems = [URLQueryItem(name: "limit", value: String(limit))]
         if let location {
             queryItems.append(URLQueryItem(name: "latitude", value: String(location.latitude)))
             queryItems.append(URLQueryItem(name: "longitude", value: String(location.longitude)))
+        }
+        if let menuQuery = normalizedMenuQuery(menuQuery) {
+            queryItems.append(URLQueryItem(name: "menu_query", value: menuQuery))
         }
         components.queryItems = queryItems
         let response: DiscoveryResponse = try await send(components: components)
@@ -259,5 +266,18 @@ public struct DogSwipeAPIClient: Sendable {
     private func components(path: String) -> URLComponents {
         let url = baseURL.appending(path: path)
         return URLComponents(url: url, resolvingAgainstBaseURL: false) ?? URLComponents()
+    }
+
+    private func normalizedMenuQuery(_ menuQuery: String?) -> String? {
+        guard let menuQuery else {
+            return nil
+        }
+        let normalized = menuQuery
+            .split(whereSeparator: \.isWhitespace)
+            .joined(separator: " ")
+        guard !normalized.isEmpty else {
+            return nil
+        }
+        return String(normalized.prefix(64))
     }
 }

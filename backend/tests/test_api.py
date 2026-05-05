@@ -99,6 +99,19 @@ async def test_discovery_can_compute_distance_from_query_location(async_client) 
 
 
 @pytest.mark.asyncio
+async def test_discovery_filters_by_menu_query(async_client) -> None:
+    response = await async_client.get(
+        "/v1/discovery",
+        params={"limit": 10, "menu_query": "kimchi sesame"},
+    )
+
+    assert response.status_code == 200
+    profiles = response.json()["profiles"]
+    assert [profile["id"] for profile in profiles] == ["hotdog-kimchi"]
+    assert profiles[0]["menu_highlights"] == ["Kimchi", "Spicy"]
+
+
+@pytest.mark.asyncio
 async def test_discovery_rejects_partial_query_location(async_client) -> None:
     response = await async_client.get("/v1/discovery", params={"latitude": 43.6532})
 

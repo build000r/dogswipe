@@ -31,6 +31,7 @@ extension CGFloat {
     static let dsHotdogToppingLineWidth: CGFloat = 5
     static let dsHotdogToppingDash: CGFloat = 10
     static let dsHotdogToppingDashGap: CGFloat = 9
+    static let dsCardHeroAspectRatio: CGFloat = 2.05
 }
 
 extension View {

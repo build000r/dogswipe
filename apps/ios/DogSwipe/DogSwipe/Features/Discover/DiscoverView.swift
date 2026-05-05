@@ -20,6 +20,7 @@ struct DiscoverView: View {
         NavigationStack {
             VStack(spacing: .dsSpace5) {
                 header
+                menuSearchBar
 
                 if case .loading = viewModel.state {
                     loadingState
@@ -93,6 +94,59 @@ struct DiscoverView: View {
         .frame(maxWidth: .infinity)
         .disabled(!viewModel.canSwipe)
         .opacity(viewModel.canSwipe ? 1 : 0.45)
+    }
+
+    private var menuSearchBar: some View {
+        HStack(spacing: .dsSpace2) {
+            Image(systemName: "magnifyingglass")
+                .foregroundStyle(Color.dsMuted)
+                .frame(width: .dsSpace6, height: .dsSpace6)
+
+            TextField("Chili, mustard, snap", text: $viewModel.menuQuery)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .submitLabel(.search)
+                .onSubmit {
+                    Task {
+                        await viewModel.searchMenu()
+                    }
+                }
+
+            if viewModel.hasMenuQuery {
+                Button {
+                    Task {
+                        await viewModel.clearMenuQuery()
+                    }
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .frame(width: .dsSpace8, height: .dsSpace8)
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(Color.dsMuted)
+                .accessibilityLabel("Clear menu search")
+            }
+
+            Button {
+                Task {
+                    await viewModel.searchMenu()
+                }
+            } label: {
+                Image(systemName: "arrow.forward.circle.fill")
+                    .frame(width: .dsSpace8, height: .dsSpace8)
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(Color.dsPrimary)
+            .accessibilityLabel("Search menu")
+            .disabled(viewModel.state == .loading)
+        }
+        .font(.subheadline)
+        .padding(.horizontal, .dsSpace3)
+        .padding(.vertical, .dsSpace2)
+        .background(Color.dsSurface, in: RoundedRectangle(cornerRadius: .dsRadius3, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: .dsRadius3, style: .continuous)
+                .stroke(Color.dsDivider)
+        }
     }
 
     private var loadingState: some View {

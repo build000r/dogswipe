@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from datetime import UTC, datetime, timedelta
 from math import asin, cos, radians, sin, sqrt
 
@@ -28,6 +29,7 @@ from .schemas import (
 )
 
 EARTH_RADIUS_MILES = 3958.8
+MENU_QUERY_MAX_LENGTH = 64
 
 
 class DogSwipeService:
@@ -46,20 +48,27 @@ class DogSwipeService:
         limit: int = 20,
         latitude: float | None = None,
         longitude: float | None = None,
+        menu_query: str | None = None,
     ) -> DiscoveryResponse:
         preferences = await self.repository.get_preferences(user_id=user_id)
         max_distance_miles = max(preferences.max_distance_miles, 1)
         location = (latitude, longitude) if latitude is not None and longitude is not None else None
+        normalized_menu_query = self._normalize_menu_query(menu_query)
         profiles = await self.repository.list_available_profiles(
-            limit=200 if location is not None else 50,
+            limit=200 if location is not None or normalized_menu_query is not None else 50,
             max_distance_miles=max_distance_miles,
             latitude=latitude,
             longitude=longitude,
         )
         profiles = [self._profile_with_location_distance(profile, location) for profile in profiles]
         ranked = sorted(
-            (profile for profile in profiles if self._is_eligible(profile, preferences)),
-            key=lambda profile: self._score(profile, preferences),
+            (
+                profile
+                for profile in profiles
+                if self._is_eligible(profile, preferences)
+                and self._matches_menu_query(profile, normalized_menu_query)
+            ),
+            key=lambda profile: self._score(profile, preferences, normalized_menu_query),
             reverse=True,
         )
         return DiscoveryResponse(profiles=ranked[: max(1, min(limit, 50))])
@@ -274,7 +283,11 @@ class DogSwipeService:
         return True
 
     @staticmethod
-    def _score(profile: HotdogProfile, preferences: CravingPreferences) -> float:
+    def _score(
+        profile: HotdogProfile,
+        preferences: CravingPreferences,
+        menu_query: str | None = None,
+    ) -> float:
         max_distance_miles = max(preferences.max_distance_miles, 1)
         distance_score = max(0.0, 1 - (profile.distance_miles / max_distance_miles))
         spicy_score = (
@@ -289,6 +302,10 @@ class DogSwipeService:
             + (spicy_score * 0.10)
             + (classic_score * 0.10)
         )
+        if menu_query is not None:
+            weighted_score = (weighted_score * 0.82) + (
+                DogSwipeService._menu_query_score(profile, menu_query) * 0.18
+            )
         return min(max(weighted_score, 0.0), 1.0)
 
     @staticmethod
@@ -303,7 +320,56 @@ class DogSwipeService:
 
     @staticmethod
     def _flavor_text(profile: HotdogProfile) -> str:
-        return f"{profile.name} {profile.style} {profile.signature_notes}".lower()
+        return DogSwipeService._menu_search_text(profile)
+
+    @staticmethod
+    def _matches_menu_query(profile: HotdogProfile, menu_query: str | None) -> bool:
+        if menu_query is None:
+            return True
+        terms = DogSwipeService._query_terms(menu_query)
+        if not terms:
+            return True
+        search_text = DogSwipeService._menu_search_text(profile)
+        return all(term in search_text for term in terms)
+
+    @staticmethod
+    def _menu_query_score(profile: HotdogProfile, menu_query: str) -> float:
+        terms = DogSwipeService._query_terms(menu_query)
+        if not terms:
+            return 0.0
+        search_text = DogSwipeService._menu_search_text(profile)
+        menu_text = " ".join(
+            [profile.menu_excerpt or "", *profile.menu_highlights]
+        ).lower()
+        search_matches = sum(1 for term in terms if term in search_text) / len(terms)
+        menu_matches = sum(1 for term in terms if term in menu_text) / len(terms)
+        return min(1.0, (search_matches * 0.7) + (menu_matches * 0.3))
+
+    @staticmethod
+    def _menu_search_text(profile: HotdogProfile) -> str:
+        return " ".join(
+            [
+                profile.name,
+                profile.style,
+                profile.signature_notes,
+                profile.vendor_name,
+                profile.menu_excerpt or "",
+                " ".join(profile.menu_highlights),
+            ]
+        ).lower()
+
+    @staticmethod
+    def _normalize_menu_query(menu_query: str | None) -> str | None:
+        if menu_query is None:
+            return None
+        normalized = " ".join(menu_query.strip().split())
+        if not normalized:
+            return None
+        return normalized[:MENU_QUERY_MAX_LENGTH]
+
+    @staticmethod
+    def _query_terms(menu_query: str) -> list[str]:
+        return re.findall(r"[a-z0-9]+", menu_query.lower())
 
     @staticmethod
     def _profile_with_location_distance(

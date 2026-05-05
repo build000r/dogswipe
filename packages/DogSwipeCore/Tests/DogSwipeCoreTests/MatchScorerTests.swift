@@ -35,6 +35,15 @@ final class MatchScorerTests: XCTestCase {
         XCTAssertEqual(ranked.map(\.id), ["hotdog-coney", "hotdog-chicago"])
     }
 
+    func testRankingFiltersByMenuQuery() {
+        let ranked = MatchScorer.ranked(
+            profiles: HotdogProfile.samples,
+            preferences: DiscoveryPreferences(maxDistanceMiles: 10, spicyFriendly: true),
+            menuQuery: "kimchi sesame"
+        )
+        XCTAssertEqual(ranked.map(\.id), ["hotdog-kimchi"])
+    }
+
     func testClassicPreferenceCanLiftClassicProfile() {
         let coney = HotdogProfile.samples[0]
         let openScore = MatchScorer.score(

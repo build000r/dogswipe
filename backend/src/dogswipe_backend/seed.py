@@ -18,6 +18,8 @@ SAMPLE_PROFILE_ROWS: tuple[dict[str, object], ...] = (
         "vendor_name": "Franklin Cart",
         "address_text": "100 Queen St W, Toronto, ON",
         "image_url": None,
+        "menu_status": "ok",
+        "menu_excerpt": "Coney Classic with chili, onion, and mustard.",
         "crave_score": 0.91,
     },
     {
@@ -32,6 +34,8 @@ SAMPLE_PROFILE_ROWS: tuple[dict[str, object], ...] = (
         "vendor_name": "Bun Signal",
         "address_text": "200 King St W, Toronto, ON",
         "image_url": None,
+        "menu_status": "ok",
+        "menu_excerpt": "Kimchi Crunch with fermented cabbage, gochujang mayo, and sesame.",
         "crave_score": 0.88,
     },
     {
@@ -46,6 +50,8 @@ SAMPLE_PROFILE_ROWS: tuple[dict[str, object], ...] = (
         "vendor_name": "Northside Stand",
         "address_text": "860 Bloor St W, Toronto, ON",
         "image_url": None,
+        "menu_status": "ok",
+        "menu_excerpt": "Garden Snap with relish, pickle, sport peppers, and celery salt.",
         "crave_score": 0.82,
     },
     {
@@ -60,6 +66,8 @@ SAMPLE_PROFILE_ROWS: tuple[dict[str, object], ...] = (
         "vendor_name": "Depot Dogs",
         "address_text": "65 Front St W, Toronto, ON",
         "image_url": None,
+        "menu_status": "ok",
+        "menu_excerpt": "Nightcap Melt with sharp cheddar, chili, grilled onions, and jalapeno.",
         "crave_score": 0.69,
     },
 )

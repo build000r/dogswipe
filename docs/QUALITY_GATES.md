@@ -4,24 +4,24 @@ Last verified: 2026-05-05
 
 | Gate | Command | Result |
 | --- | --- | --- |
-| Swift package tests | `make swift-test` | 31 tests passed |
+| Swift package tests | `make swift-test` | 33 tests passed |
 | iOS smoke build | `xcodebuild -quiet -project apps/ios/DogSwipe/DogSwipe.xcodeproj -scheme DogSwipe -destination 'generic/platform=iOS' build` | passed |
 | iOS unit tests | `xcodebuild -quiet -project apps/ios/DogSwipe/DogSwipe.xcodeproj -scheme DogSwipe -destination 'platform=iOS Simulator,id=<available iPhone simulator UDID>' -only-testing:DogSwipeTests test` | passed |
 | iOS screenshot UI smoke | `make ios-ui-test` | 1 UI test passed across 5 hotdog app surfaces |
 | iOS screenshot export | `make ios-screenshots` | 5 PNG attachments exported under `.build/ios-screenshots/attachments` |
-| Backend API tests | `make backend-test` | 73 tests passed |
-| Backend coverage | `make coverage` | 89.70% total coverage |
+| Backend API tests | `make backend-test` | 75 tests passed |
+| Backend coverage | `make coverage` | 89.61% total coverage |
 | Clean backend install | `python3.12 -m venv /tmp/... && pip install -e 'backend[test]'` | passed |
 | Backend lint | `make lint` | passed |
 | Backend typecheck | `make typecheck` | passed |
 | Alembic migration smoke | `make backend-test` | migration test upgraded to `0008` and downgraded to `base` |
-| Backend container build | `docker build -q backend` | built image `sha256:6fafce8f97eeeb5c6b0bcd32479eb30c1133b4d5083a6399a76aa4c571082320` |
+| Backend container build | `docker build -q backend` | built image `sha256:36e49501e78985bb76212fbb7498bac4662a19daf667dcd1618be3627777698e` |
 | Production Compose config | `make deploy-config` | passed |
 | Deploy preflight | `make deploy-preflight` | 19 passed, 0 warnings, 0 failed |
 | Skillbox overlay template | `make deploy-overlay-template` | 15 passed, 0 failed |
 | SwiftUI drift scan | `make drift` | 0 Swift findings |
 | iOS release assets | `make ios-release-assets` | AppIcon, accent color, privacy manifest, associated-domains entitlement, and Apple app-site association template passed |
-| CRAP score | `make crap` | `FINAL_SCORE: 7.00` |
+| CRAP score | `make crap` | `FINAL_SCORE: 9.00` |
 | MMDX preflight | `make mmdx-preflight` | 3 charts passed |
 | CI quality enforcement | GitHub Actions `backend`, `swift-package`, and `ios` jobs | coverage XML feeds blocking CRAP; MMDX, SwiftUI drift, deploy, Swift package, and iOS gates fail on regressions; iOS prefers a modern simulator, preboots it, disables parallel test workers, uses bounded destination/job/test timeouts, and runs screenshot UI smoke |
 | SPAPS usage audit | `python3 ../sweet-potato/skills/sweet-potato-usage-audit/scripts/audit_sweet_potato_usage.py --sweet-potato-root ../sweet-potato .` | 0 high, 0 medium, 0 low |
@@ -43,13 +43,13 @@ Last verified: 2026-05-05
 - Alembic owns the production schema path with a tested initial upgrade/downgrade migration.
 - Hotdog cards render a local SwiftUI product visual when `image_url` is absent, and the profile tab exposes interactive craving controls backed by shared ranking preferences.
 - `GET /v1/preferences` and `PUT /v1/preferences` persist user-scoped craving preferences; the Swift client and iOS store round-trip the same snake_case contract.
-- `GET /v1/discovery` resolves the current user, accepts optional `latitude`/`longitude`, applies saved max-distance/classic filters, and shares the same ranking semantics as the Swift local deck scorer.
+- `GET /v1/discovery` resolves the current user, accepts optional `latitude`/`longitude` and `menu_query`, applies saved max-distance/classic filters, searches bounded hotdog/menu fields, and shares the same ranking semantics as the Swift local deck scorer.
 - `GET /v1/matches` resolves the current user, accepts optional `latitude`/`longitude`, rejects partial coordinate queries, and returns saved high-crave hotdogs with recomputed distance and walking-time fields.
 - Hotdog profile payloads include deterministic walking-time estimates derived from resolved distance; Swift decodes the field and falls back to local distance-based estimates for offline samples.
-- iOS discovery can pass a CoreLocation coordinate to the backend, and vendor submissions can include optional hotdog coordinates for dynamic response distances.
+- iOS discovery can pass a CoreLocation coordinate and menu query to the backend, and vendor submissions can include optional hotdog coordinates for dynamic response distances.
 - Hotdog profiles can include pickup address text, `DogSwipeCore` derives Apple Maps directions URLs from coordinates or address text, and iOS discovery/matches can preview live MapKit walking-route ETA/distance from the user's current location while preserving Apple Maps handoff.
 - The iOS Vendor form can resolve pickup address text into latitude/longitude through an injected CoreLocation geocoder with covered success/failure states.
-- Hotdog profile payloads derive short `menu_highlights` from bounded menu snapshots; Swift decodes the array and iOS discovery/vendor summaries display those menu signals.
+- Hotdog profile payloads derive short `menu_highlights` from bounded menu snapshots; Swift decodes the array, the Discover screen can search those bounded menu/profile signals, and iOS discovery/vendor summaries display them.
 - iOS native sign-in stores SPAPS access/refresh JWTs in Keychain, refreshes sessions, and injects only the access bearer into the shared API client.
 - iOS registers `dogswipe://auth`, parses returned magic-link tokens from custom-scheme or configured HTTPS universal-link callbacks, and verifies deep links through `AuthSessionStore`.
 - The iOS target includes a hotdog-specific AppIcon catalog, accent color, and `PrivacyInfo.xcprivacy` declaration for linked auth email and precise location data used only for app functionality; `make ios-release-assets` blocks missing icon slots, alpha-channel icons, and privacy manifest drift.

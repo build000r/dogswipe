@@ -74,42 +74,50 @@ struct HotdogCardView: View {
     }
 
     private var hero: some View {
-        ZStack {
-            if let imageURL = profile.imageURL {
-                AsyncImage(url: imageURL) { phase in
-                    switch phase {
-                    case .success(let image):
-                        image.resizable().scaledToFill()
-                    case .failure:
-                        fallbackHero
-                    case .empty:
-                        fallbackHero.overlay {
-                            ProgressView()
+        GeometryReader { proxy in
+            ZStack {
+                if let imageURL = profile.imageURL {
+                    AsyncImage(url: imageURL) { phase in
+                        switch phase {
+                        case .success(let image):
+                            image.resizable().scaledToFill()
+                        case .failure:
+                            fallbackHero
+                        case .empty:
+                            fallbackHero.overlay {
+                                ProgressView()
+                            }
+                        @unknown default:
+                            fallbackHero
                         }
-                    @unknown default:
-                        fallbackHero
                     }
+                } else {
+                    fallbackHero
                 }
-            } else {
-                fallbackHero
-            }
 
-            VStack {
-                Spacer()
-                HStack {
-                    Label(profile.vendorName, systemImage: "mappin.and.ellipse")
-                        .font(.subheadline.weight(.medium))
-                        .foregroundStyle(Color.dsSurface)
-                        .padding(.horizontal, .dsSpace3)
-                        .padding(.vertical, .dsSpace2)
-                        .background(Color.dsInk.opacity(0.62), in: Capsule())
+                VStack {
                     Spacer()
+                    HStack {
+                        Label {
+                            Text(profile.vendorName)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.8)
+                        } icon: {
+                            Image(systemName: "mappin.and.ellipse")
+                        }
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(Color.dsSurface)
+                            .padding(.horizontal, .dsSpace3)
+                            .padding(.vertical, .dsSpace2)
+                            .background(Color.dsInk.opacity(0.62), in: Capsule())
+                        Spacer()
+                    }
+                    .padding(.dsSpace4)
                 }
-                .padding(.dsSpace4)
             }
+            .frame(width: proxy.size.width, height: proxy.size.height)
         }
-        .frame(maxWidth: .infinity)
-        .aspectRatio(0.86, contentMode: .fit)
+        .aspectRatio(.dsCardHeroAspectRatio, contentMode: .fit)
         .clipped()
         .clipShape(RoundedRectangle(cornerRadius: .dsRadius4, style: .continuous))
     }
