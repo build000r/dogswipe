@@ -1,0 +1,67 @@
+<!-- mmdx
+{
+  "entry": "main",
+  "links": [
+    {
+      "from": "main",
+      "label": "Quality Gates",
+      "to": "quality",
+      "title": "Open quality gate detail"
+    },
+    {
+      "from": "main",
+      "label": "SPAPS Boundary",
+      "to": "spaps",
+      "title": "Open SPAPS boundary detail"
+    }
+  ]
+}
+-->
+
+## chart main DogSwipe Delivery Stack
+```mermaid
+flowchart LR
+  user["iOS user"]
+  ios["SwiftUI app"]
+  core["DogSwipeCore package"]
+  api["FastAPI backend"]
+  db["PostgreSQL"]
+  spaps["SPAPS auth"]
+  gates["Quality Gates"]
+
+  user --> ios
+  ios --> core
+  ios --> api
+  api --> db
+  api --> spaps
+  core --> gates
+  api --> gates
+
+  gates["Quality Gates"]
+  spaps["SPAPS Boundary"]
+```
+
+## chart quality Quality Gates
+```mermaid
+stateDiagram-v2
+  [*] --> SwiftTests
+  SwiftTests --> BackendCoverage
+  BackendCoverage --> DriftScan
+  DriftScan --> CrapScore
+  CrapScore --> DeployPreflight
+  DeployPreflight --> [*]
+```
+
+## chart spaps SPAPS Boundary
+```mermaid
+sequenceDiagram
+  participant App as iOS App
+  participant API as DogSwipe API
+  participant SPAPS as Sweet Potato/SPAPS
+  participant DB as PostgreSQL
+
+  App->>API: Authorization: Bearer JWT
+  API->>SPAPS: Validate user/session
+  API->>DB: Record swipe or read matches
+  API-->>App: Discovery/match response
+```

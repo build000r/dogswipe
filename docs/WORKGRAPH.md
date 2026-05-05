@@ -1,0 +1,22 @@
+# DogSwipe Workgraph
+
+Status key: `done`, `active`, `ready`, `blocked`.
+
+| ID | Status | Depends On | Writes | Done When |
+| --- | --- | --- | --- | --- |
+| WG-001 Repo foundation | done | none | `.gitignore`, `README.md`, `docs/*`, `Makefile` | Git repo exists with public-ready docs, workgraph, and verification commands |
+| WG-002 Swift core | done | WG-001 | `packages/DogSwipeCore/**` | `swift test` passes and core swipe logic is covered |
+| WG-003 iOS shell | done | WG-002 | `apps/ios/DogSwipe/**` | XcodeGen project builds for generic iOS destination |
+| WG-004 Python starter | done | WG-001 | `backend/**`, `docker-compose.yml` | FastAPI discovery/swipe API passes tests with coverage above 80 |
+| WG-005 Quality gates | done | WG-002, WG-003, WG-004 | `.drift/**`, coverage artifacts | drift scan and CRAP score meet target gates |
+| WG-006 Public repo + deploy | blocked | WG-005 | git remote, deployment overlay | public GitHub repo exists and deploy preflight identifies a safe target |
+
+## Ready Frontier
+
+WG-002, WG-003, and WG-004 can proceed without write overlap once WG-001 lands.
+
+## Risks
+
+- The original visual reference image is unavailable in this context; final visual parity is blocked on reacquiring that asset or a written design brief.
+- Deploy is blocked until a skillbox overlay names a concrete host, app URL, and health check target.
+- App Store/TestFlight release is out of scope for this first skeleton until signing assets and bundle ownership are known.

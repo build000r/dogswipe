@@ -1,0 +1,55 @@
+# DogSwipe
+
+DogSwipe is a production-oriented monorepo for a swipe-first iOS dog discovery app backed by a Sweet Potato/SPAPS-aligned FastAPI service.
+
+The repo is intentionally split into three testable surfaces:
+
+| Surface | Path | Purpose |
+| --- | --- | --- |
+| iOS app | `apps/ios/DogSwipe` | SwiftUI app shell, generated with XcodeGen |
+| Swift domain package | `packages/DogSwipeCore` | Matching, swipe state, and domain models with fast `swift test` coverage |
+| Python backend | `backend` | FastAPI + PostgreSQL starter using `spaps-server-quickstart` contracts |
+
+## Quick Start
+
+```bash
+make generate-ios
+make swift-test
+make backend-install-local
+make backend-test
+```
+
+`backend-install-local` uses a sibling Sweet Potato checkout at `../sweet-potato` so this workspace can track current SPAPS package contracts. For a clean public install, publish or install `spaps-server-quickstart~=0.5.1` and run `make backend-install`.
+
+## Local Services
+
+```bash
+docker compose up --build
+curl http://localhost:8000/health
+```
+
+The backend defaults to local development mode with auth disabled. Production deployments should set `SPAPS_AUTH_ENABLED=true`, `SPAPS_API_KEY`, `SPAPS_APPLICATION_ID`, and a managed PostgreSQL `DATABASE_URL`.
+
+## Verification Gates
+
+```bash
+make test
+make coverage
+make drift
+make crap
+```
+
+Target gates for this repo:
+
+- Python coverage: `>=80%`
+- Swift package tests: green via `swift test`
+- UI drift: no unreviewed SwiftUI token drift outside design token files
+- CRAP: scoped `FINAL_SCORE < 20`
+
+## Build Vs Clone Decision
+
+The placement decision is `NEW REPO`: this app owns a durable product boundary rather than fitting cleanly inside `htma_server` or `sweet-potato`. The build strategy is `BORROW + BUILD`: borrow the SPAPS/FastAPI quickstart pattern from `../htma_server` and `../sweet-potato`, build the app-specific iOS UX and dog discovery domain directly in this repo.
+
+## Current Scope
+
+This first slice establishes the production skeleton and contracts. The attached design image from the original request is not available in this compacted context, so the current SwiftUI surface uses a restrained native design system and records that visual parity is still an open design verification gate.

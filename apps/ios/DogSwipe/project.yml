@@ -1,0 +1,42 @@
+name: DogSwipe
+options:
+  bundleIdPrefix: com.build000r
+  deploymentTarget:
+    iOS: "17.0"
+packages:
+  DogSwipeCore:
+    path: ../../../packages/DogSwipeCore
+targets:
+  DogSwipe:
+    type: application
+    platform: iOS
+    sources:
+      - path: DogSwipe
+    dependencies:
+      - package: DogSwipeCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.build000r.dogswipe
+        CODE_SIGNING_ALLOWED: NO
+        CODE_SIGNING_REQUIRED: NO
+        GENERATE_INFOPLIST_FILE: YES
+        CURRENT_PROJECT_VERSION: 1
+        MARKETING_VERSION: 0.1.0
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: YES
+        INFOPLIST_KEY_UIRequiresFullScreen: YES
+  DogSwipeTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: DogSwipeTests
+    dependencies:
+      - target: DogSwipe
+      - package: DogSwipeCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.build000r.dogswipe.tests
+        CODE_SIGNING_ALLOWED: NO
+        CODE_SIGNING_REQUIRED: NO
+        GENERATE_INFOPLIST_FILE: YES
