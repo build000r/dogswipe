@@ -4,7 +4,21 @@ import SwiftUI
 
 struct HotdogCardView: View {
     let profile: HotdogProfile
+    let originLocation: DiscoveryLocation?
+    @StateObject private var routePreviewStore: RoutePreviewStore
     @Environment(\.openURL) private var openURL
+
+    init(
+        profile: HotdogProfile,
+        originLocation: DiscoveryLocation? = nil,
+        routePreviewStore: RoutePreviewStore? = nil
+    ) {
+        self.profile = profile
+        self.originLocation = originLocation
+        _routePreviewStore = StateObject(
+            wrappedValue: routePreviewStore ?? RoutePreviewStore()
+        )
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: .dsSpace4) {
@@ -47,20 +61,16 @@ struct HotdogCardView: View {
                     metric(label: "Crave", value: "\(Int(profile.craveScore * 100))%")
                 }
 
-                if let directionsURL = profile.directionsURL {
-                    Button {
-                        openURL(directionsURL)
-                    } label: {
-                        Label("Directions", systemImage: "map")
-                    }
-                    .buttonStyle(.bordered)
-                    .tint(.dsPrimary)
-                }
+                routeActions
+                routeStatus
             }
             .padding(.horizontal, .dsSpace5)
             .padding(.bottom, .dsSpace5)
         }
         .dsCardSurface()
+        .onChange(of: profile.id) {
+            routePreviewStore.reset()
+        }
     }
 
     private var hero: some View {
@@ -132,6 +142,63 @@ struct HotdogCardView: View {
                 .foregroundStyle(Color.dsMuted)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    @ViewBuilder
+    private var routeActions: some View {
+        if routePreviewStore.canPreview(profile: profile, origin: originLocation)
+            || profile.directionsURL != nil {
+            HStack(spacing: .dsSpace3) {
+                if routePreviewStore.canPreview(profile: profile, origin: originLocation) {
+                    Button {
+                        Task {
+                            await routePreviewStore.preview(
+                                profile: profile,
+                                origin: originLocation
+                            )
+                        }
+                    } label: {
+                        Label("Live walk", systemImage: "figure.walk")
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(.dsPrimary)
+                    .disabled(routePreviewStore.state == .loading)
+                }
+
+                if let directionsURL = profile.directionsURL {
+                    Button {
+                        openURL(directionsURL)
+                    } label: {
+                        Label("Directions", systemImage: "map")
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(.dsPrimary)
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var routeStatus: some View {
+        switch routePreviewStore.state {
+        case .idle:
+            EmptyView()
+        case .loading:
+            Label("Checking route", systemImage: "location.magnifyingglass")
+                .font(.caption.weight(.medium))
+                .foregroundStyle(Color.dsMuted)
+        case .ready(let estimate):
+            Label(
+                "\(estimate.walkingTimeLabel) route, \(estimate.distanceLabel)",
+                systemImage: "figure.walk"
+            )
+            .font(.caption.weight(.medium))
+            .foregroundStyle(Color.dsPrimary)
+        case .failed(let message):
+            Label(message, systemImage: "exclamationmark.triangle")
+                .font(.caption.weight(.medium))
+                .foregroundStyle(Color.dsAccent)
+        }
     }
 
     private func menuHighlightChip(_ value: String) -> some View {

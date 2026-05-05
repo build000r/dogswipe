@@ -15,6 +15,7 @@ final class DiscoverViewModel: ObservableObject {
     @Published private(set) var deck = SwipeDeckState(profiles: [])
     @Published private(set) var lastMatch: SwipeResponse?
     @Published private(set) var isUsingCurrentLocation = false
+    @Published private(set) var currentLocation: DiscoveryLocation?
 
     private let apiClient: DogSwipeAPIClient
     private let preferencesStore: CravingPreferencesStore
@@ -46,6 +47,7 @@ final class DiscoverViewModel: ObservableObject {
         state = .loading
         do {
             let location = await locationProvider.currentLocation()
+            currentLocation = location
             isUsingCurrentLocation = location != nil
             let profiles = try await apiClient.discovery(limit: 20, location: location)
             allProfiles = rank(profiles)
@@ -53,6 +55,7 @@ final class DiscoverViewModel: ObservableObject {
             lastMatch = nil
             state = .ready
         } catch {
+            currentLocation = nil
             isUsingCurrentLocation = false
             if allProfiles.isEmpty {
                 allProfiles = rank(HotdogProfile.samples)
@@ -63,6 +66,7 @@ final class DiscoverViewModel: ObservableObject {
     }
 
     func resetToSamples() {
+        currentLocation = nil
         isUsingCurrentLocation = false
         allProfiles = rank(HotdogProfile.samples)
         deck = SwipeDeckState(profiles: allProfiles)

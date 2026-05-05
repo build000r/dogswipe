@@ -17,7 +17,7 @@ The first production slice must prove three things:
 ## Current Product Contract
 
 - Discovery cards represent hotdogs, not venues: the primary object is a specific item from a vendor.
-- A card must show name, style, price, signature notes, distance, walking time, vendor, crave score, and compact menu highlights when a bounded menu snapshot exists; when the app has current location permission, distance should be recomputed from profile coordinates rather than relying on static sample mileage, and users should be able to hand off to Apple Maps from coordinates or pickup address text.
+- A card must show name, style, price, signature notes, distance, walking time, vendor, crave score, and compact menu highlights when a bounded menu snapshot exists; when the app has current location permission, distance should be recomputed from profile coordinates rather than relying on static sample mileage, users should be able to preview a live walking route on the card, and full navigation should hand off to Apple Maps from coordinates or pickup address text.
 - Cards without remote media still need a product-specific hotdog visual, and craving controls should persist as user-scoped preferences that filter/rank both backend discovery and the local Swift deck.
 - Screenshot and demo fixtures must remain deterministic and hotdog-specific across Discover, Matches, Vendor, Review, and Profile so public app captures do not depend on live auth, location prompts, or localhost state.
 - Positive swipes are intent signals. Matches are high-crave liked items, not social matches.
@@ -31,7 +31,7 @@ The first production slice must prove three things:
 - Real-time chat
 - Recommendation ML
 - App Store signing and TestFlight automation
-- Live routing beyond Apple Maps handoff
+- Full turn-by-turn navigation or route persistence beyond lightweight MapKit previews
 - Crawler-based menu indexing
 
 These are valuable later, but they would dilute the core loop before the app has a reliable discovery contract.

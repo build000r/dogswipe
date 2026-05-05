@@ -35,6 +35,7 @@ flowchart LR
   client["DogSwipeAPIClient"]
   profiles["HotdogProfile contract"]
   maps["Apple Maps handoff"]
+  routepreview["MapKit route preview"]
   geocoder["CLGeocoder address lookup"]
   walk["Walking ETA"]
   preferences["CravingPreferences contract"]
@@ -65,6 +66,8 @@ flowchart LR
   vm --> client
   core --> profiles
   core --> maps
+  ios --> routepreview
+  routepreview --> walk
   ios --> geocoder
   geocoder --> vendor
   core --> walk
@@ -139,6 +142,7 @@ sequenceDiagram
   App->>API: Discovery request with optional current coordinates
   API->>DB: Read preferences and coordinate-backed hotdog profiles
   API-->>App: Preference-filtered discovery with resolved distance and walking ETA
+  App->>App: Preview MapKit walking route from current location to hotdog coordinates
   App->>Maps: Open directions from coordinates or address_text
   API->>DB: Read swipes, matches, or preferences
   API-->>App: Match or preference response

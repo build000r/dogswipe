@@ -39,10 +39,11 @@ Status key: `done`, `active`, `ready`, `blocked`.
 | WG-033 iOS release surface | done | WG-030, WG-032 | `apps/ios/DogSwipe/**`, `scripts/**`, `.github/**`, `docs/**` | The iOS target has a hotdog-specific AppIcon catalog, accent color, privacy manifest, local verifier, and CI gate for release-facing asset drift |
 | WG-034 iOS screenshot smoke | done | WG-033 | `apps/ios/DogSwipe/**`, `scripts/**`, `.github/**`, `docs/**` | The iOS app has deterministic hotdog screenshot fixtures, a UI test target that covers Discover/Matches/Vendor/Review/Profile, local screenshot export, and CI smoke coverage |
 | WG-035 Universal-link auth plumbing | done | WG-017, WG-029, WG-033 | `apps/ios/DogSwipe/**`, `deploy/**`, `scripts/**`, `docs/**` | The app can request SPAPS magic links with a configurable HTTPS redirect, only accepts universal auth links from configured hosts, and the deploy contract includes an Apple app-site association template plus verification hooks |
+| WG-036 Live route preview | done | WG-024, WG-028 | `apps/ios/DogSwipe/**`, `docs/**` | Discovery cards can compute an on-device MapKit walking-route ETA/distance from the current user location to coordinate-backed hotdogs without replacing Apple Maps handoff |
 
 ## Ready Frontier
 
-The next ready work is to create a concrete skillbox deploy overlay or continue deeper product slices: live routing beyond Apple Maps handoff, TestFlight automation, and crawler-backed menu indexing if the lightweight snapshot model proves useful.
+The next ready work is to create a concrete skillbox deploy overlay or continue deeper product slices: TestFlight automation, full route persistence or turn-by-turn navigation if lightweight previews prove insufficient, and crawler-backed menu indexing if the lightweight snapshot model proves useful.
 
 ## Risks
 

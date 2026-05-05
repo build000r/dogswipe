@@ -47,6 +47,44 @@ private enum TestGeocodingError: Error {
     case failed
 }
 
+private enum TestRoutingError: Error {
+    case failed
+}
+
+private final class MockRouteEstimator: RouteEstimating, @unchecked Sendable {
+    struct Request: Equatable {
+        let origin: DiscoveryLocation
+        let profile: HotdogProfile
+    }
+
+    var requests: [Request] = []
+    var result: Result<RouteEstimate, Error>
+
+    init(result: Result<RouteEstimate, Error>) {
+        self.result = result
+    }
+
+    func walkingRoute(
+        from origin: DiscoveryLocation,
+        to profile: HotdogProfile
+    ) async throws -> RouteEstimate {
+        requests.append(Request(origin: origin, profile: profile))
+        return try result.get()
+    }
+}
+
+private struct SlowRouteEstimator: RouteEstimating {
+    let estimate: RouteEstimate
+
+    func walkingRoute(
+        from origin: DiscoveryLocation,
+        to profile: HotdogProfile
+    ) async throws -> RouteEstimate {
+        try await Task.sleep(nanoseconds: 50_000_000)
+        return estimate
+    }
+}
+
 @MainActor
 private final class RecordingVendorAddressGeocoder: VendorAddressGeocoding {
     var addresses: [String] = []
@@ -212,6 +250,74 @@ final class DogSwipeSmokeTests: XCTestCase {
         XCTAssertEqual(locationQuery["latitude"], "43.6532")
         XCTAssertEqual(locationQuery["longitude"], "-79.3832")
         XCTAssertTrue(viewModel.isUsingCurrentLocation)
+        XCTAssertEqual(
+            viewModel.currentLocation,
+            DiscoveryLocation(latitude: 43.6532, longitude: -79.3832)
+        )
+    }
+
+    @MainActor
+    func testRoutePreviewStoreLoadsWalkingEstimate() async {
+        let estimate = RouteEstimate(walkingTimeMinutes: 14, distanceMiles: 0.7)
+        let estimator = MockRouteEstimator(result: .success(estimate))
+        let store = RoutePreviewStore(routeEstimator: estimator)
+        let origin = DiscoveryLocation(latitude: 43.6532, longitude: -79.3832)
+        let profile = HotdogProfile.samples[0]
+
+        await store.preview(profile: profile, origin: origin)
+
+        XCTAssertEqual(store.state, .ready(estimate))
+        XCTAssertEqual(estimator.requests, [.init(origin: origin, profile: profile)])
+    }
+
+    @MainActor
+    func testRoutePreviewStoreReportsUnavailableRouteInputs() async {
+        let estimator = MockRouteEstimator(
+            result: .failure(TestRoutingError.failed)
+        )
+        let store = RoutePreviewStore(routeEstimator: estimator)
+        let profile = HotdogProfile(
+            id: "no-coordinates",
+            name: "No Coordinates",
+            style: "Cart dog",
+            priceDollars: 6,
+            signatureNotes: "Mustard and onion.",
+            distanceMiles: 1,
+            vendorName: "Missing Map",
+            craveScore: 0.5
+        )
+
+        await store.preview(profile: profile, origin: nil)
+        XCTAssertEqual(store.state, .failed("Current location is unavailable."))
+
+        await store.preview(
+            profile: profile,
+            origin: DiscoveryLocation(latitude: 43.6532, longitude: -79.3832)
+        )
+        XCTAssertEqual(store.state, .failed("Route preview needs vendor coordinates."))
+        XCTAssertTrue(estimator.requests.isEmpty)
+    }
+
+    @MainActor
+    func testRoutePreviewStoreIgnoresStaleRouteAfterReset() async {
+        let estimate = RouteEstimate(walkingTimeMinutes: 14, distanceMiles: 0.7)
+        let store = RoutePreviewStore(
+            routeEstimator: SlowRouteEstimator(estimate: estimate)
+        )
+        let origin = DiscoveryLocation(latitude: 43.6532, longitude: -79.3832)
+        let task = Task {
+            await store.preview(profile: HotdogProfile.samples[0], origin: origin)
+        }
+
+        for _ in 0..<20 where store.state != .loading {
+            await Task.yield()
+        }
+        XCTAssertEqual(store.state, .loading)
+
+        store.reset()
+        await task.value
+
+        XCTAssertEqual(store.state, .idle)
     }
 
     @MainActor

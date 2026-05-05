@@ -24,7 +24,10 @@ struct DiscoverView: View {
                 if case .loading = viewModel.state {
                     loadingState
                 } else if let profile = viewModel.currentProfile {
-                    HotdogCardView(profile: profile)
+                    HotdogCardView(
+                        profile: profile,
+                        originLocation: viewModel.currentLocation
+                    )
                         .transition(.scale.combined(with: .opacity))
                 } else {
                     emptyState
