@@ -75,6 +75,8 @@ jobs:
         run: brew install xcodegen
       - name: Generate project
         run: make generate-ios
+      - name: Release asset manifest
+        run: make ios-release-assets
       - name: Build app
         run: xcodebuild -quiet -project apps/ios/DogSwipe/DogSwipe.xcodeproj -scheme DogSwipe -destination 'generic/platform=iOS' build
       - name: Unit tests

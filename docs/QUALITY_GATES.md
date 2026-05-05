@@ -18,6 +18,7 @@ Last verified: 2026-05-05
 | Deploy preflight | `make deploy-preflight` | 17 passed, 0 warnings, 0 failed |
 | Skillbox overlay template | `make deploy-overlay-template` | passed |
 | SwiftUI drift scan | `make drift` | 0 Swift findings |
+| iOS release assets | `make ios-release-assets` | passed |
 | CRAP score | `make crap` | `FINAL_SCORE: 7.00` |
 | MMDX preflight | `make mmdx-preflight` | 3 charts passed |
 | CI quality enforcement | GitHub Actions `backend`, `swift-package`, and `ios` jobs | coverage XML feeds blocking CRAP; MMDX, SwiftUI drift, deploy, Swift package, and iOS gates fail on regressions; iOS prefers a modern simulator, preboots it, disables parallel test workers, and uses bounded destination/job/test timeouts |
@@ -46,6 +47,7 @@ Last verified: 2026-05-05
 - Hotdog profile payloads derive short `menu_highlights` from bounded menu snapshots; Swift decodes the array and iOS discovery/vendor summaries display those menu signals.
 - iOS native sign-in stores SPAPS access/refresh JWTs in Keychain, refreshes sessions, and injects only the access bearer into the shared API client.
 - iOS registers `dogswipe://auth`, parses returned magic-link tokens, and verifies deep links through `AuthSessionStore`.
+- The iOS target includes a hotdog-specific AppIcon catalog, accent color, and `PrivacyInfo.xcprivacy` declaration for linked auth email and precise location data used only for app functionality; `make ios-release-assets` blocks missing icon slots, alpha-channel icons, and privacy manifest drift.
 - `POST /v1/vendor/submissions` stores authenticated vendor hotdog listings as `pending_review`; `GET`/`PUT /v1/vendor/submissions` are user-scoped and the iOS Vendor tab can revise change-requested listings.
 - `POST /v1/vendor/submissions/{id}/ingest-menu` is owner-scoped, stores bounded menu URL snapshot status/excerpt/timestamp fields, and the iOS Vendor tab can refresh and render the snapshot state.
 - `POST /v1/admin/vendor/menus/refresh` is admin-scoped, refreshes stale vendor menu snapshots in bounded batches, reports checked/refreshed/failed counts, and the iOS Admin tab can trigger the refresh.
@@ -58,4 +60,4 @@ Last verified: 2026-05-05
 
 - Live deployment is blocked until a skillbox deploy overlay names a host, service, production origin, and health URL.
 - Visual parity with the original reference image is blocked because the image is not available in this compacted context.
-- App Store signing, app icons, and TestFlight automation are release-slice work, not part of this starter gate.
+- App Store signing, screenshots, and TestFlight automation remain release-slice work because bundle ownership and signing assets are not available in this workspace.

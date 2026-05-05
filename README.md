@@ -110,6 +110,7 @@ make coverage
 make drift
 make crap
 make mmdx-preflight
+make ios-release-assets
 ```
 
 Target gates for this repo:
@@ -120,8 +121,9 @@ Target gates for this repo:
 - CRAP: scoped `FINAL_SCORE < 20`
 - MMDX: architecture stack preflights cleanly
 - Deploy preflight: production Compose config and env contract resolve without secrets
+- iOS release assets: AppIcon catalog, accent color, and privacy manifest pass manifest verification
 
-GitHub Actions enforces the same blocking gates for backend coverage, CRAP, MMDX architecture syntax, SwiftUI drift, deploy preflight, and iOS build/tests.
+GitHub Actions enforces the same blocking gates for backend coverage, CRAP, MMDX architecture syntax, SwiftUI drift, deploy preflight, iOS release asset verification, and iOS build/tests.
 
 Latest recorded gate results live in [docs/QUALITY_GATES.md](docs/QUALITY_GATES.md).
 
@@ -131,13 +133,13 @@ The placement decision is `NEW REPO`: this app owns a durable product boundary r
 
 ## Current Scope
 
-The current app can load local hotdog profiles, render cards with a local product visual when no image URL is available, request and verify SPAPS magic links including native `dogswipe://auth` returns, store access/refresh JWTs in Keychain, record swipes, persist shared craving controls that filter/rank discovery, use CoreLocation-backed coordinates for live distance ranking, show deterministic walking-time estimates, surface menu highlights from bounded snapshots, open Apple Maps directions from coordinates or pickup address text, resolve vendor pickup addresses into coordinates, submit and revise vendor-owned hotdog listings, refresh bounded menu URL snapshots as a vendor, refresh stale vendor menu snapshots as an admin or optional background worker, approve/reject/request edits as an admin, and fetch matches through the shared Swift API client. Backend migrations are managed through Alembic up to `0008`, local Docker development can auto-create and seed the starter data with explicit local-only flags, CI enforces the core quality gates, and production deploy artifacts are ready for a concrete skillbox target.
+The current app can load local hotdog profiles, render cards with a local product visual when no image URL is available, request and verify SPAPS magic links including native `dogswipe://auth` returns, store access/refresh JWTs in Keychain, record swipes, persist shared craving controls that filter/rank discovery, use CoreLocation-backed coordinates for live distance ranking, show deterministic walking-time estimates, surface menu highlights from bounded snapshots, open Apple Maps directions from coordinates or pickup address text, resolve vendor pickup addresses into coordinates, submit and revise vendor-owned hotdog listings, refresh bounded menu URL snapshots as a vendor, refresh stale vendor menu snapshots as an admin or optional background worker, approve/reject/request edits as an admin, and fetch matches through the shared Swift API client. The iOS target includes a hotdog-specific AppIcon catalog, accent color, and `PrivacyInfo.xcprivacy` declaration for auth email and precise location use, with a verifier in CI. Backend migrations are managed through Alembic up to `0008`, local Docker development can auto-create and seed the starter data with explicit local-only flags, CI enforces the core quality gates, and production deploy artifacts are ready for a concrete skillbox target.
 
 ## Known Limits
 
 - Live deployment is blocked until a skillbox deploy overlay names a host, service, production origin, env source, deploy root, and health URL.
 - Final visual parity with the original reference image remains blocked because the image is not available in this context.
-- Crawler-based menu indexing, universal-link polish, live routing beyond Apple Maps handoff, and App Store/TestFlight release assets are future slices.
+- Crawler-based menu indexing, universal-link polish, live routing beyond Apple Maps handoff, App Store signing, screenshot capture, and TestFlight automation are future slices.
 
 ## About Contributions
 
