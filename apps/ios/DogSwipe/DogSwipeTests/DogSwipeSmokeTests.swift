@@ -159,6 +159,54 @@ final class DogSwipeSmokeTests: XCTestCase {
         XCTAssertNil(body["user_id"])
     }
 
+    @MainActor
+    func testAdminReviewStoreApprovesPendingSubmission() async throws {
+        let http = MockHTTPClient()
+        let pending = HotdogProfile(
+            id: "pending-hotdog",
+            name: "Pending Snap",
+            style: "Classic cart dog",
+            priceDollars: 6.25,
+            signatureNotes: "Mustard, relish, and onion.",
+            distanceMiles: 1.8,
+            vendorName: "Boardwalk Dogs",
+            craveScore: 0.5,
+            availabilityStatus: .pendingReview
+        )
+        let approved = HotdogProfile(
+            id: pending.id,
+            name: pending.name,
+            style: pending.style,
+            priceDollars: pending.priceDollars,
+            signatureNotes: pending.signatureNotes,
+            distanceMiles: pending.distanceMiles,
+            vendorName: pending.vendorName,
+            craveScore: 0.72,
+            availabilityStatus: .available
+        )
+        http.responses = [
+            try JSONEncoder().encode(AdminReviewQueueResponse(submissions: [pending])),
+            try JSONEncoder().encode(AdminApprovalResponse(profile: approved))
+        ]
+        let apiClient = DogSwipeAPIClient(
+            baseURL: URL(string: "http://localhost:8000")!,
+            httpClient: http
+        )
+        let store = AdminReviewStore(apiClient: apiClient)
+
+        await store.load()
+        await store.approve(pending)
+
+        XCTAssertTrue(store.pendingSubmissions.isEmpty)
+        XCTAssertEqual(store.reviewMessage, "Pending Snap approved.")
+        XCTAssertEqual(http.requests.map { $0.url?.path }, [
+            "/v1/admin/vendor/submissions",
+            "/v1/admin/vendor/submissions/pending-hotdog/approve"
+        ])
+        let body = try jsonBody(http.requests.last!)
+        XCTAssertEqual(body["crave_score"] as? Double, 0.72)
+    }
+
     func testSPAPSAuthClientRequestsMagicLinkWithPublishableKey() async throws {
         let http = MockHTTPClient()
         let client = makeAuthClient(http: http)

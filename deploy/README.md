@@ -39,6 +39,7 @@ Required runtime values:
 - `SPAPS_API_URL`
 - `SPAPS_API_KEY`
 - `SPAPS_APPLICATION_ID`
+- `DOGSWIPE_ADMIN_USER_IDS`
 
 ## Preflight
 

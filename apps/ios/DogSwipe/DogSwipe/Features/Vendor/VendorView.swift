@@ -115,37 +115,7 @@ struct VendorView: View {
     }
 
     private func submissionRow(_ profile: HotdogProfile) -> some View {
-        VStack(alignment: .leading, spacing: .dsSpace2) {
-            HStack(alignment: .firstTextBaseline) {
-                VStack(alignment: .leading, spacing: .dsSpace1) {
-                    Text(profile.name)
-                        .font(.headline)
-                        .foregroundStyle(Color.dsInk)
-                    Text(profile.vendorName)
-                        .font(.subheadline)
-                        .foregroundStyle(Color.dsMuted)
-                }
-                Spacer()
-                Text(statusLabel(profile.availabilityStatus))
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(Color.dsPrimary)
-            }
-
-            HStack(spacing: .dsSpace4) {
-                Text(profile.priceLabel)
-                    .font(.subheadline.monospacedDigit())
-                    .foregroundStyle(Color.dsInk)
-                Text(profile.style)
-                    .font(.subheadline)
-                    .foregroundStyle(Color.dsMuted)
-            }
-
-            if let menuURL = profile.menuURL {
-                Label(menuURL.host ?? menuURL.absoluteString, systemImage: "menucard")
-                    .font(.caption)
-                    .foregroundStyle(Color.dsMuted)
-            }
-        }
+        SubmissionSummaryView(profile: profile)
         .padding(.dsSpace4)
         .dsCardSurface()
     }
@@ -167,19 +137,6 @@ struct VendorView: View {
     ) -> some View {
         field(title, text: text, icon: icon)
             .keyboardType(.decimalPad)
-    }
-
-    private func statusLabel(_ status: AvailabilityStatus) -> String {
-        switch status {
-        case .available:
-            "Available"
-        case .limited:
-            "Limited"
-        case .soldOut:
-            "Sold out"
-        case .pendingReview:
-            "Pending"
-        }
     }
 }
 

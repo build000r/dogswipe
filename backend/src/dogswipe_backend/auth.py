@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from typing import cast
+from typing import Annotated, cast
 
-from fastapi import HTTPException, Request, status
+from fastapi import Depends, HTTPException, Request, status
 from spaps_server_quickstart.auth.dependencies import optional_authenticated_user
 
 from .settings import get_settings
@@ -33,3 +33,19 @@ def get_current_user_id(request: Request) -> str:
         )
 
     return local_user_id
+
+
+def get_current_admin_user_id(
+    user_id: Annotated[str, Depends(get_current_user_id)],
+) -> str:
+    admin_user_ids = {
+        admin_user_id.strip()
+        for admin_user_id in get_settings().dogswipe_admin_user_ids.split(",")
+        if admin_user_id.strip()
+    }
+    if user_id not in admin_user_ids:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required",
+        )
+    return user_id

@@ -154,6 +154,34 @@ public struct VendorSubmissionListResponse: Codable, Equatable, Sendable {
     }
 }
 
+public struct AdminApprovalRequest: Codable, Equatable, Sendable {
+    public let craveScore: Double
+
+    public init(craveScore: Double = 0.72) {
+        self.craveScore = craveScore
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case craveScore = "crave_score"
+    }
+}
+
+public struct AdminReviewQueueResponse: Codable, Equatable, Sendable {
+    public let submissions: [HotdogProfile]
+
+    public init(submissions: [HotdogProfile]) {
+        self.submissions = submissions
+    }
+}
+
+public struct AdminApprovalResponse: Codable, Equatable, Sendable {
+    public let profile: HotdogProfile
+
+    public init(profile: HotdogProfile) {
+        self.profile = profile
+    }
+}
+
 public extension HotdogProfile {
     static let samples: [HotdogProfile] = [
         HotdogProfile(

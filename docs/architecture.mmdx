@@ -33,6 +33,7 @@ flowchart LR
   profiles["HotdogProfile contract"]
   preferences["CravingPreferences contract"]
   vendor["VendorSubmission contract"]
+  admin["AdminReview contract"]
   api["FastAPI backend"]
   principal["Principal resolver"]
   migrations["Alembic migrations"]
@@ -53,11 +54,13 @@ flowchart LR
   core --> profiles
   core --> preferences
   core --> vendor
+  core --> admin
   client --> api
   keychain --> client
   api --> profiles
   api --> preferences
   api --> vendor
+  api --> admin
   api --> principal
   principal --> spaps
   api --> db
@@ -104,4 +107,7 @@ sequenceDiagram
   App->>API: Submit vendor hotdog listing
   API->>DB: Store pending_review listing owned by user_id
   API-->>App: Vendor submission response
+  App->>API: Admin approve pending listing
+  API->>DB: Mark listing available and verified
+  API-->>App: Approved hotdog profile
 ```

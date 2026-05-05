@@ -110,6 +110,26 @@ public struct DogSwipeAPIClient: Sendable {
         return response.profile
     }
 
+    public func adminReviewQueue() async throws -> [HotdogProfile] {
+        let response: AdminReviewQueueResponse = try await send(
+            path: "/v1/admin/vendor/submissions"
+        )
+        return response.submissions
+    }
+
+    @discardableResult
+    public func approveVendorSubmission(
+        profileID: String,
+        craveScore: Double
+    ) async throws -> HotdogProfile {
+        let response: AdminApprovalResponse = try await send(
+            path: "/v1/admin/vendor/submissions/\(profileID)/approve",
+            method: "POST",
+            body: AdminApprovalRequest(craveScore: craveScore)
+        )
+        return response.profile
+    }
+
     private func send<Response: Decodable>(
         path: String,
         method: String = "GET",

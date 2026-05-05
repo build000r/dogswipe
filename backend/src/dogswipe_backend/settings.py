@@ -13,6 +13,7 @@ class DogSwipeSettings(BaseServiceSettings):  # type: ignore[misc]
     database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/dogswipe"
     redis_url: str = "redis://localhost:6379/0"
     spaps_auth_enabled: bool = False
+    dogswipe_admin_user_ids: str = ""
     dogswipe_auto_create_schema: bool = False
     dogswipe_seed_sample_profiles: bool = False
     spaps_auth_exempt_paths: Annotated[tuple[str, ...], NoDecode] = (

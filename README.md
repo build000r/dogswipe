@@ -25,6 +25,7 @@ The repo is intentionally split into three testable surfaces:
 | Matches | `POST /v1/swipes` records likes/passes/super-likes; `GET /v1/matches` returns high-crave liked hotdogs. |
 | Preferences | `GET /v1/preferences` and `PUT /v1/preferences` persist user-scoped craving controls under the same backend-owned identity boundary. |
 | Vendor submissions | `POST /v1/vendor/submissions` stores vendor-owned hotdog listings as `pending_review`; `GET /v1/vendor/submissions` returns only the current user's submissions. |
+| Admin review | Configured admins can list `GET /v1/admin/vendor/submissions` and approve `POST /v1/admin/vendor/submissions/{id}/approve`, promoting reviewed hotdogs into discovery. |
 | Auth boundary | User-scoped backend routes derive identity from SPAPS auth when enabled, with a local-only header fallback while auth is disabled. |
 | iOS transport | The Profile tab can request and verify SPAPS magic links with a publishable key, stores access/refresh JWTs in Keychain, and sends only the access bearer to the DogSwipe API. |
 
@@ -76,7 +77,7 @@ docker compose up --build
 curl http://localhost:8000/health
 ```
 
-The backend defaults to local development mode with auth disabled. Production deployments should set `SPAPS_AUTH_ENABLED=true`, `SPAPS_API_KEY`, `SPAPS_APPLICATION_ID`, and a managed PostgreSQL `DATABASE_URL`.
+The backend defaults to local development mode with auth disabled. Production deployments should set `SPAPS_AUTH_ENABLED=true`, `SPAPS_API_KEY`, `SPAPS_APPLICATION_ID`, `DOGSWIPE_ADMIN_USER_IDS`, and a managed PostgreSQL `DATABASE_URL`.
 
 For local Docker development, `DOGSWIPE_AUTO_CREATE_SCHEMA=true` and `DOGSWIPE_SEED_SAMPLE_PROFILES=true` create the starter tables and seed sample profiles at API startup. Keep those flags off in production and run managed migrations instead:
 
@@ -114,13 +115,13 @@ The placement decision is `NEW REPO`: this app owns a durable product boundary r
 
 ## Current Scope
 
-The current app can load local hotdog profiles, render cards with a local product visual when no image URL is available, request and verify SPAPS magic links, store access/refresh JWTs in Keychain, record swipes, persist shared craving controls, submit vendor-owned hotdog listings for review, and fetch matches through the shared Swift API client. Backend migrations are managed through Alembic up to `0004`, local Docker development can auto-create and seed the starter data with explicit local-only flags, and production deploy artifacts are ready for a concrete skillbox target.
+The current app can load local hotdog profiles, render cards with a local product visual when no image URL is available, request and verify SPAPS magic links, store access/refresh JWTs in Keychain, record swipes, persist shared craving controls, submit vendor-owned hotdog listings for review, approve pending listings as an admin, and fetch matches through the shared Swift API client. Backend migrations are managed through Alembic up to `0004`, local Docker development can auto-create and seed the starter data with explicit local-only flags, and production deploy artifacts are ready for a concrete skillbox target.
 
 ## Known Limits
 
 - Live deployment is blocked until a skillbox deploy overlay names a host, service, production origin, env source, deploy root, and health URL.
 - Final visual parity with the original reference image remains blocked because the image is not available in this context.
-- Admin approval tools, live menu ingestion, deep-link handoff polish, location services, and App Store/TestFlight release assets are future slices.
+- Rejection/edit moderation, live menu ingestion, deep-link handoff polish, location services, and App Store/TestFlight release assets are future slices.
 
 ## About Contributions
 

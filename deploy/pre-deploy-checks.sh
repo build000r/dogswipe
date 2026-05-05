@@ -74,6 +74,11 @@ if [[ -f "$ENV_FILE" ]]; then
         fail "$var is required when SPAPS_AUTH_ENABLED=true"
       fi
     done
+    if [[ -n "$(env_value DOGSWIPE_ADMIN_USER_IDS)" ]]; then
+      pass "DOGSWIPE_ADMIN_USER_IDS is set for review tools"
+    else
+      fail "DOGSWIPE_ADMIN_USER_IDS is required when SPAPS_AUTH_ENABLED=true"
+    fi
   else
     warn "SPAPS_AUTH_ENABLED is not true; production user routes will not use SPAPS"
   fi

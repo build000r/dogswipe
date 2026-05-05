@@ -209,6 +209,74 @@ final class DogSwipeAPIClientTests: XCTestCase {
         XCTAssertTrue(body.contains("\"menu_url\":\"https:\\/\\/boardwalk.example.com\\/menu\""))
     }
 
+    func testAdminReviewQueueDecodesBackendContract() async throws {
+        let http = MockHTTPClient()
+        http.nextData = try JSONEncoder().encode(
+            AdminReviewQueueResponse(
+                submissions: [
+                    HotdogProfile(
+                        id: "pending-hotdog",
+                        name: "Pending Snap",
+                        style: "Classic cart dog",
+                        priceDollars: 6.25,
+                        signatureNotes: "Mustard, relish, and onion.",
+                        distanceMiles: 1.8,
+                        vendorName: "Boardwalk Dogs",
+                        craveScore: 0.5,
+                        availabilityStatus: .pendingReview
+                    )
+                ]
+            )
+        )
+        let client = DogSwipeAPIClient(baseURL: URL(string: "http://localhost:8000")!, httpClient: http)
+
+        let queue = try await client.adminReviewQueue()
+
+        XCTAssertEqual(queue.map(\.id), ["pending-hotdog"])
+        XCTAssertEqual(queue.first?.availabilityStatus, .pendingReview)
+        XCTAssertEqual(http.requests.first?.url?.path, "/v1/admin/vendor/submissions")
+        XCTAssertEqual(http.requests.first?.httpMethod, "GET")
+    }
+
+    func testApproveVendorSubmissionEncodesBackendContract() async throws {
+        let http = MockHTTPClient()
+        http.nextData = """
+        {
+          "profile": {
+            "id": "pending-hotdog",
+            "name": "Pending Snap",
+            "style": "Classic cart dog",
+            "price_dollars": 6.25,
+            "signature_notes": "Mustard, relish, and onion.",
+            "distance_miles": 1.8,
+            "vendor_name": "Boardwalk Dogs",
+            "image_url": null,
+            "menu_url": null,
+            "media_alt_text": null,
+            "crave_score": 0.86,
+            "availability_status": "available",
+            "last_verified_at": "2026-05-05T14:00:00Z"
+          }
+        }
+        """.data(using: .utf8)!
+        let client = DogSwipeAPIClient(baseURL: URL(string: "http://localhost:8000")!, httpClient: http)
+
+        let profile = try await client.approveVendorSubmission(
+            profileID: "pending-hotdog",
+            craveScore: 0.86
+        )
+
+        XCTAssertEqual(profile.availabilityStatus, .available)
+        XCTAssertEqual(profile.craveScore, 0.86)
+        XCTAssertEqual(
+            http.requests.first?.url?.path,
+            "/v1/admin/vendor/submissions/pending-hotdog/approve"
+        )
+        XCTAssertEqual(http.requests.first?.httpMethod, "POST")
+        let body = String(data: http.requests.first!.httpBody!, encoding: .utf8)!
+        XCTAssertTrue(body.contains("\"crave_score\":0.86"))
+    }
+
     func testAddsBearerTokenWhenProviderReturnsToken() async throws {
         let http = MockHTTPClient()
         http.nextData = #"{"profiles":[]}"#.data(using: .utf8)!

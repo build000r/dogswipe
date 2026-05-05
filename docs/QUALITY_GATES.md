@@ -4,18 +4,18 @@ Last verified: 2026-05-05
 
 | Gate | Command | Result |
 | --- | --- | --- |
-| Swift package tests | `make swift-test` | 18 tests passed |
+| Swift package tests | `make swift-test` | 20 tests passed |
 | iOS smoke build | `xcodebuild -quiet -project apps/ios/DogSwipe/DogSwipe.xcodeproj -scheme DogSwipe -destination 'generic/platform=iOS' build` | passed |
 | iOS unit tests | `xcodebuild -quiet -project apps/ios/DogSwipe/DogSwipe.xcodeproj -scheme DogSwipe -destination 'platform=iOS Simulator,name=iPhone 17' test` | passed |
-| Backend API tests | `make backend-test` | 29 tests passed |
-| Backend coverage | `make coverage` | 89.97% total coverage |
+| Backend API tests | `make backend-test` | 37 tests passed |
+| Backend coverage | `make coverage` | 90.50% total coverage |
 | Clean backend install | `python3.12 -m venv /tmp/... && pip install -e 'backend[test]'` | passed |
 | Backend lint | `make lint` | passed |
 | Backend typecheck | `make typecheck` | passed |
 | Alembic migration smoke | `DATABASE_URL=sqlite+aiosqlite:////tmp/dogswipe-vendor-migrate-smoke.sqlite make migrate` | upgraded to `0004`; `make migration-current` reports `0004 (head)` |
-| Backend container build | `docker build -q backend` | built image `sha256:ba7459ec92b5d8c4a2d36663fd896ff7889570d07e40d9347fcd161395524737` |
+| Backend container build | `docker build -q backend` | built image `sha256:609313aa3a5b269bda8f05d43e550b8586679c1687d8d46e1e707574997d6962` |
 | Production Compose config | `make deploy-config` | passed |
-| Deploy preflight | `make deploy-preflight` | 15 passed, 0 warnings, 0 failed |
+| Deploy preflight | `make deploy-preflight` | 16 passed, 0 warnings, 0 failed |
 | SwiftUI drift scan | `make drift` | 0 Swift findings |
 | CRAP score | `make crap` | `FINAL_SCORE: 5.00` |
 | MMDX preflight | `python3 ../opensource/skills/mmdx/scripts/mmd.py docs/architecture.mmdx --preflight-only` | 3 charts passed |
@@ -36,6 +36,7 @@ Last verified: 2026-05-05
 - `GET /v1/preferences` and `PUT /v1/preferences` persist user-scoped craving preferences; the Swift client and iOS store round-trip the same snake_case contract.
 - iOS native sign-in stores SPAPS access/refresh JWTs in Keychain, refreshes sessions, and injects only the access bearer into the shared API client.
 - `POST /v1/vendor/submissions` stores authenticated vendor hotdog listings as `pending_review`; `GET /v1/vendor/submissions` is user-scoped and the iOS Vendor tab submits through the shared authenticated API client.
+- Configured admins can list pending vendor submissions, approve one into discovery, and production preflight requires `DOGSWIPE_ADMIN_USER_IDS` when SPAPS auth is enabled.
 - Production deploy artifacts define the Compose stack, env contract, preflight checks, post-deploy verification, reverse-proxy template, and CI workflow.
 
 ## Known Blocks

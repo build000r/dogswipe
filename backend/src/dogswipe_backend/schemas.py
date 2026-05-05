@@ -79,3 +79,17 @@ class VendorSubmissionResponse(BaseModel):
 
 class VendorSubmissionListResponse(BaseModel):
     submissions: list[HotdogProfile]
+
+
+class AdminApprovalRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    crave_score: float = Field(default=0.72, ge=0, le=1)
+
+
+class AdminReviewQueueResponse(BaseModel):
+    submissions: list[HotdogProfile]
+
+
+class AdminApprovalResponse(BaseModel):
+    profile: HotdogProfile

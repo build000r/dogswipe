@@ -9,6 +9,7 @@ from dogswipe_backend.auth import (
     DEFAULT_LOCAL_USER_ID,
     LOCAL_USER_HEADER,
     MAX_USER_ID_LENGTH,
+    get_current_admin_user_id,
     get_current_user_id,
 )
 from dogswipe_backend.settings import get_settings
@@ -63,3 +64,20 @@ def test_get_current_user_id_requires_auth_when_spaps_enabled(
     with pytest.raises(HTTPException) as exc_info:
         get_current_user_id(_request())
     assert exc_info.value.status_code == 401
+
+
+def test_get_current_admin_user_id_accepts_configured_admin(
+    clear_settings,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    del clear_settings
+    monkeypatch.setenv("DOGSWIPE_ADMIN_USER_IDS", "admin-1, admin-2")
+    get_settings.cache_clear()
+    assert get_current_admin_user_id("admin-2") == "admin-2"
+
+
+def test_get_current_admin_user_id_rejects_unconfigured_user(clear_settings) -> None:
+    del clear_settings
+    with pytest.raises(HTTPException) as exc_info:
+        get_current_admin_user_id("vendor-1")
+    assert exc_info.value.status_code == 403

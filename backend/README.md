@@ -21,6 +21,8 @@ make backend-test
 | `PUT` | `/v1/preferences` | Save user-scoped craving preferences |
 | `GET` | `/v1/vendor/submissions` | Return the authenticated/local user's submitted hotdog listings |
 | `POST` | `/v1/vendor/submissions` | Submit a vendor-owned hotdog listing for review |
+| `GET` | `/v1/admin/vendor/submissions` | Return pending vendor submissions for configured admins |
+| `POST` | `/v1/admin/vendor/submissions/{id}/approve` | Approve a pending submission into discovery |
 
 ## Hotdog Profile Contract
 
@@ -62,7 +64,7 @@ Client-supplied `user_id` fields are rejected here too.
 
 ## Vendor Submission Contract
 
-`POST /v1/vendor/submissions` accepts a hotdog listing draft, derives ownership from the backend auth context, and stores it as `pending_review` so it does not enter discovery until an admin approval slice exists:
+`POST /v1/vendor/submissions` accepts a hotdog listing draft, derives ownership from the backend auth context, and stores it as `pending_review` so it does not enter discovery until a configured admin approves it:
 
 ```json
 {
@@ -79,6 +81,18 @@ Client-supplied `user_id` fields are rejected here too.
 ```
 
 `GET /v1/vendor/submissions` returns only submissions owned by the authenticated/local user. Client-supplied `user_id` fields are rejected.
+
+## Admin Review Contract
+
+Admin routes use the same backend-owned identity path and require the resolved user id to appear in `DOGSWIPE_ADMIN_USER_IDS`. In auth-disabled local mode, that default user is `local-dev-user`.
+
+```json
+{
+  "crave_score": 0.86
+}
+```
+
+`POST /v1/admin/vendor/submissions/{id}/approve` sets the listing to `available`, records `last_verified_at`, and lets the approved hotdog appear in discovery.
 
 ## Migrations
 

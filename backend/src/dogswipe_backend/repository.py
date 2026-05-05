@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+from datetime import UTC, datetime
 
 from sqlalchemy import Select, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -45,6 +46,17 @@ class HotdogRepository:
         raise NotImplementedError
 
     async def list_vendor_submissions(self, *, user_id: str) -> list[HotdogProfile]:
+        raise NotImplementedError
+
+    async def list_pending_vendor_submissions(self) -> list[HotdogProfile]:
+        raise NotImplementedError
+
+    async def approve_vendor_submission(
+        self,
+        *,
+        profile_id: str,
+        crave_score: float,
+    ) -> HotdogProfile | None:
         raise NotImplementedError
 
 
@@ -150,6 +162,34 @@ class SqlAlchemyHotdogRepository(HotdogRepository):
             .order_by(HotdogProfileRecord.created_at.desc(), HotdogProfileRecord.name.asc())
         )
         return self._profiles(await self.session.scalars(statement))
+
+    async def list_pending_vendor_submissions(self) -> list[HotdogProfile]:
+        statement = (
+            select(HotdogProfileRecord)
+            .where(HotdogProfileRecord.availability_status == "pending_review")
+            .where(HotdogProfileRecord.vendor_owner_user_id.is_not(None))
+            .order_by(HotdogProfileRecord.created_at.asc(), HotdogProfileRecord.name.asc())
+        )
+        return self._profiles(await self.session.scalars(statement))
+
+    async def approve_vendor_submission(
+        self,
+        *,
+        profile_id: str,
+        crave_score: float,
+    ) -> HotdogProfile | None:
+        record = await self.session.get(HotdogProfileRecord, profile_id)
+        if (
+            record is None
+            or record.vendor_owner_user_id is None
+            or record.availability_status != "pending_review"
+        ):
+            return None
+        record.availability_status = "available"
+        record.crave_score = crave_score
+        record.last_verified_at = datetime.now(UTC)
+        await self.session.flush()
+        return HotdogProfile.model_validate(record)
 
     @staticmethod
     def _profiles(records: Iterable[HotdogProfileRecord]) -> list[HotdogProfile]:

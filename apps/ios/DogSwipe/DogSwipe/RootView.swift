@@ -5,6 +5,7 @@ struct RootView: View {
     @StateObject private var authSessionStore: AuthSessionStore
     @StateObject private var preferencesStore: CravingPreferencesStore
     @StateObject private var vendorSubmissionStore: VendorSubmissionStore
+    @StateObject private var adminReviewStore: AdminReviewStore
     private let apiClient: DogSwipeAPIClient
 
     init(
@@ -28,6 +29,9 @@ struct RootView: View {
         )
         _vendorSubmissionStore = StateObject(
             wrappedValue: VendorSubmissionStore(apiClient: apiClient)
+        )
+        _adminReviewStore = StateObject(
+            wrappedValue: AdminReviewStore(apiClient: apiClient)
         )
     }
 
@@ -58,6 +62,11 @@ struct RootView: View {
             VendorView(store: vendorSubmissionStore)
                 .tabItem {
                     Label("Vendor", systemImage: "storefront")
+                }
+
+            AdminReviewView(store: adminReviewStore)
+                .tabItem {
+                    Label("Review", systemImage: "checkmark.seal.fill")
                 }
 
             ProfileView(

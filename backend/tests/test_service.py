@@ -4,6 +4,7 @@ import pytest
 
 from dogswipe_backend.repository import HotdogRepository
 from dogswipe_backend.schemas import (
+    AdminApprovalRequest,
     CravingPreferences,
     HotdogProfile,
     SwipeDecision,
@@ -88,6 +89,42 @@ class FakeRepository(HotdogRepository):
     async def list_vendor_submissions(self, *, user_id: str) -> list[HotdogProfile]:
         return self.submissions_by_user.get(user_id, [])
 
+    async def list_pending_vendor_submissions(self) -> list[HotdogProfile]:
+        return [
+            profile
+            for submissions in self.submissions_by_user.values()
+            for profile in submissions
+            if profile.availability_status == "pending_review"
+        ]
+
+    async def approve_vendor_submission(
+        self,
+        *,
+        profile_id: str,
+        crave_score: float,
+    ) -> HotdogProfile | None:
+        for user_id, submissions in self.submissions_by_user.items():
+            for index, profile in enumerate(submissions):
+                if profile.id != profile_id or profile.availability_status != "pending_review":
+                    continue
+                approved = HotdogProfile(
+                    id=profile.id,
+                    name=profile.name,
+                    style=profile.style,
+                    price_dollars=profile.price_dollars,
+                    signature_notes=profile.signature_notes,
+                    distance_miles=profile.distance_miles,
+                    vendor_name=profile.vendor_name,
+                    image_url=profile.image_url,
+                    menu_url=profile.menu_url,
+                    media_alt_text=profile.media_alt_text,
+                    crave_score=crave_score,
+                    availability_status="available",
+                )
+                self.submissions_by_user[user_id][index] = approved
+                return approved
+        return None
+
 
 @pytest.mark.asyncio
 async def test_discovery_clamps_limit() -> None:
@@ -146,3 +183,30 @@ async def test_vendor_submission_round_trips_through_repository() -> None:
     assert response.profile.name == "Submitted Snap"
     assert response.profile.availability_status == "pending_review"
     assert submissions.submissions == [response.profile]
+
+
+@pytest.mark.asyncio
+async def test_admin_approval_promotes_pending_submission() -> None:
+    repository = FakeRepository()
+    service = DogSwipeService(repository)
+    response = await service.submit_vendor_profile(
+        user_id="vendor-1",
+        submission=VendorSubmissionRequest(
+            name="Submitted Snap",
+            style="Classic cart dog",
+            price_dollars=6,
+            signature_notes="Mustard and onion",
+            distance_miles=2,
+            vendor_name="Submit Cart",
+        ),
+    )
+
+    queue = await service.admin_review_queue()
+    approved = await service.approve_vendor_submission(
+        profile_id=response.profile.id,
+        request=AdminApprovalRequest(crave_score=0.88),
+    )
+
+    assert queue.submissions == [response.profile]
+    assert approved.profile.availability_status == "available"
+    assert approved.profile.crave_score == 0.88

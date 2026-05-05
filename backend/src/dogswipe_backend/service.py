@@ -1,7 +1,12 @@
 from __future__ import annotations
 
+from fastapi import HTTPException, status
+
 from .repository import HotdogRepository
 from .schemas import (
+    AdminApprovalRequest,
+    AdminApprovalResponse,
+    AdminReviewQueueResponse,
     CravingPreferences,
     DiscoveryResponse,
     MatchResponse,
@@ -63,3 +68,25 @@ class DogSwipeService:
         return VendorSubmissionListResponse(
             submissions=await self.repository.list_vendor_submissions(user_id=user_id)
         )
+
+    async def admin_review_queue(self) -> AdminReviewQueueResponse:
+        return AdminReviewQueueResponse(
+            submissions=await self.repository.list_pending_vendor_submissions()
+        )
+
+    async def approve_vendor_submission(
+        self,
+        *,
+        profile_id: str,
+        request: AdminApprovalRequest,
+    ) -> AdminApprovalResponse:
+        profile = await self.repository.approve_vendor_submission(
+            profile_id=profile_id,
+            crave_score=request.crave_score,
+        )
+        if profile is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Vendor submission not found",
+            )
+        return AdminApprovalResponse(profile=profile)

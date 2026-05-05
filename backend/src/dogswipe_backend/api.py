@@ -4,10 +4,13 @@ from fastapi import APIRouter, Depends, Query, status
 from spaps_server_quickstart.api.health import HealthRouterFactory
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .auth import get_current_user_id
+from .auth import get_current_admin_user_id, get_current_user_id
 from .db import get_db_session
 from .repository import HotdogRepository, SqlAlchemyHotdogRepository
 from .schemas import (
+    AdminApprovalRequest,
+    AdminApprovalResponse,
+    AdminReviewQueueResponse,
     CravingPreferences,
     DiscoveryResponse,
     MatchResponse,
@@ -98,6 +101,27 @@ def build_api_router() -> APIRouter:
         user_id: str = Depends(get_current_user_id),
     ) -> VendorSubmissionResponse:
         return await service.submit_vendor_profile(user_id=user_id, submission=request)
+
+    @v1.get("/admin/vendor/submissions", response_model=AdminReviewQueueResponse)
+    async def admin_vendor_submissions(
+        service: DogSwipeService = Depends(get_service),
+        admin_user_id: str = Depends(get_current_admin_user_id),
+    ) -> AdminReviewQueueResponse:
+        del admin_user_id
+        return await service.admin_review_queue()
+
+    @v1.post(
+        "/admin/vendor/submissions/{profile_id}/approve",
+        response_model=AdminApprovalResponse,
+    )
+    async def approve_vendor_submission(
+        profile_id: str,
+        request: AdminApprovalRequest,
+        service: DogSwipeService = Depends(get_service),
+        admin_user_id: str = Depends(get_current_admin_user_id),
+    ) -> AdminApprovalResponse:
+        del admin_user_id
+        return await service.approve_vendor_submission(profile_id=profile_id, request=request)
 
     router.include_router(v1)
     return router

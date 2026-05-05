@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import pytest
 
+from dogswipe_backend.settings import get_settings
+
 
 @pytest.mark.asyncio
 async def test_health_endpoint(async_client) -> None:
@@ -258,3 +260,87 @@ async def test_vendor_submission_rejects_client_supplied_user_id(async_client) -
     )
 
     assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_admin_can_approve_vendor_submission(
+    async_client,
+    clear_settings,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    del clear_settings
+    monkeypatch.setenv("DOGSWIPE_ADMIN_USER_IDS", "admin-user")
+    get_settings.cache_clear()
+    submitted = await async_client.post(
+        "/v1/vendor/submissions",
+        headers={"X-DogSwipe-User-ID": "vendor-approval"},
+        json={
+            "name": "Approved Snap",
+            "style": "Classic cart dog",
+            "price_dollars": 6.25,
+            "signature_notes": "Mustard, relish, and onion.",
+            "distance_miles": 1.8,
+            "vendor_name": "Approval Cart",
+        },
+    )
+    profile_id = submitted.json()["profile"]["id"]
+
+    queue = await async_client.get(
+        "/v1/admin/vendor/submissions",
+        headers={"X-DogSwipe-User-ID": "admin-user"},
+    )
+
+    assert queue.status_code == 200
+    assert [item["id"] for item in queue.json()["submissions"]] == [profile_id]
+
+    approved = await async_client.post(
+        f"/v1/admin/vendor/submissions/{profile_id}/approve",
+        headers={"X-DogSwipe-User-ID": "admin-user"},
+        json={"crave_score": 0.86},
+    )
+
+    assert approved.status_code == 200
+    profile = approved.json()["profile"]
+    assert profile["availability_status"] == "available"
+    assert profile["crave_score"] == 0.86
+    assert profile["last_verified_at"] is not None
+
+    discovery = await async_client.get("/v1/discovery", params={"limit": 50})
+    assert "Approved Snap" in [item["name"] for item in discovery.json()["profiles"]]
+
+    repeat_approval = await async_client.post(
+        f"/v1/admin/vendor/submissions/{profile_id}/approve",
+        headers={"X-DogSwipe-User-ID": "admin-user"},
+        json={"crave_score": 0.9},
+    )
+    assert repeat_approval.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_admin_routes_reject_non_admin(async_client, clear_settings) -> None:
+    del clear_settings
+    response = await async_client.get(
+        "/v1/admin/vendor/submissions",
+        headers={"X-DogSwipe-User-ID": "vendor-user"},
+    )
+
+    assert response.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_admin_approve_missing_submission_returns_404(
+    async_client,
+    clear_settings,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    del clear_settings
+    monkeypatch.setenv("DOGSWIPE_ADMIN_USER_IDS", "admin-user")
+    get_settings.cache_clear()
+
+    response = await async_client.post(
+        "/v1/admin/vendor/submissions/missing/approve",
+        headers={"X-DogSwipe-User-ID": "admin-user"},
+        json={"crave_score": 0.75},
+    )
+
+    assert response.status_code == 404
