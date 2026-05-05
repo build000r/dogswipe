@@ -19,15 +19,16 @@ Status key: `done`, `active`, `ready`, `blocked`.
 | WG-013 Hotdog UI hardening | done | WG-012 | `apps/ios/DogSwipe/**`, `docs/**` | Cards render a local hotdog visual when no image URL exists and the profile tab exposes shared craving controls covered by an iOS unit test |
 | WG-014 User preference persistence | done | WG-009, WG-011, WG-013 | `backend/**`, `packages/DogSwipeCore/**`, `apps/ios/DogSwipe/**`, `docs/**` | Craving controls round-trip through user-scoped backend preferences with migration, API, Swift client, and tests |
 | WG-015 iOS auth session bootstrap | done | WG-011, WG-014 | `apps/ios/DogSwipe/**`, `docs/**` | The app stores provided bearer JWTs in Keychain and injects them into discovery, swipe, match, and preference API clients without exposing SPAPS API keys |
+| WG-016 Deploy contract | done | WG-006, WG-010 | `deploy/**`, `.github/**`, `Makefile`, `docs/**` | Production Compose, env template, pre/post verification scripts, reverse-proxy template, and CI preflight exist; live rollout remains overlay-gated |
 
 ## Ready Frontier
 
-The next ready work is to create a skillbox deploy overlay or continue deeper product slices: native SPAPS sign-in UX, live menu media, and vendor workflows.
+The next ready work is to create a concrete skillbox deploy overlay or continue deeper product slices: native SPAPS sign-in UX, live menu media, and vendor workflows.
 
 ## Risks
 
 - The original visual reference image is unavailable in this context; final visual parity is blocked on reacquiring that asset or a written design brief.
-- Deploy is blocked until a skillbox overlay names a concrete host, app URL, and health check target.
+- Live deploy is blocked until a skillbox overlay names a concrete host, deploy root, env source, production domain, and health check target.
 - App Store/TestFlight release is out of scope for this first skeleton until signing assets and bundle ownership are known.
 
 ## Remote Checkpoint

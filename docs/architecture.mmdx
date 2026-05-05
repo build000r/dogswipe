@@ -32,6 +32,7 @@ flowchart LR
   api["FastAPI backend"]
   principal["Principal resolver"]
   migrations["Alembic migrations"]
+  deploy["Deploy contract"]
   db["PostgreSQL"]
   spaps["SPAPS auth"]
   gates["Quality Gates"]
@@ -51,9 +52,12 @@ flowchart LR
   principal --> spaps
   api --> db
   migrations --> db
+  deploy --> api
+  deploy --> db
   core --> gates
   api --> gates
   migrations --> gates
+  deploy --> gates
 
   gates["Quality Gates"]
   spaps["SPAPS Boundary"]
@@ -64,10 +68,10 @@ flowchart LR
 stateDiagram-v2
   [*] --> SwiftTests
   SwiftTests --> BackendCoverage
-  BackendCoverage --> DriftScan
+  BackendCoverage --> DeployPreflight
+  DeployPreflight --> DriftScan
   DriftScan --> CrapScore
-  CrapScore --> DeployPreflight
-  DeployPreflight --> [*]
+  CrapScore --> [*]
 ```
 
 ## chart spaps SPAPS Boundary

@@ -81,6 +81,8 @@ DATABASE_URL=postgresql+asyncpg://... make migrate
 DATABASE_URL=postgresql+asyncpg://... make migration-current
 ```
 
+Production deploy artifacts live in [deploy/README.md](deploy/README.md). The repo now includes a production Compose file, env template, pre/post deploy verification scripts, and a reverse-proxy site template. A live rollout still requires a skillbox overlay with the concrete host, deploy root, env source, domain, and health URL.
+
 The iOS target reads `DOGSWIPE_API_BASE_URL` from its generated Info.plist and defaults to `http://localhost:8000`, which works for simulator-local backend development. User-scoped routes derive identity from SPAPS auth when enabled; local development can use `X-DogSwipe-User-ID` while auth is disabled. For auth-enabled environments, the app stores a provided user bearer token in Keychain and injects it through `DogSwipeAPIClient`; it must never embed or send a SPAPS API key from the client.
 
 ## Verification Gates
@@ -98,6 +100,7 @@ Target gates for this repo:
 - Swift package tests: green via `swift test`
 - UI drift: no unreviewed SwiftUI token drift outside design token files
 - CRAP: scoped `FINAL_SCORE < 20`
+- Deploy preflight: production Compose config and env contract resolve without secrets
 
 Latest recorded gate results live in [docs/QUALITY_GATES.md](docs/QUALITY_GATES.md).
 
@@ -107,11 +110,11 @@ The placement decision is `NEW REPO`: this app owns a durable product boundary r
 
 ## Current Scope
 
-The current app can load local hotdog profiles, render cards with a local product visual when no image URL is available, store a user bearer token in Keychain, record swipes, persist shared craving controls, and fetch matches through the shared Swift API client. Backend migrations are managed through Alembic up to `0003`, and local Docker development can auto-create and seed the starter data with explicit local-only flags.
+The current app can load local hotdog profiles, render cards with a local product visual when no image URL is available, store a user bearer token in Keychain, record swipes, persist shared craving controls, and fetch matches through the shared Swift API client. Backend migrations are managed through Alembic up to `0003`, local Docker development can auto-create and seed the starter data with explicit local-only flags, and production deploy artifacts are ready for a concrete skillbox target.
 
 ## Known Limits
 
-- Live deployment is blocked until a skillbox deploy overlay names a host, service, production origin, and health URL.
+- Live deployment is blocked until a skillbox deploy overlay names a host, service, production origin, env source, deploy root, and health URL.
 - Final visual parity with the original reference image remains blocked because the image is not available in this context.
 - Native SPAPS sign-in, real vendor onboarding, live menu inventory, location services, and App Store/TestFlight release assets are future slices.
 

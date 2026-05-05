@@ -5,7 +5,7 @@ PIP := $(VENV)/bin/pip
 PYTEST := $(VENV)/bin/pytest
 ALEMBIC := $(VENV)/bin/alembic
 
-.PHONY: generate-ios ios-build swift-test backend-install backend-install-local backend-test coverage lint typecheck migrate migration-current test drift crap
+.PHONY: generate-ios ios-build swift-test backend-install backend-install-local backend-test coverage lint typecheck migrate migration-current test drift crap deploy-config deploy-preflight deploy-post-verify
 
 generate-ios:
 	cd apps/ios/DogSwipe && xcodegen generate
@@ -53,3 +53,12 @@ drift:
 
 crap:
 	python3 $(SKILLS_ROOT)/crap/scripts/analyze_crap.py $(CURDIR) --languages python,swift --threshold 20 --top 20
+
+deploy-config:
+	DOGSWIPE_ENV_FILE=prod.env.example DOGSWIPE_IMAGE=dogswipe-api:local POSTGRES_PASSWORD=postgres docker compose --env-file deploy/prod.env.example -f deploy/docker-compose.prod.yml config >/dev/null
+
+deploy-preflight:
+	ENV_FILE=deploy/prod.env.example DOGSWIPE_ENV_FILE=prod.env.example DOGSWIPE_IMAGE=dogswipe-api:local POSTGRES_PASSWORD=postgres bash deploy/pre-deploy-checks.sh
+
+deploy-post-verify:
+	bash deploy/post-deploy-verify.sh

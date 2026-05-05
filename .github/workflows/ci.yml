@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install backend
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e 'backend[test]'
+      - name: Test
+        run: cd backend && pytest -q
+      - name: Coverage
+        run: cd backend && pytest --cov=dogswipe_backend --cov-report=term-missing -q
+      - name: Lint
+        run: cd backend && ruff check src tests migrations
+      - name: Typecheck
+        run: cd backend && mypy src
+      - name: Migration smoke
+        env:
+          DATABASE_URL: sqlite+aiosqlite:////tmp/dogswipe-ci-migrate.sqlite
+        run: cd backend && alembic upgrade head && alembic current | grep '0003 (head)'
+      - name: Production compose config
+        env:
+          DOGSWIPE_IMAGE: dogswipe-api:ci
+          DOGSWIPE_ENV_FILE: prod.env.example
+          POSTGRES_PASSWORD: ci-postgres
+        run: docker compose --env-file deploy/prod.env.example -f deploy/docker-compose.prod.yml config >/dev/null
+      - name: Docker image build
+        run: docker build -q backend
+
+  swift-package:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Swift package tests
+        run: swift test --package-path packages/DogSwipeCore
+
+  ios:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate project
+        run: make generate-ios
+      - name: Build app
+        run: xcodebuild -quiet -project apps/ios/DogSwipe/DogSwipe.xcodeproj -scheme DogSwipe -destination 'generic/platform=iOS' build
+      - name: Unit tests
+        run: |
+          set -euo pipefail
+          simulator="$(xcrun simctl list devices available | awk -F '[()]' '/iPhone/ {print $1}' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | tail -1)"
+          xcodebuild -quiet -project apps/ios/DogSwipe/DogSwipe.xcodeproj -scheme DogSwipe -destination "platform=iOS Simulator,name=${simulator}" test

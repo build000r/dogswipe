@@ -9,10 +9,13 @@ Last verified: 2026-05-05
 | iOS unit tests | `xcodebuild -quiet -project apps/ios/DogSwipe/DogSwipe.xcodeproj -scheme DogSwipe -destination 'platform=iOS Simulator,name=iPhone 17' test` | passed |
 | Backend API tests | `make backend-test` | 25 tests passed |
 | Backend coverage | `make coverage` | 89.17% total coverage |
+| Clean backend install | `python3.12 -m venv /tmp/... && pip install -e 'backend[test]'` | passed |
 | Backend lint | `make lint` | passed |
 | Backend typecheck | `make typecheck` | passed |
 | Alembic migration smoke | `DATABASE_URL=sqlite+aiosqlite:////tmp/dogswipe-preferences-migrate-smoke.sqlite make migrate` | upgraded to `0003`; `make migration-current` reports `0003 (head)` |
-| Backend container build | `docker build -q backend` | built image `sha256:0c6ebd61d339a33af5ba03542f98a2288b50c23642b1024c602012ddcc8db627` |
+| Backend container build | `docker build -q backend` | built image `sha256:a60d19614623df59ea07e8927b404bc7ea9243cc3598fc69cc0a5cd1209a29ce` |
+| Production Compose config | `make deploy-config` | passed |
+| Deploy preflight | `make deploy-preflight` | 15 passed, 0 warnings, 0 failed |
 | SwiftUI drift scan | `make drift` | 0 Swift findings |
 | CRAP score | `make crap` | `FINAL_SCORE: 5.00` |
 | MMDX preflight | `python3 ../opensource/skills/mmdx/scripts/mmd.py docs/architecture.mmdx --preflight-only` | 3 charts passed |
@@ -31,6 +34,7 @@ Last verified: 2026-05-05
 - Hotdog cards render a local SwiftUI product visual when `image_url` is absent, and the profile tab exposes interactive craving controls backed by shared ranking preferences.
 - `GET /v1/preferences` and `PUT /v1/preferences` persist user-scoped craving preferences; the Swift client and iOS store round-trip the same snake_case contract.
 - iOS session bootstrap stores provided bearer JWTs in Keychain and injects them into the shared API client without exposing SPAPS API keys.
+- Production deploy artifacts define the Compose stack, env contract, preflight checks, post-deploy verification, reverse-proxy template, and CI workflow.
 
 ## Known Blocks
 

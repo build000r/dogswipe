@@ -1,0 +1,74 @@
+services:
+  api:
+    image: ${DOGSWIPE_IMAGE:?DOGSWIPE_IMAGE must be set}
+    restart: always
+    env_file:
+      - ${DOGSWIPE_ENV_FILE:-prod.env}
+    environment:
+      GIT_COMMIT_SHA: ${GIT_COMMIT_SHA:-unknown}
+    command:
+      - uvicorn
+      - dogswipe_backend.app:create_app
+      - --factory
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+      - --proxy-headers
+      - --forwarded-allow-ips
+      - "*"
+    expose:
+      - "8000"
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=3).read()"
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      app-internal:
+      reverse-proxy:
+        aliases:
+          - dogswipe-api
+
+  postgres:
+    image: postgres:16
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
+      POSTGRES_DB: ${POSTGRES_DB:-dogswipe}
+    volumes:
+      - ${DOGSWIPE_POSTGRES_DATA:-/mnt/volume_nyc3_cfo_v1/dogswipe/pgdata}:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-dogswipe}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - app-internal
+
+  redis:
+    image: redis:7-alpine
+    restart: always
+    command: redis-server --save "" --appendonly no
+    volumes:
+      - redisdata:/data
+    networks:
+      - app-internal
+
+volumes:
+  redisdata:
+    driver: local
+
+networks:
+  app-internal:
+  reverse-proxy:
+    external: true

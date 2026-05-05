@@ -1,0 +1,61 @@
+upstream dogswipe_api_upstream {
+    server dogswipe-api:8000;
+    keepalive 16;
+}
+
+server {
+    listen 80;
+    server_name ${DOGSWIPE_API_DOMAIN};
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    http2 on;
+    server_name ${DOGSWIPE_API_DOMAIN};
+    resolver 127.0.0.11 valid=30s ipv6=off;
+
+    ssl_certificate /etc/letsencrypt/live/${DOGSWIPE_API_DOMAIN}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${DOGSWIPE_API_DOMAIN}/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers off;
+
+    add_header Strict-Transport-Security "max-age=63072000" always;
+    add_header X-Frame-Options DENY always;
+    add_header X-Content-Type-Options nosniff always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+
+    access_log /var/log/nginx/${DOGSWIPE_API_DOMAIN}.access.log main;
+    error_log /var/log/nginx/${DOGSWIPE_API_DOMAIN}.error.log warn;
+
+    location /health {
+        proxy_pass http://dogswipe_api_upstream/health;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location / {
+        proxy_pass http://dogswipe_api_upstream;
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 60s;
+        proxy_send_timeout 60s;
+        proxy_connect_timeout 60s;
+    }
+
+    location ~ /\. {
+        deny all;
+        return 404;
+    }
+
+    location ~ \.(env|md|yml|yaml|json)$ {
+        deny all;
+        return 404;
+    }
+}
