@@ -34,10 +34,11 @@ Status key: `done`, `active`, `ready`, `blocked`.
 | WG-028 Walking-time estimates | done | WG-022, WG-024 | `backend/**`, `packages/DogSwipeCore/**`, `apps/ios/DogSwipe/**`, `docs/**` | Hotdog profile responses include deterministic walking-time estimates from resolved distance, and iOS discovery/matches display the estimate alongside distance |
 | WG-029 Deploy overlay template | done | WG-016, WG-028 | `deploy/**`, `.github/**`, `Makefile`, `docs/**` | Repo includes a DogSwipe skillbox overlay template, overlay validator, CI deploy preflight, and migration smoke now checks the actual Alembic head |
 | WG-030 CI quality enforcement | done | WG-005, WG-016, WG-029 | `.github/**`, `Makefile`, `docs/**` | GitHub Actions fetches the public quality tools outside the app workspace and fails on CRAP, MMDX, SwiftUI drift, deploy, backend, Swift package, and iOS regressions |
+| WG-031 Menu highlights | done | WG-023, WG-030 | `backend/**`, `packages/DogSwipeCore/**`, `apps/ios/DogSwipe/**`, `docs/**` | Bounded menu snapshots derive short `menu_highlights`, Swift decodes them, and iOS discovery/vendor summaries display the signals without adding crawler storage |
 
 ## Ready Frontier
 
-The next ready work is to create a concrete skillbox deploy overlay or continue deeper product slices: provider-backed address geocoding/live routing, universal-link polish, release assets, and full menu indexing/enrichment if the snapshot model proves useful.
+The next ready work is to create a concrete skillbox deploy overlay or continue deeper product slices: provider-backed address geocoding/live routing, universal-link polish, release assets, and crawler-backed menu indexing if the lightweight snapshot model proves useful.
 
 ## Risks
 

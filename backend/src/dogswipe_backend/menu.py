@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from html.parser import HTMLParser
 from typing import Protocol
@@ -9,6 +10,22 @@ import httpx
 
 MAX_MENU_BYTES = 100_000
 MAX_MENU_EXCERPT_CHARS = 500
+MAX_MENU_HIGHLIGHTS = 4
+_PRICE_PATTERN = re.compile(r"(?<!\w)\$\s?\d+(?:\.\d{1,2})?")
+_MENU_HIGHLIGHT_RULES: tuple[tuple[str, tuple[str, ...]], ...] = (
+    ("Classic", ("classic", "snap dog", "cart dog")),
+    ("Chili", ("chili", "coney")),
+    ("Cheese", ("cheese", "cheddar")),
+    ("Kimchi", ("kimchi",)),
+    ("Spicy", ("spicy", "gochujang", "jalapeno", "hot sauce")),
+    ("Mustard", ("mustard",)),
+    ("Relish", ("relish",)),
+    ("Onion", ("onion",)),
+    ("Celery salt", ("celery salt",)),
+    ("Bacon", ("bacon",)),
+    ("All-beef", ("all-beef", "all beef", "beef frank")),
+    ("Vegan", ("vegan", "plant-based", "plant based")),
+)
 
 
 @dataclass(frozen=True)
@@ -76,6 +93,37 @@ def extract_menu_excerpt(content: str, *, content_type: str = "") -> str | None:
     if not normalized:
         return None
     return normalized[:MAX_MENU_EXCERPT_CHARS]
+
+
+def extract_menu_highlights(excerpt: str | None) -> list[str]:
+    normalized = _normalize_menu_excerpt(excerpt)
+    if not normalized:
+        return []
+
+    return list(dict.fromkeys([*_price_highlights(normalized), *_term_highlights(normalized)]))[
+        :MAX_MENU_HIGHLIGHTS
+    ]
+
+
+def _normalize_menu_excerpt(excerpt: str | None) -> str:
+    if excerpt is None:
+        return ""
+    return " ".join(excerpt.split()).lower()
+
+
+def _price_highlights(normalized: str) -> list[str]:
+    price_match = _PRICE_PATTERN.search(normalized)
+    if price_match is None:
+        return []
+    return [price_match.group(0).replace(" ", "")]
+
+
+def _term_highlights(normalized: str) -> list[str]:
+    return [
+        label
+        for label, terms in _MENU_HIGHLIGHT_RULES
+        if any(term in normalized for term in terms)
+    ]
 
 
 class _MenuTextParser(HTMLParser):

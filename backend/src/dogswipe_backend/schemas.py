@@ -13,6 +13,8 @@ from pydantic import (
     model_validator,
 )
 
+from .menu import extract_menu_highlights
+
 ReviewNote = Annotated[
     str,
     StringConstraints(strip_whitespace=True, min_length=1, max_length=240),
@@ -56,6 +58,11 @@ class HotdogProfile(BaseModel):
     def walking_time_minutes(self) -> int:
         minutes = round((self.distance_miles / WALKING_SPEED_MILES_PER_HOUR) * 60)
         return max(1, minutes)
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def menu_highlights(self) -> list[str]:
+        return extract_menu_highlights(self.menu_excerpt)
 
 
 class DiscoveryResponse(BaseModel):

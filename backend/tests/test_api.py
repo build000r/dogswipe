@@ -13,7 +13,10 @@ class FakeHTTPMenuIngestor:
 
     async def ingest(self, url: str) -> MenuIngestionResult:
         self.urls.append(url)
-        return MenuIngestionResult(status="ok", excerpt="Admin refreshed menu.")
+        return MenuIngestionResult(
+            status="ok",
+            excerpt="Admin refreshed menu with chili and onion.",
+        )
 
 
 @pytest.mark.asyncio
@@ -476,7 +479,8 @@ async def test_admin_can_refresh_stale_vendor_menus(
     assert payload["failed_count"] == 0
     assert [profile["id"] for profile in payload["profiles"]] == [profile_id]
     assert payload["profiles"][0]["menu_status"] == "ok"
-    assert payload["profiles"][0]["menu_excerpt"] == "Admin refreshed menu."
+    assert payload["profiles"][0]["menu_excerpt"] == "Admin refreshed menu with chili and onion."
+    assert payload["profiles"][0]["menu_highlights"] == ["Chili", "Onion"]
 
 
 @pytest.mark.asyncio

@@ -3,7 +3,7 @@ from __future__ import annotations
 import httpx
 import pytest
 
-from dogswipe_backend.menu import HTTPMenuIngestor, extract_menu_excerpt
+from dogswipe_backend.menu import HTTPMenuIngestor, extract_menu_excerpt, extract_menu_highlights
 
 
 def test_extract_menu_excerpt_strips_html_noise() -> None:
@@ -22,6 +22,19 @@ def test_extract_menu_excerpt_strips_html_noise() -> None:
     )
 
     assert excerpt == "Boardwalk Dogs Classic snap, mustard, relish, and onion."
+
+
+def test_extract_menu_highlights_returns_short_food_signals() -> None:
+    highlights = extract_menu_highlights(
+        "Boardwalk Snap $6.25 classic dog, mustard, relish, onion, and celery salt."
+    )
+
+    assert highlights == ["$6.25", "Classic", "Mustard", "Relish"]
+
+
+def test_extract_menu_highlights_handles_empty_snapshots() -> None:
+    assert extract_menu_highlights(None) == []
+    assert extract_menu_highlights("   ") == []
 
 
 @pytest.mark.asyncio

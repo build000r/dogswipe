@@ -7,8 +7,8 @@ Last verified: 2026-05-05
 | Swift package tests | `make swift-test` | 30 tests passed |
 | iOS smoke build | `xcodebuild -quiet -project apps/ios/DogSwipe/DogSwipe.xcodeproj -scheme DogSwipe -destination 'generic/platform=iOS' build` | passed |
 | iOS unit tests | `xcodebuild -quiet -project apps/ios/DogSwipe/DogSwipe.xcodeproj -scheme DogSwipe -destination 'platform=iOS Simulator,id=<available iPhone simulator UDID>' test` | passed |
-| Backend API tests | `make backend-test` | 68 tests passed |
-| Backend coverage | `make coverage` | 89.67% total coverage |
+| Backend API tests | `make backend-test` | 70 tests passed |
+| Backend coverage | `make coverage` | 89.63% total coverage |
 | Clean backend install | `python3.12 -m venv /tmp/... && pip install -e 'backend[test]'` | passed |
 | Backend lint | `make lint` | passed |
 | Backend typecheck | `make typecheck` | passed |
@@ -42,6 +42,7 @@ Last verified: 2026-05-05
 - Hotdog profile payloads include deterministic walking-time estimates derived from resolved distance; Swift decodes the field and falls back to local distance-based estimates for offline samples.
 - iOS discovery can pass a CoreLocation coordinate to the backend, and vendor submissions can include optional hotdog coordinates for dynamic response distances.
 - Hotdog profiles can include pickup address text, `DogSwipeCore` derives Apple Maps directions URLs from coordinates or address text, and iOS discovery/matches expose directions actions.
+- Hotdog profile payloads derive short `menu_highlights` from bounded menu snapshots; Swift decodes the array and iOS discovery/vendor summaries display those menu signals.
 - iOS native sign-in stores SPAPS access/refresh JWTs in Keychain, refreshes sessions, and injects only the access bearer into the shared API client.
 - iOS registers `dogswipe://auth`, parses returned magic-link tokens, and verifies deep links through `AuthSessionStore`.
 - `POST /v1/vendor/submissions` stores authenticated vendor hotdog listings as `pending_review`; `GET`/`PUT /v1/vendor/submissions` are user-scoped and the iOS Vendor tab can revise change-requested listings.

@@ -37,6 +37,7 @@ flowchart LR
   preferences["CravingPreferences contract"]
   vendor["VendorSubmission contract"]
   menu["MenuSnapshot contract"]
+  highlights["Menu highlights"]
   admin["AdminReview contract"]
   api["FastAPI backend"]
   worker["Menu refresh worker"]
@@ -63,6 +64,7 @@ flowchart LR
   core --> preferences
   core --> vendor
   core --> menu
+  menu --> highlights
   core --> admin
   client --> api
   keychain --> client
@@ -70,6 +72,7 @@ flowchart LR
   api --> preferences
   api --> vendor
   api --> menu
+  api --> highlights
   worker --> menu
   worker --> db
   api --> admin
@@ -138,13 +141,13 @@ sequenceDiagram
   API->>Menu: Fetch bounded HTML/text snapshot
   Menu-->>API: Menu text or fetch error
   API->>DB: Store menu_status, menu_excerpt, and menu_checked_at
-  API-->>App: Menu ingestion response
+  API-->>App: Menu ingestion response with menu_highlights
   App->>API: Admin refresh stale vendor menus
   API->>DB: Load stale vendor-owned menu candidates
   API->>Menu: Fetch bounded HTML/text snapshots
   Menu-->>API: Menu text or fetch errors
   API->>DB: Store refreshed menu statuses and timestamps
-  API-->>App: Checked/refreshed/failed counts and updated profiles
+  API-->>App: Checked/refreshed/failed counts and highlighted profiles
   Worker->>Worker: Wake on configured interval when enabled
   Worker->>DB: Load stale vendor-owned menu candidates
   Worker->>Menu: Fetch bounded HTML/text snapshots

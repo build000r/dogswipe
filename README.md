@@ -20,7 +20,7 @@ The repo is intentionally split into three testable surfaces:
 
 | Surface | Implemented behavior |
 | --- | --- |
-| Discovery | `GET /v1/discovery` returns available `HotdogProfile` records filtered by the user's saved max-distance/classic preferences and ranked by crave/distance fit; optional `latitude`/`longitude` query params recompute card distance from the user's current location; responses include deterministic walking-time estimates, and iOS cards can open Apple Maps directions from coordinates or address text. |
+| Discovery | `GET /v1/discovery` returns available `HotdogProfile` records filtered by the user's saved max-distance/classic preferences and ranked by crave/distance fit; optional `latitude`/`longitude` query params recompute card distance from the user's current location; responses include deterministic walking-time estimates and menu highlights, and iOS cards can open Apple Maps directions from coordinates or address text. |
 | Swipe state | Swift package owns deterministic deck advancement, undo, and positive-signal tracking. |
 | Matches | `POST /v1/swipes` records likes/passes/super-likes; `GET /v1/matches` returns high-crave liked hotdogs. |
 | Preferences | `GET /v1/preferences` and `PUT /v1/preferences` persist user-scoped craving controls under the same backend-owned identity boundary; the backend discovery route and Swift local deck scorer both consume the same contract. |
@@ -48,6 +48,7 @@ Hotdog profile payloads use this snake_case backend contract:
   "menu_url": null,
   "menu_status": null,
   "menu_excerpt": null,
+  "menu_highlights": [],
   "menu_checked_at": null,
   "media_alt_text": null,
   "crave_score": 0.91,
@@ -99,7 +100,7 @@ Production deploy artifacts live in [deploy/README.md](deploy/README.md). The re
 
 The iOS target reads `DOGSWIPE_API_BASE_URL` from its Info.plist and defaults to `http://localhost:8000`, which works for simulator-local backend development. It also reads `DOGSWIPE_SPAPS_API_BASE_URL`, `DOGSWIPE_SPAPS_PUBLISHABLE_KEY`, and `DOGSWIPE_SPAPS_ORIGIN` for native magic-link sign-in. For auth-enabled environments, configure a `spaps_pub_...` publishable key and matching origin; the app requests/verifies magic links through SPAPS, registers the `dogswipe://auth` URL scheme for link returns, stores access/refresh JWTs in Keychain, and injects only the access bearer through `DogSwipeAPIClient`. Discovery can request iOS when-in-use location permission and pass current coordinates to the backend so response distances reflect the user position. Secret SPAPS API keys remain server-only.
 
-Menu snapshots are intentionally bounded. Vendors and admins can refresh menu URLs on demand, and production can optionally enable `DOGSWIPE_MENU_REFRESH_ENABLED=true` to run the same stale-menu refresh in the API process with `DOGSWIPE_MENU_REFRESH_INTERVAL_SECONDS`, `DOGSWIPE_MENU_REFRESH_BATCH_SIZE`, and `DOGSWIPE_MENU_REFRESH_MAX_AGE_HOURS`.
+Menu snapshots are intentionally bounded. Vendors and admins can refresh menu URLs on demand, and production can optionally enable `DOGSWIPE_MENU_REFRESH_ENABLED=true` to run the same stale-menu refresh in the API process with `DOGSWIPE_MENU_REFRESH_INTERVAL_SECONDS`, `DOGSWIPE_MENU_REFRESH_BATCH_SIZE`, and `DOGSWIPE_MENU_REFRESH_MAX_AGE_HOURS`. Discovery responses derive short `menu_highlights` from the latest snapshot excerpt so cards can surface menu signals without storing a separate crawler index.
 
 ## Verification Gates
 
@@ -130,13 +131,13 @@ The placement decision is `NEW REPO`: this app owns a durable product boundary r
 
 ## Current Scope
 
-The current app can load local hotdog profiles, render cards with a local product visual when no image URL is available, request and verify SPAPS magic links including native `dogswipe://auth` returns, store access/refresh JWTs in Keychain, record swipes, persist shared craving controls that filter/rank discovery, use CoreLocation-backed coordinates for live distance ranking, show deterministic walking-time estimates, open Apple Maps directions from coordinates or pickup address text, submit and revise vendor-owned hotdog listings, refresh bounded menu URL snapshots as a vendor, refresh stale vendor menu snapshots as an admin or optional background worker, approve/reject/request edits as an admin, and fetch matches through the shared Swift API client. Backend migrations are managed through Alembic up to `0008`, local Docker development can auto-create and seed the starter data with explicit local-only flags, CI enforces the core quality gates, and production deploy artifacts are ready for a concrete skillbox target.
+The current app can load local hotdog profiles, render cards with a local product visual when no image URL is available, request and verify SPAPS magic links including native `dogswipe://auth` returns, store access/refresh JWTs in Keychain, record swipes, persist shared craving controls that filter/rank discovery, use CoreLocation-backed coordinates for live distance ranking, show deterministic walking-time estimates, surface menu highlights from bounded snapshots, open Apple Maps directions from coordinates or pickup address text, submit and revise vendor-owned hotdog listings, refresh bounded menu URL snapshots as a vendor, refresh stale vendor menu snapshots as an admin or optional background worker, approve/reject/request edits as an admin, and fetch matches through the shared Swift API client. Backend migrations are managed through Alembic up to `0008`, local Docker development can auto-create and seed the starter data with explicit local-only flags, CI enforces the core quality gates, and production deploy artifacts are ready for a concrete skillbox target.
 
 ## Known Limits
 
 - Live deployment is blocked until a skillbox deploy overlay names a host, service, production origin, env source, deploy root, and health URL.
 - Final visual parity with the original reference image remains blocked because the image is not available in this context.
-- Full menu indexing/enrichment, universal-link polish, provider-backed address geocoding/live routing, and App Store/TestFlight release assets are future slices.
+- Crawler-based menu indexing, universal-link polish, provider-backed address geocoding/live routing, and App Store/TestFlight release assets are future slices.
 
 ## About Contributions
 

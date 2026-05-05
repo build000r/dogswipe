@@ -48,6 +48,7 @@ make backend-test
   "menu_url": null,
   "menu_status": null,
   "menu_excerpt": null,
+  "menu_highlights": [],
   "menu_checked_at": null,
   "media_alt_text": null,
   "crave_score": 0.91,
@@ -101,7 +102,7 @@ Client-supplied `user_id` fields are rejected here too.
 
 `GET /v1/vendor/submissions` returns only submissions owned by the authenticated/local user. `PUT /v1/vendor/submissions/{id}` lets that owner revise `pending_review` or `changes_requested` listings and returns the listing to `pending_review`. Client-supplied `user_id` fields are rejected.
 
-`POST /v1/vendor/submissions/{id}/ingest-menu` is owner-scoped. If the listing has a `menu_url`, the backend performs a bounded HTTP(S) fetch, extracts a short text snapshot from HTML or plain text, and stores `menu_status`, `menu_excerpt`, and `menu_checked_at` on the profile. Supported status values are `ok`, `missing_url`, `invalid_url`, `fetch_failed`, and `empty`. Revising a listing clears any stale menu snapshot fields.
+`POST /v1/vendor/submissions/{id}/ingest-menu` is owner-scoped. If the listing has a `menu_url`, the backend performs a bounded HTTP(S) fetch, extracts a short text snapshot from HTML or plain text, and stores `menu_status`, `menu_excerpt`, and `menu_checked_at` on the profile. Response payloads also derive short `menu_highlights` from the latest excerpt for card display. Supported status values are `ok`, `missing_url`, `invalid_url`, `fetch_failed`, and `empty`. Revising a listing clears any stale menu snapshot fields.
 
 ## Admin Review Contract
 

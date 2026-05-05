@@ -16,6 +16,7 @@ public struct HotdogProfile: Identifiable, Codable, Equatable, Sendable {
     public let menuURL: URL?
     public let menuStatus: String?
     public let menuExcerpt: String?
+    public let menuHighlights: [String]?
     public let menuCheckedAt: String?
     public let mediaAltText: String?
     public let craveScore: Double
@@ -40,6 +41,7 @@ public struct HotdogProfile: Identifiable, Codable, Equatable, Sendable {
         menuURL: URL? = nil,
         menuStatus: String? = nil,
         menuExcerpt: String? = nil,
+        menuHighlights: [String]? = nil,
         menuCheckedAt: String? = nil,
         mediaAltText: String? = nil,
         craveScore: Double,
@@ -63,6 +65,7 @@ public struct HotdogProfile: Identifiable, Codable, Equatable, Sendable {
         self.menuURL = menuURL
         self.menuStatus = menuStatus
         self.menuExcerpt = menuExcerpt
+        self.menuHighlights = menuHighlights
         self.menuCheckedAt = menuCheckedAt
         self.mediaAltText = mediaAltText
         self.craveScore = craveScore
@@ -82,6 +85,10 @@ public struct HotdogProfile: Identifiable, Codable, Equatable, Sendable {
     public var walkingTimeLabel: String {
         let minutes = walkingTimeMinutes ?? max(1, Int(((distanceMiles / 3) * 60).rounded()))
         return "\(minutes) min"
+    }
+
+    public var menuHighlightLabels: [String] {
+        menuHighlights ?? []
     }
 
     public var directionsURL: URL? {
@@ -120,6 +127,7 @@ public struct HotdogProfile: Identifiable, Codable, Equatable, Sendable {
         case menuURL = "menu_url"
         case menuStatus = "menu_status"
         case menuExcerpt = "menu_excerpt"
+        case menuHighlights = "menu_highlights"
         case menuCheckedAt = "menu_checked_at"
         case mediaAltText = "media_alt_text"
         case craveScore = "crave_score"
@@ -339,6 +347,7 @@ public extension HotdogProfile {
             longitude: -79.3843,
             vendorName: "Franklin Cart",
             addressText: "100 Queen St W, Toronto, ON",
+            menuHighlights: ["Chili", "Mustard", "Onion"],
             craveScore: 0.91
         ),
         HotdogProfile(
@@ -352,6 +361,7 @@ public extension HotdogProfile {
             longitude: -79.38,
             vendorName: "Bun Signal",
             addressText: "200 King St W, Toronto, ON",
+            menuHighlights: ["Kimchi", "Spicy", "Sesame"],
             craveScore: 0.88
         ),
         HotdogProfile(

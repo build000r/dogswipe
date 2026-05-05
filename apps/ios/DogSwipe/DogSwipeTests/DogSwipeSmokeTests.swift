@@ -276,6 +276,7 @@ final class DogSwipeSmokeTests: XCTestCase {
         let refreshed = makeMenuSnapshotProfile(
             menuStatus: "ok",
             menuExcerpt: "Boardwalk Snap - mustard, relish, and onion.",
+            menuHighlights: ["Mustard", "Relish", "Onion"],
             menuCheckedAt: "2026-05-05T15:45:00Z"
         )
         http.responses = [
@@ -296,6 +297,7 @@ final class DogSwipeSmokeTests: XCTestCase {
             store.submissions.first?.menuExcerpt,
             "Boardwalk Snap - mustard, relish, and onion."
         )
+        XCTAssertEqual(store.submissions.first?.menuHighlightLabels, ["Mustard", "Relish", "Onion"])
         XCTAssertEqual(store.message, "Boardwalk Snap menu refreshed.")
         XCTAssertEqual(http.requests.map { $0.url?.path }, [
             "/v1/vendor/submissions",
@@ -608,6 +610,7 @@ final class DogSwipeSmokeTests: XCTestCase {
     private func makeMenuSnapshotProfile(
         menuStatus: String? = nil,
         menuExcerpt: String? = nil,
+        menuHighlights: [String]? = nil,
         menuCheckedAt: String? = nil
     ) -> HotdogProfile {
         HotdogProfile(
@@ -621,6 +624,7 @@ final class DogSwipeSmokeTests: XCTestCase {
             menuURL: URL(string: "https://boardwalk.example.com/menu"),
             menuStatus: menuStatus,
             menuExcerpt: menuExcerpt,
+            menuHighlights: menuHighlights,
             menuCheckedAt: menuCheckedAt,
             craveScore: 0.5,
             availabilityStatus: .pendingReview

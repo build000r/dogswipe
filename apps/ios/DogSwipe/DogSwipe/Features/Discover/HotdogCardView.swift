@@ -24,6 +24,20 @@ struct HotdogCardView: View {
                         .lineLimit(1)
                 }
 
+                if !profile.menuHighlightLabels.isEmpty {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: .dsSpace2) {
+                            Image(systemName: "menucard")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(Color.dsPrimary)
+
+                            ForEach(profile.menuHighlightLabels.prefix(4), id: \.self) { highlight in
+                                menuHighlightChip(highlight)
+                            }
+                        }
+                    }
+                }
+
                 Divider()
 
                 HStack(spacing: .dsSpace4) {
@@ -118,6 +132,16 @@ struct HotdogCardView: View {
                 .foregroundStyle(Color.dsMuted)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func menuHighlightChip(_ value: String) -> some View {
+        Text(value)
+            .font(.caption.weight(.semibold))
+            .foregroundStyle(Color.dsInk)
+            .lineLimit(1)
+            .padding(.horizontal, .dsSpace2)
+            .padding(.vertical, .dsSpace1)
+            .background(Color.dsPrimarySoft, in: Capsule())
     }
 }
 

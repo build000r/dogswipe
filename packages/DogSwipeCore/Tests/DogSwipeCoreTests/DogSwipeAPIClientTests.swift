@@ -39,6 +39,7 @@ final class DogSwipeAPIClientTests: XCTestCase {
               "address_text": "100 Queen St W, Toronto, ON",
               "image_url": null,
               "menu_url": "https://franklin.example.com/menu",
+              "menu_highlights": ["$6.50", "Chili", "Mustard", "Onion"],
               "media_alt_text": "Coney hotdog with chili and onion",
               "crave_score": 0.91,
               "availability_status": "available",
@@ -64,6 +65,7 @@ final class DogSwipeAPIClientTests: XCTestCase {
                 == true
         )
         XCTAssertEqual(profiles.first?.menuURL?.absoluteString, "https://franklin.example.com/menu")
+        XCTAssertEqual(profiles.first?.menuHighlightLabels, ["$6.50", "Chili", "Mustard", "Onion"])
         XCTAssertEqual(profiles.first?.mediaAltText, "Coney hotdog with chili and onion")
         XCTAssertEqual(http.requests.first?.url?.path, "/v1/discovery")
         XCTAssertEqual(http.requests.first?.url?.query, "limit=10")

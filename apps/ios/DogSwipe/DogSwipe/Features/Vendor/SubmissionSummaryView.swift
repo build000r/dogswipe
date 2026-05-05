@@ -48,6 +48,13 @@ struct SubmissionSummaryView: View {
                     .foregroundStyle(Color.dsMuted)
             }
 
+            if !profile.menuHighlightLabels.isEmpty {
+                Label(profile.menuHighlightLabels.joined(separator: " / "), systemImage: "menucard")
+                    .font(.caption)
+                    .foregroundStyle(Color.dsMuted)
+                    .lineLimit(1)
+            }
+
             if let menuExcerpt = profile.menuExcerpt, !menuExcerpt.isEmpty {
                 Text(menuExcerpt)
                     .font(.caption)
