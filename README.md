@@ -2,6 +2,8 @@
 
 DogSwipe is a production-oriented monorepo for a swipe-first iOS dog discovery app backed by a Sweet Potato/SPAPS-aligned FastAPI service.
 
+Public repo: <https://github.com/build000r/dogswipe>
+
 The repo is intentionally split into three testable surfaces:
 
 | Surface | Path | Purpose |
