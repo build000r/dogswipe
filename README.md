@@ -1,6 +1,6 @@
 # DogSwipe
 
-DogSwipe is a production-oriented monorepo for a swipe-first iOS dog discovery app backed by a Sweet Potato/SPAPS-aligned FastAPI service.
+DogSwipe is a production-oriented monorepo for a swipe-first iOS app for finding local hotdogs, backed by a Sweet Potato/SPAPS-aligned FastAPI service.
 
 Public repo: <https://github.com/build000r/dogswipe>
 
@@ -59,7 +59,7 @@ Target gates for this repo:
 
 ## Build Vs Clone Decision
 
-The placement decision is `NEW REPO`: this app owns a durable product boundary rather than fitting cleanly inside `htma_server` or `sweet-potato`. The build strategy is `BORROW + BUILD`: borrow the SPAPS/FastAPI quickstart pattern from `../htma_server` and `../sweet-potato`, build the app-specific iOS UX and dog discovery domain directly in this repo.
+The placement decision is `NEW REPO`: this app owns a durable product boundary rather than fitting cleanly inside `htma_server` or `sweet-potato`. The build strategy is `BORROW + BUILD`: borrow the SPAPS/FastAPI quickstart pattern from `../htma_server` and `../sweet-potato`, build the app-specific iOS UX and local hotdog discovery domain directly in this repo.
 
 ## Current Scope
 

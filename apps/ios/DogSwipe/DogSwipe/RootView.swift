@@ -5,7 +5,7 @@ struct RootView: View {
         TabView {
             DiscoverView()
                 .tabItem {
-                    Label("Discover", systemImage: "pawprint.fill")
+                    Label("Discover", systemImage: "fork.knife.circle.fill")
                 }
 
             MatchesView()

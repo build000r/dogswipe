@@ -5,12 +5,12 @@ from collections.abc import Iterable
 from sqlalchemy import Select, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .models import DogProfileRecord, SwipeEventRecord
-from .schemas import DogProfile, SwipeDecision
+from .models import HotdogProfileRecord, SwipeEventRecord
+from .schemas import HotdogProfile, SwipeDecision
 
 
-class DogRepository:
-    async def list_available_profiles(self, *, limit: int = 20) -> list[DogProfile]:
+class HotdogRepository:
+    async def list_available_profiles(self, *, limit: int = 20) -> list[HotdogProfile]:
         raise NotImplementedError
 
     async def record_swipe(
@@ -22,19 +22,19 @@ class DogRepository:
     ) -> bool:
         raise NotImplementedError
 
-    async def list_matches(self, *, user_id: str) -> list[DogProfile]:
+    async def list_matches(self, *, user_id: str) -> list[HotdogProfile]:
         raise NotImplementedError
 
 
-class SqlAlchemyDogRepository(DogRepository):
+class SqlAlchemyHotdogRepository(HotdogRepository):
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
-    async def list_available_profiles(self, *, limit: int = 20) -> list[DogProfile]:
+    async def list_available_profiles(self, *, limit: int = 20) -> list[HotdogProfile]:
         statement = (
-            select(DogProfileRecord)
-            .where(DogProfileRecord.adoption_status == "available")
-            .order_by(DogProfileRecord.compatibility_score.desc(), DogProfileRecord.name.asc())
+            select(HotdogProfileRecord)
+            .where(HotdogProfileRecord.availability_status == "available")
+            .order_by(HotdogProfileRecord.crave_score.desc(), HotdogProfileRecord.name.asc())
             .limit(limit)
         )
         return self._profiles(await self.session.scalars(statement))
@@ -46,7 +46,7 @@ class SqlAlchemyDogRepository(DogRepository):
         profile_id: str,
         decision: SwipeDecision,
     ) -> bool:
-        profile = await self.session.get(DogProfileRecord, profile_id)
+        profile = await self.session.get(HotdogProfileRecord, profile_id)
         if profile is None:
             return False
         self.session.add(
@@ -54,10 +54,10 @@ class SqlAlchemyDogRepository(DogRepository):
         )
         await self.session.flush()
         return decision in {SwipeDecision.like, SwipeDecision.super_like} and (
-            profile.compatibility_score >= 0.72
+            profile.crave_score >= 0.72
         )
 
-    async def list_matches(self, *, user_id: str) -> list[DogProfile]:
+    async def list_matches(self, *, user_id: str) -> list[HotdogProfile]:
         liked_profile_ids = (
             select(SwipeEventRecord.profile_id)
             .where(SwipeEventRecord.user_id == user_id)
@@ -67,14 +67,14 @@ class SqlAlchemyDogRepository(DogRepository):
                 )
             )
         )
-        statement: Select[tuple[DogProfileRecord]] = (
-            select(DogProfileRecord)
-            .where(DogProfileRecord.id.in_(liked_profile_ids))
-            .where(DogProfileRecord.compatibility_score >= 0.72)
-            .order_by(DogProfileRecord.compatibility_score.desc(), DogProfileRecord.name.asc())
+        statement: Select[tuple[HotdogProfileRecord]] = (
+            select(HotdogProfileRecord)
+            .where(HotdogProfileRecord.id.in_(liked_profile_ids))
+            .where(HotdogProfileRecord.crave_score >= 0.72)
+            .order_by(HotdogProfileRecord.crave_score.desc(), HotdogProfileRecord.name.asc())
         )
         return self._profiles(await self.session.scalars(statement))
 
     @staticmethod
-    def _profiles(records: Iterable[DogProfileRecord]) -> list[DogProfile]:
-        return [DogProfile.model_validate(record) for record in records]
+    def _profiles(records: Iterable[HotdogProfileRecord]) -> list[HotdogProfile]:
+        return [HotdogProfile.model_validate(record) for record in records]

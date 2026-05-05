@@ -16,21 +16,21 @@ struct MatchesView: View {
                     ProgressView()
                         .tint(.dsPrimary)
                 } else if viewModel.matches.isEmpty {
-                    ContentUnavailableView("No matches yet", systemImage: "heart")
+                    ContentUnavailableView("No saved bites yet", systemImage: "heart")
                 } else {
                     List(viewModel.matches) { profile in
                         HStack(spacing: .dsSpace3) {
-                            Image(systemName: "pawprint.fill")
+                            Image(systemName: "fork.knife.circle.fill")
                                 .foregroundStyle(Color.dsPrimary)
                             VStack(alignment: .leading, spacing: .dsSpace1) {
                                 Text(profile.name)
                                     .font(.headline)
-                                Text(profile.shelterName)
+                                Text(profile.vendorName)
                                     .font(.subheadline)
                                     .foregroundStyle(Color.dsMuted)
                             }
                             Spacer()
-                            Text("\(Int(profile.compatibilityScore * 100))%")
+                            Text(profile.priceLabel)
                                 .font(.headline.monospacedDigit())
                                 .foregroundStyle(Color.dsPrimary)
                         }

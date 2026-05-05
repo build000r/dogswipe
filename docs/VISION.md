@@ -1,22 +1,22 @@
 # DogSwipe Vision
 
-DogSwipe should feel like the fastest humane way to find the right dog, not a catalog with a dating-app skin.
+DogSwipe should feel like the fastest way to find the right local hotdog, not a restaurant directory with a dating-app skin.
 
 ## Product Thesis
 
-Adoption discovery breaks down because profiles are scattered, compatibility is hard to compare, and shelters cannot tell which interest is serious. DogSwipe narrows that loop: people swipe through high-signal dog cards, the app explains compatibility, and the backend records preference signals that can mature into shelter workflows.
+Local food discovery breaks down because menus are scattered, craving fit is hard to compare, and nearby vendors are usually buried in generic map results. DogSwipe narrows that loop: people swipe through high-signal hotdog cards, the app explains price/distance/crave fit, and the backend records preference signals that can mature into vendor and route workflows.
 
 ## Minimum Winning Slice
 
 The first production slice must prove three things:
 
-1. A user can review a dog profile, understand fit, and make a swipe decision quickly.
+1. A user can review a local hotdog profile, understand price/distance/crave fit, and make a swipe decision quickly.
 2. Swipe state is deterministic, undoable, and testable outside the UI.
 3. A SPAPS-aligned backend can expose discovery, swipe, and match endpoints without inventing a parallel auth stack.
 
 ## Non-Goals For The First Slice
 
-- Shelter admin tooling
+- Vendor admin tooling
 - Payments or booking
 - Real-time chat
 - Recommendation ML

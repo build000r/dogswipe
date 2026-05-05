@@ -2,8 +2,8 @@ import DogSwipeCore
 import Foundation
 import SwiftUI
 
-struct DogCardView: View {
-    let profile: DogProfile
+struct HotdogCardView: View {
+    let profile: HotdogProfile
 
     var body: some View {
         VStack(alignment: .leading, spacing: .dsSpace4) {
@@ -11,7 +11,7 @@ struct DogCardView: View {
 
             VStack(alignment: .leading, spacing: .dsSpace3) {
                 titleRow
-                Text(profile.temperament)
+                Text(profile.signatureNotes)
                     .font(.body)
                     .foregroundStyle(Color.dsMuted)
                     .lineLimit(2)
@@ -19,9 +19,9 @@ struct DogCardView: View {
                 Divider()
 
                 HStack(spacing: .dsSpace4) {
-                    metric(label: "Age", value: profile.ageLabel)
+                    metric(label: "Price", value: profile.priceLabel)
                     metric(label: "Distance", value: String(format: "%.1f mi", profile.distanceMiles))
-                    metric(label: "Fit", value: "\(Int(profile.compatibilityScore * 100))%")
+                    metric(label: "Crave", value: "\(Int(profile.craveScore * 100))%")
                 }
             }
             .padding(.horizontal, .dsSpace5)
@@ -53,7 +53,7 @@ struct DogCardView: View {
             VStack {
                 Spacer()
                 HStack {
-                    Label(profile.shelterName, systemImage: "mappin.and.ellipse")
+                    Label(profile.vendorName, systemImage: "mappin.and.ellipse")
                         .font(.subheadline.weight(.medium))
                         .foregroundStyle(Color.dsSurface)
                         .padding(.horizontal, .dsSpace3)
@@ -70,7 +70,7 @@ struct DogCardView: View {
     private var fallbackHero: some View {
         ZStack {
             Color.dsPrimarySoft
-            Image(systemName: "pawprint.fill")
+            Image(systemName: "fork.knife.circle.fill")
                 .font(.largeTitle)
                 .foregroundStyle(Color.dsPrimary)
         }
@@ -82,7 +82,7 @@ struct DogCardView: View {
                 Text(profile.name)
                     .font(.title.weight(.semibold))
                     .foregroundStyle(Color.dsInk)
-                Text(profile.breed)
+                Text(profile.style)
                     .font(.subheadline)
                     .foregroundStyle(Color.dsMuted)
             }
@@ -104,7 +104,7 @@ struct DogCardView: View {
 }
 
 #Preview {
-    DogCardView(profile: DogProfile.samples[0])
+    HotdogCardView(profile: HotdogProfile.samples[0])
         .padding()
         .dsPageBackground()
 }

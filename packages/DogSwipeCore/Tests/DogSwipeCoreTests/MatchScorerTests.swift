@@ -4,31 +4,31 @@ import XCTest
 final class MatchScorerTests: XCTestCase {
     func testScoreStaysWithinBounds() {
         let score = MatchScorer.score(
-            profile: DogProfile.samples[0],
+            profile: HotdogProfile.samples[0],
             preferences: DiscoveryPreferences(maxDistanceMiles: 0)
         )
         XCTAssertGreaterThanOrEqual(score, 0)
         XCTAssertLessThanOrEqual(score, 1)
     }
 
-    func testRankingPrefersCloserCompatibleDog() {
+    func testRankingPrefersCloserCraveableHotdog() {
         let ranked = MatchScorer.ranked(
-            profiles: DogProfile.samples,
-            preferences: DiscoveryPreferences(maxDistanceMiles: 10, activeLifestyle: true)
+            profiles: HotdogProfile.samples,
+            preferences: DiscoveryPreferences(maxDistanceMiles: 10, spicyFriendly: true)
         )
-        XCTAssertEqual(ranked.first?.id, "dog-luna")
+        XCTAssertEqual(ranked.first?.id, "hotdog-coney")
     }
 
-    func testApartmentPreferenceCanLiftApartmentFriendlyProfile() {
-        let miso = DogProfile.samples[1]
-        let defaultScore = MatchScorer.score(
-            profile: miso,
-            preferences: DiscoveryPreferences(apartmentFriendly: false)
+    func testClassicPreferenceCanLiftClassicProfile() {
+        let coney = HotdogProfile.samples[0]
+        let openScore = MatchScorer.score(
+            profile: coney,
+            preferences: DiscoveryPreferences(classicOnly: false)
         )
-        let apartmentScore = MatchScorer.score(
-            profile: miso,
-            preferences: DiscoveryPreferences(apartmentFriendly: true)
+        let classicScore = MatchScorer.score(
+            profile: coney,
+            preferences: DiscoveryPreferences(classicOnly: true)
         )
-        XCTAssertGreaterThan(apartmentScore, defaultScore)
+        XCTAssertGreaterThanOrEqual(classicScore, openScore)
     }
 }

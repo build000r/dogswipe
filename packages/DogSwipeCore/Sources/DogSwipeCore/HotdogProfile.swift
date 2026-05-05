@@ -1,0 +1,125 @@
+import Foundation
+
+public struct HotdogProfile: Identifiable, Codable, Equatable, Sendable {
+    public let id: String
+    public let name: String
+    public let style: String
+    public let priceDollars: Double
+    public let signatureNotes: String
+    public let distanceMiles: Double
+    public let vendorName: String
+    public let imageURL: URL?
+    public let craveScore: Double
+    public let availabilityStatus: AvailabilityStatus
+
+    public init(
+        id: String,
+        name: String,
+        style: String,
+        priceDollars: Double,
+        signatureNotes: String,
+        distanceMiles: Double,
+        vendorName: String,
+        imageURL: URL? = nil,
+        craveScore: Double,
+        availabilityStatus: AvailabilityStatus = .available
+    ) {
+        self.id = id
+        self.name = name
+        self.style = style
+        self.priceDollars = priceDollars
+        self.signatureNotes = signatureNotes
+        self.distanceMiles = distanceMiles
+        self.vendorName = vendorName
+        self.imageURL = imageURL
+        self.craveScore = craveScore
+        self.availabilityStatus = availabilityStatus
+    }
+
+    public var priceLabel: String {
+        if priceDollars.rounded() == priceDollars {
+            return "$\(Int(priceDollars))"
+        }
+        return String(format: "$%.2f", priceDollars)
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case name
+        case style
+        case priceDollars = "price_dollars"
+        case signatureNotes = "signature_notes"
+        case distanceMiles = "distance_miles"
+        case vendorName = "vendor_name"
+        case imageURL = "image_url"
+        case craveScore = "crave_score"
+        case availabilityStatus = "availability_status"
+    }
+}
+
+public enum AvailabilityStatus: String, Codable, Equatable, Sendable {
+    case available
+    case limited
+    case soldOut = "sold_out"
+}
+
+public struct DiscoveryResponse: Codable, Equatable, Sendable {
+    public let profiles: [HotdogProfile]
+
+    public init(profiles: [HotdogProfile]) {
+        self.profiles = profiles
+    }
+}
+
+public struct MatchResponse: Codable, Equatable, Sendable {
+    public let matches: [HotdogProfile]
+
+    public init(matches: [HotdogProfile]) {
+        self.matches = matches
+    }
+}
+
+public extension HotdogProfile {
+    static let samples: [HotdogProfile] = [
+        HotdogProfile(
+            id: "hotdog-coney",
+            name: "Coney Classic",
+            style: "Chili dog",
+            priceDollars: 6.5,
+            signatureNotes: "Beef frank, snap casing, chili, onion, and yellow mustard.",
+            distanceMiles: 1.2,
+            vendorName: "Franklin Cart",
+            craveScore: 0.91
+        ),
+        HotdogProfile(
+            id: "hotdog-kimchi",
+            name: "Kimchi Crunch",
+            style: "Korean street dog",
+            priceDollars: 8.75,
+            signatureNotes: "Gochujang mayo, kimchi, scallion, and sesame crunch.",
+            distanceMiles: 2.4,
+            vendorName: "Bun Signal",
+            craveScore: 0.88
+        ),
+        HotdogProfile(
+            id: "hotdog-chicago",
+            name: "Garden Snap",
+            style: "Chicago dog",
+            priceDollars: 7.25,
+            signatureNotes: "Sport peppers, relish, tomato, pickle spear, and celery salt.",
+            distanceMiles: 3.1,
+            vendorName: "Northside Stand",
+            craveScore: 0.82
+        ),
+        HotdogProfile(
+            id: "hotdog-nightcap",
+            name: "Nightcap Melt",
+            style: "Chili cheese dog",
+            priceDollars: 9,
+            signatureNotes: "Sharp cheddar, late-night chili, grilled onions, and jalapeno dust.",
+            distanceMiles: 4.8,
+            vendorName: "Depot Dogs",
+            craveScore: 0.69
+        )
+    ]
+}

@@ -3,42 +3,42 @@ import XCTest
 
 final class SwipeDeckStateTests: XCTestCase {
     func testDeckStartsWithAvailableProfilesOnly() {
-        let unavailable = DogProfile(
-            id: "adopted",
-            name: "Adopted",
-            breed: "Mixed",
-            ageYears: 1,
-            temperament: "Gentle",
+        let unavailable = HotdogProfile(
+            id: "sold-out",
+            name: "Sold Out",
+            style: "Classic",
+            priceDollars: 1,
+            signatureNotes: "Mustard and onion.",
             distanceMiles: 1,
-            shelterName: "Test",
-            compatibilityScore: 0.9,
-            adoptionStatus: .adopted
+            vendorName: "Test",
+            craveScore: 0.9,
+            availabilityStatus: .soldOut
         )
-        let state = SwipeDeckState(profiles: DogProfile.samples + [unavailable])
-        XCTAssertEqual(state.remainingCount, DogProfile.samples.count)
-        XCTAssertEqual(state.currentProfile?.id, "dog-luna")
+        let state = SwipeDeckState(profiles: HotdogProfile.samples + [unavailable])
+        XCTAssertEqual(state.remainingCount, HotdogProfile.samples.count)
+        XCTAssertEqual(state.currentProfile?.id, "hotdog-coney")
     }
 
     func testRecordAdvancesDeckAndStoresHistory() {
-        var state = SwipeDeckState(profiles: DogProfile.samples)
+        var state = SwipeDeckState(profiles: HotdogProfile.samples)
         let event = state.record(.like, now: Date(timeIntervalSince1970: 1))
-        XCTAssertEqual(event?.profileID, "dog-luna")
-        XCTAssertEqual(state.currentProfile?.id, "dog-miso")
-        XCTAssertEqual(state.positiveProfileIDs(), ["dog-luna"])
+        XCTAssertEqual(event?.profileID, "hotdog-coney")
+        XCTAssertEqual(state.currentProfile?.id, "hotdog-kimchi")
+        XCTAssertEqual(state.positiveProfileIDs(), ["hotdog-coney"])
     }
 
     func testPassIsNotPositiveSignal() {
-        var state = SwipeDeckState(profiles: DogProfile.samples)
+        var state = SwipeDeckState(profiles: HotdogProfile.samples)
         state.record(.pass)
         XCTAssertTrue(state.positiveProfileIDs().isEmpty)
     }
 
     func testUndoRestoresLastProfile() {
-        var state = SwipeDeckState(profiles: DogProfile.samples)
+        var state = SwipeDeckState(profiles: HotdogProfile.samples)
         state.record(.superLike)
-        let restored = state.undo(from: DogProfile.samples)
-        XCTAssertEqual(restored?.id, "dog-luna")
-        XCTAssertEqual(state.currentProfile?.id, "dog-luna")
+        let restored = state.undo(from: HotdogProfile.samples)
+        XCTAssertEqual(restored?.id, "hotdog-coney")
+        XCTAssertEqual(state.currentProfile?.id, "hotdog-coney")
         XCTAssertTrue(state.history.isEmpty)
     }
 

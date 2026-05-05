@@ -17,7 +17,7 @@ struct DiscoverView: View {
                 if case .loading = viewModel.state {
                     loadingState
                 } else if let profile = viewModel.currentProfile {
-                    DogCardView(profile: profile)
+                    HotdogCardView(profile: profile)
                         .transition(.scale.combined(with: .opacity))
                 } else {
                     emptyState
@@ -40,7 +40,7 @@ struct DiscoverView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: .dsSpace2) {
-            Text("Best nearby fit")
+            Text("Best nearby bite")
                 .font(.title2.weight(.semibold))
                 .foregroundStyle(Color.dsInk)
 
@@ -54,11 +54,11 @@ struct DiscoverView: View {
     private var statusText: String {
         switch viewModel.state {
         case .idle, .loading:
-            "Refreshing profiles"
+            "Refreshing local hotdogs"
         case .ready:
-            "\(viewModel.remainingCount) profiles ready for review"
+            "\(viewModel.remainingCount) hotdogs ready for review"
         case .failed:
-            "Showing offline profiles"
+            "Showing saved local picks"
         }
     }
 
@@ -83,7 +83,7 @@ struct DiscoverView: View {
         VStack(spacing: .dsSpace3) {
             ProgressView()
                 .tint(.dsPrimary)
-            Text("Loading profiles")
+            Text("Loading hotdogs")
                 .font(.headline)
                 .foregroundStyle(Color.dsInk)
         }
@@ -96,7 +96,7 @@ struct DiscoverView: View {
             Image(systemName: "checkmark.seal.fill")
                 .font(.largeTitle)
                 .foregroundStyle(Color.dsPrimary)
-            Text("You reviewed every profile")
+            Text("You reviewed every hotdog")
                 .font(.headline)
                 .foregroundStyle(Color.dsInk)
             Button("Start over") {

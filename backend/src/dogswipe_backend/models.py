@@ -9,19 +9,23 @@ from sqlalchemy.orm import Mapped, mapped_column
 from .db import Base
 
 
-class DogProfileRecord(Base):
-    __tablename__ = "dog_profiles"
+class HotdogProfileRecord(Base):
+    __tablename__ = "hotdog_profiles"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
     name: Mapped[str] = mapped_column(String(80), nullable=False)
-    breed: Mapped[str] = mapped_column(String(120), nullable=False)
-    age_years: Mapped[float] = mapped_column(Float, nullable=False)
-    temperament: Mapped[str] = mapped_column(String(120), nullable=False)
+    style: Mapped[str] = mapped_column(String(120), nullable=False)
+    price_dollars: Mapped[float] = mapped_column(Float, nullable=False)
+    signature_notes: Mapped[str] = mapped_column(String(120), nullable=False)
     distance_miles: Mapped[float] = mapped_column(Float, nullable=False)
-    shelter_name: Mapped[str] = mapped_column(String(160), nullable=False)
+    vendor_name: Mapped[str] = mapped_column(String(160), nullable=False)
     image_url: Mapped[str | None] = mapped_column(Text)
-    compatibility_score: Mapped[float] = mapped_column(Float, nullable=False, default=0.5)
-    adoption_status: Mapped[str] = mapped_column(String(32), nullable=False, default="available")
+    crave_score: Mapped[float] = mapped_column(Float, nullable=False, default=0.5)
+    availability_status: Mapped[str] = mapped_column(
+        String(32),
+        nullable=False,
+        default="available",
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 

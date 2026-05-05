@@ -2,29 +2,29 @@ from __future__ import annotations
 
 import pytest
 
-from dogswipe_backend.repository import DogRepository
-from dogswipe_backend.schemas import DogProfile, SwipeDecision, SwipeRequest
+from dogswipe_backend.repository import HotdogRepository
+from dogswipe_backend.schemas import HotdogProfile, SwipeDecision, SwipeRequest
 from dogswipe_backend.service import DogSwipeService
 
 
-class FakeRepository(DogRepository):
+class FakeRepository(HotdogRepository):
     def __init__(self) -> None:
         self.limit_seen = 0
         self.swipes: list[tuple[str, str, SwipeDecision]] = []
 
-    async def list_available_profiles(self, *, limit: int = 20) -> list[DogProfile]:
+    async def list_available_profiles(self, *, limit: int = 20) -> list[HotdogProfile]:
         self.limit_seen = limit
         return [
-            DogProfile(
-                id="dog-test",
+            HotdogProfile(
+                id="hotdog-test",
                 name="Test",
-                breed="Mixed",
-                age_years=1,
-                temperament="Gentle",
+                style="Classic",
+                price_dollars=1,
+                signature_notes="Gentle",
                 distance_miles=1,
-                shelter_name="Test Shelter",
-                compatibility_score=0.8,
-                adoption_status="available",
+                vendor_name="Test Cart",
+                crave_score=0.8,
+                availability_status="available",
             )
         ]
 
@@ -38,7 +38,7 @@ class FakeRepository(DogRepository):
         self.swipes.append((user_id, profile_id, decision))
         return decision == SwipeDecision.super_like
 
-    async def list_matches(self, *, user_id: str) -> list[DogProfile]:
+    async def list_matches(self, *, user_id: str) -> list[HotdogProfile]:
         assert user_id
         return await self.list_available_profiles()
 
@@ -49,7 +49,7 @@ async def test_discovery_clamps_limit() -> None:
     service = DogSwipeService(repository)
     response = await service.discovery(limit=1000)
     assert repository.limit_seen == 50
-    assert response.profiles[0].id == "dog-test"
+    assert response.profiles[0].id == "hotdog-test"
 
 
 @pytest.mark.asyncio
@@ -58,7 +58,7 @@ async def test_swipe_returns_repository_match_signal() -> None:
     service = DogSwipeService(repository)
     response = await service.swipe(
         user_id="u1",
-        request=SwipeRequest(profile_id="dog-test", decision=SwipeDecision.super_like),
+        request=SwipeRequest(profile_id="hotdog-test", decision=SwipeDecision.super_like),
     )
     assert response.matched is True
-    assert repository.swipes == [("u1", "dog-test", SwipeDecision.super_like)]
+    assert repository.swipes == [("u1", "hotdog-test", SwipeDecision.super_like)]

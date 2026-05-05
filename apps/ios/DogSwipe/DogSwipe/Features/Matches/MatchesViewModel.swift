@@ -11,7 +11,7 @@ final class MatchesViewModel: ObservableObject {
     }
 
     @Published private(set) var state: LoadState = .idle
-    @Published private(set) var matches: [DogProfile] = []
+    @Published private(set) var matches: [HotdogProfile] = []
 
     private let apiClient: DogSwipeAPIClient
 
@@ -28,7 +28,7 @@ final class MatchesViewModel: ObservableObject {
             state = .ready
         } catch {
             matches = MatchScorer.ranked(
-                profiles: DogProfile.samples,
+                profiles: HotdogProfile.samples,
                 preferences: DiscoveryPreferences()
             )
             state = .failed("Could not refresh matches.")

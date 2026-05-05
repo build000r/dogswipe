@@ -6,18 +6,18 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from .auth import get_current_user_id
 from .db import get_db_session
-from .repository import DogRepository, SqlAlchemyDogRepository
+from .repository import HotdogRepository, SqlAlchemyHotdogRepository
 from .schemas import DiscoveryResponse, MatchResponse, SwipeRequest, SwipeResponse
 from .service import DogSwipeService
 from .settings import get_settings
 
 
-async def get_repository(session: AsyncSession = Depends(get_db_session)) -> DogRepository:
-    return SqlAlchemyDogRepository(session)
+async def get_repository(session: AsyncSession = Depends(get_db_session)) -> HotdogRepository:
+    return SqlAlchemyHotdogRepository(session)
 
 
 async def get_service(
-    repository: DogRepository = Depends(get_repository),
+    repository: HotdogRepository = Depends(get_repository),
 ) -> DogSwipeService:
     return DogSwipeService(repository)
 

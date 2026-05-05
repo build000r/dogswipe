@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from .repository import DogRepository
+from .repository import HotdogRepository
 from .schemas import DiscoveryResponse, MatchResponse, SwipeRequest, SwipeResponse
 
 
 class DogSwipeService:
-    def __init__(self, repository: DogRepository) -> None:
+    def __init__(self, repository: HotdogRepository) -> None:
         self.repository = repository
 
     async def discovery(self, *, limit: int = 20) -> DiscoveryResponse:

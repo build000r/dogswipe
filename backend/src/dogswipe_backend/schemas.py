@@ -11,23 +11,23 @@ class SwipeDecision(StrEnum):
     super_like = "super_like"
 
 
-class DogProfile(BaseModel):
+class HotdogProfile(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: str
     name: str
-    breed: str
-    age_years: float = Field(ge=0)
-    temperament: str
+    style: str
+    price_dollars: float = Field(ge=0)
+    signature_notes: str
     distance_miles: float = Field(ge=0)
-    shelter_name: str
+    vendor_name: str
     image_url: str | None = None
-    compatibility_score: float = Field(ge=0, le=1)
-    adoption_status: str
+    crave_score: float = Field(ge=0, le=1)
+    availability_status: str
 
 
 class DiscoveryResponse(BaseModel):
-    profiles: list[DogProfile]
+    profiles: list[HotdogProfile]
 
 
 class SwipeRequest(BaseModel):
@@ -44,4 +44,4 @@ class SwipeResponse(BaseModel):
 
 
 class MatchResponse(BaseModel):
-    matches: list[DogProfile]
+    matches: list[HotdogProfile]

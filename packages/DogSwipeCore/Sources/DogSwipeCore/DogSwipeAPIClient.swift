@@ -60,7 +60,7 @@ public struct DogSwipeAPIClient: Sendable {
         self.authorizationTokenProvider = authorizationTokenProvider
     }
 
-    public func discovery(limit: Int = 20) async throws -> [DogProfile] {
+    public func discovery(limit: Int = 20) async throws -> [HotdogProfile] {
         var components = components(path: "/v1/discovery")
         components.queryItems = [URLQueryItem(name: "limit", value: String(limit))]
         let response: DiscoveryResponse = try await send(components: components)
@@ -76,7 +76,7 @@ public struct DogSwipeAPIClient: Sendable {
         return try await send(path: "/v1/swipes", method: "POST", body: request)
     }
 
-    public func matches() async throws -> [DogProfile] {
+    public func matches() async throws -> [HotdogProfile] {
         let components = components(path: "/v1/matches")
         let response: MatchResponse = try await send(components: components)
         return response.matches

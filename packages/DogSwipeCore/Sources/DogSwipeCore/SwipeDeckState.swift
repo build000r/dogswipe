@@ -1,15 +1,15 @@
 import Foundation
 
 public struct SwipeDeckState: Equatable, Sendable {
-    public private(set) var profiles: [DogProfile]
+    public private(set) var profiles: [HotdogProfile]
     public private(set) var history: [SwipeEvent]
 
-    public init(profiles: [DogProfile], history: [SwipeEvent] = []) {
-        self.profiles = profiles.filter { $0.adoptionStatus == .available }
+    public init(profiles: [HotdogProfile], history: [SwipeEvent] = []) {
+        self.profiles = profiles.filter { $0.availabilityStatus == .available }
         self.history = history
     }
 
-    public var currentProfile: DogProfile? {
+    public var currentProfile: HotdogProfile? {
         profiles.first
     }
 
@@ -33,7 +33,7 @@ public struct SwipeDeckState: Equatable, Sendable {
     }
 
     @discardableResult
-    public mutating func undo(from allProfiles: [DogProfile]) -> DogProfile? {
+    public mutating func undo(from allProfiles: [HotdogProfile]) -> HotdogProfile? {
         guard let event = history.popLast(),
               let profile = allProfiles.first(where: { $0.id == event.profileID }) else {
             return nil

@@ -11,7 +11,7 @@ final class DiscoverViewModel: ObservableObject {
     }
 
     @Published private(set) var state: LoadState = .idle
-    @Published private(set) var allProfiles: [DogProfile] = []
+    @Published private(set) var allProfiles: [HotdogProfile] = []
     @Published private(set) var deck = SwipeDeckState(profiles: [])
     @Published private(set) var lastMatch: SwipeResponse?
 
@@ -23,7 +23,7 @@ final class DiscoverViewModel: ObservableObject {
         self.apiClient = apiClient
     }
 
-    var currentProfile: DogProfile? {
+    var currentProfile: HotdogProfile? {
         deck.currentProfile
     }
 
@@ -45,7 +45,7 @@ final class DiscoverViewModel: ObservableObject {
             state = .ready
         } catch {
             if allProfiles.isEmpty {
-                allProfiles = DogProfile.samples
+                allProfiles = HotdogProfile.samples
                 deck = SwipeDeckState(profiles: allProfiles)
             }
             state = .failed("Could not refresh profiles.")
@@ -53,7 +53,7 @@ final class DiscoverViewModel: ObservableObject {
     }
 
     func resetToSamples() {
-        allProfiles = DogProfile.samples
+        allProfiles = HotdogProfile.samples
         deck = SwipeDeckState(profiles: allProfiles)
         lastMatch = nil
         state = .ready

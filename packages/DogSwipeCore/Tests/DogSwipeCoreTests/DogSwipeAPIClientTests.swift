@@ -26,16 +26,16 @@ final class DogSwipeAPIClientTests: XCTestCase {
         {
           "profiles": [
             {
-              "id": "dog-luna",
-              "name": "Luna",
-              "breed": "Australian Shepherd",
-              "age_years": 2.5,
-              "temperament": "Active",
-              "distance_miles": 4.2,
-              "shelter_name": "River North Rescue",
+              "id": "hotdog-coney",
+              "name": "Coney Classic",
+              "style": "Chili dog",
+              "price_dollars": 6.5,
+              "signature_notes": "Beef frank, snap casing, chili, onion, and yellow mustard.",
+              "distance_miles": 1.2,
+              "vendor_name": "Franklin Cart",
               "image_url": null,
-              "compatibility_score": 0.91,
-              "adoption_status": "available"
+              "crave_score": 0.91,
+              "availability_status": "available"
             }
           ]
         }
@@ -44,7 +44,9 @@ final class DogSwipeAPIClientTests: XCTestCase {
 
         let profiles = try await client.discovery(limit: 10)
 
-        XCTAssertEqual(profiles.map(\.id), ["dog-luna"])
+        XCTAssertEqual(profiles.map(\.id), ["hotdog-coney"])
+        XCTAssertEqual(profiles.first?.priceLabel, "$6.50")
+        XCTAssertEqual(profiles.first?.vendorName, "Franklin Cart")
         XCTAssertEqual(http.requests.first?.url?.path, "/v1/discovery")
         XCTAssertEqual(http.requests.first?.url?.query, "limit=10")
     }
@@ -52,20 +54,20 @@ final class DogSwipeAPIClientTests: XCTestCase {
     func testSwipeEncodesBackendContract() async throws {
         let http = MockHTTPClient()
         http.nextData = """
-        {"profile_id":"dog-luna","decision":"super_like","matched":true}
+        {"profile_id":"hotdog-coney","decision":"super_like","matched":true}
         """.data(using: .utf8)!
         let client = DogSwipeAPIClient(baseURL: URL(string: "http://localhost:8000")!, httpClient: http)
 
         let response = try await client.swipe(
-            profileID: "dog-luna",
+            profileID: "hotdog-coney",
             decision: .superLike
         )
 
-        XCTAssertEqual(response, SwipeResponse(profileID: "dog-luna", decision: .superLike, matched: true))
+        XCTAssertEqual(response, SwipeResponse(profileID: "hotdog-coney", decision: .superLike, matched: true))
         XCTAssertEqual(http.requests.first?.httpMethod, "POST")
         let body = String(data: http.requests.first!.httpBody!, encoding: .utf8)!
         XCTAssertFalse(body.contains("user_id"))
-        XCTAssertTrue(body.contains("\"profile_id\":\"dog-luna\""))
+        XCTAssertTrue(body.contains("\"profile_id\":\"hotdog-coney\""))
         XCTAssertTrue(body.contains("\"decision\":\"super_like\""))
     }
 

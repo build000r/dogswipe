@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from dogswipe_backend.repository import SqlAlchemyDogRepository
+from dogswipe_backend.repository import SqlAlchemyHotdogRepository
 from dogswipe_backend.runtime import prepare_local_database
 from dogswipe_backend.settings import get_settings
 
@@ -20,6 +20,11 @@ async def test_prepare_local_database_creates_schema_and_seeds(
     await prepare_local_database()
 
     async with database.session_factory() as session:
-        profiles = await SqlAlchemyDogRepository(session).list_available_profiles(limit=10)
+        profiles = await SqlAlchemyHotdogRepository(session).list_available_profiles(limit=10)
 
-    assert [profile.id for profile in profiles] == ["dog-luna", "dog-sage", "dog-miso"]
+    assert [profile.id for profile in profiles] == [
+        "hotdog-coney",
+        "hotdog-kimchi",
+        "hotdog-chicago",
+        "hotdog-nightcap",
+    ]

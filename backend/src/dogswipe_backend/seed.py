@@ -3,41 +3,52 @@ from __future__ import annotations
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .models import DogProfileRecord
+from .models import HotdogProfileRecord
 
 SAMPLE_PROFILE_ROWS: tuple[dict[str, object], ...] = (
     {
-        "id": "dog-luna",
-        "name": "Luna",
-        "breed": "Australian Shepherd",
-        "age_years": 2.5,
-        "temperament": "Active, focused, affectionate",
-        "distance_miles": 4.2,
-        "shelter_name": "River North Rescue",
-        "image_url": "https://images.unsplash.com/photo-1552053831-71594a27632d",
-        "compatibility_score": 0.91,
+        "id": "hotdog-coney",
+        "name": "Coney Classic",
+        "style": "Chili dog",
+        "price_dollars": 6.5,
+        "signature_notes": "Beef frank, snap casing, chili, onion, and yellow mustard.",
+        "distance_miles": 1.2,
+        "vendor_name": "Franklin Cart",
+        "image_url": None,
+        "crave_score": 0.91,
     },
     {
-        "id": "dog-miso",
-        "name": "Miso",
-        "breed": "Shiba Inu",
-        "age_years": 4.0,
-        "temperament": "Independent, quiet, apartment-ready",
-        "distance_miles": 8.7,
-        "shelter_name": "West Loop Humane",
-        "image_url": "https://images.unsplash.com/photo-1537151625747-768eb6cf92b2",
-        "compatibility_score": 0.68,
+        "id": "hotdog-kimchi",
+        "name": "Kimchi Crunch",
+        "style": "Korean street dog",
+        "price_dollars": 8.75,
+        "signature_notes": "Gochujang mayo, kimchi, scallion, and sesame crunch.",
+        "distance_miles": 2.4,
+        "vendor_name": "Bun Signal",
+        "image_url": None,
+        "crave_score": 0.88,
     },
     {
-        "id": "dog-sage",
-        "name": "Sage",
-        "breed": "Greyhound",
-        "age_years": 5.0,
-        "temperament": "Calm, warm, couch loyal",
-        "distance_miles": 2.1,
-        "shelter_name": "Lakeside Adoption Center",
-        "image_url": "https://images.unsplash.com/photo-1518717758536-85ae29035b6d",
-        "compatibility_score": 0.84,
+        "id": "hotdog-chicago",
+        "name": "Garden Snap",
+        "style": "Chicago dog",
+        "price_dollars": 7.25,
+        "signature_notes": "Sport peppers, relish, tomato, pickle spear, and celery salt.",
+        "distance_miles": 3.1,
+        "vendor_name": "Northside Stand",
+        "image_url": None,
+        "crave_score": 0.82,
+    },
+    {
+        "id": "hotdog-nightcap",
+        "name": "Nightcap Melt",
+        "style": "Chili cheese dog",
+        "price_dollars": 9.0,
+        "signature_notes": "Sharp cheddar, late-night chili, grilled onions, and jalapeno dust.",
+        "distance_miles": 4.8,
+        "vendor_name": "Depot Dogs",
+        "image_url": None,
+        "crave_score": 0.69,
     },
 )
 
@@ -46,11 +57,13 @@ async def seed_sample_profiles(session: AsyncSession) -> int:
     sample_ids = [str(row["id"]) for row in SAMPLE_PROFILE_ROWS]
     existing_ids = set(
         await session.scalars(
-            select(DogProfileRecord.id).where(DogProfileRecord.id.in_(sample_ids))
+            select(HotdogProfileRecord.id).where(HotdogProfileRecord.id.in_(sample_ids))
         )
     )
     records = [
-        DogProfileRecord(**row) for row in SAMPLE_PROFILE_ROWS if str(row["id"]) not in existing_ids
+        HotdogProfileRecord(**row)
+        for row in SAMPLE_PROFILE_ROWS
+        if str(row["id"]) not in existing_ids
     ]
     session.add_all(records)
     await session.flush()

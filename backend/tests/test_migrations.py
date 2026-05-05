@@ -27,20 +27,20 @@ def test_migrations_upgrade_and_downgrade(clear_settings, tmp_path, monkeypatch)
     engine = create_engine(f"sqlite:///{database_path}")
     try:
         inspector = inspect(engine)
-        assert {"alembic_version", "dog_profiles", "swipe_events"}.issubset(
+        assert {"alembic_version", "hotdog_profiles", "swipe_events"}.issubset(
             set(inspector.get_table_names())
         )
-        assert {column["name"] for column in inspector.get_columns("dog_profiles")} == {
+        assert {column["name"] for column in inspector.get_columns("hotdog_profiles")} == {
             "id",
             "name",
-            "breed",
-            "age_years",
-            "temperament",
+            "style",
+            "price_dollars",
+            "signature_notes",
             "distance_miles",
-            "shelter_name",
+            "vendor_name",
             "image_url",
-            "compatibility_score",
-            "adoption_status",
+            "crave_score",
+            "availability_status",
             "created_at",
         }
     finally:

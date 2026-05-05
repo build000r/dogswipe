@@ -10,8 +10,8 @@ Last verified: 2026-05-05
 | Backend coverage | `make coverage` | 93.28% total coverage |
 | Backend lint | `make lint` | passed |
 | Backend typecheck | `make typecheck` | passed |
-| Alembic migration smoke | `DATABASE_URL=sqlite+aiosqlite:////tmp/dogswipe-migrate-smoke.sqlite make migrate` | upgraded to `0001`; `make migration-current` reports `0001 (head)` |
-| Backend container build | `docker build -q backend` | built image `sha256:10a7e4ab0ce6c4ccff5b3a587abd171df4d05a848c3bd63a8ea524779f158f23` |
+| Alembic migration smoke | `DATABASE_URL=sqlite+aiosqlite:////tmp/dogswipe-hotdog-migrate-smoke.sqlite make migrate` | upgraded to `0002`; `make migration-current` reports `0002 (head)` |
+| Backend container build | `docker build -q backend` | built image `sha256:b37eb3b0724f9d31648a50446c272778e28d964f7b2f042faef40128c0b18e5e` |
 | SwiftUI drift scan | `make drift` | 0 Swift findings |
 | CRAP score | `make crap` | `FINAL_SCORE: 5.00` |
 | MMDX preflight | `python3 ../opensource/skills/mmdx/scripts/mmd.py docs/architecture.mmdx --preflight-only` | 3 charts passed |
@@ -21,6 +21,7 @@ Last verified: 2026-05-05
 - `DogSwipeAPIClient` decodes backend snake_case profile payloads.
 - `DogSwipeAPIClient` encodes swipe requests without client-controlled user identity.
 - `DogSwipeAPIClient` can attach a trimmed user bearer token from an injected provider and omits blank auth values.
+- Product profiles represent local hotdogs with style, price, vendor, crave score, and availability fields.
 - `DiscoverViewModel` loads profiles from the backend client and falls back to sample profiles when offline.
 - `MatchesViewModel` fetches matches from the backend client and exposes a visible empty/loading/failure state.
 - Local backend startup can create the starter schema and idempotently seed sample profiles when explicit local-only env flags are enabled.
