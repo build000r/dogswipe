@@ -20,17 +20,17 @@ depends_on: str | Sequence[str] | None = None
 
 def upgrade() -> None:
     op.create_table(
-        "dog_profiles",
+        "hotdog_profiles",
         sa.Column("id", sa.String(length=36), nullable=False),
         sa.Column("name", sa.String(length=80), nullable=False),
-        sa.Column("breed", sa.String(length=120), nullable=False),
-        sa.Column("age_years", sa.Float(), nullable=False),
-        sa.Column("temperament", sa.String(length=120), nullable=False),
+        sa.Column("style", sa.String(length=120), nullable=False),
+        sa.Column("price_dollars", sa.Float(), nullable=False),
+        sa.Column("signature_notes", sa.String(length=120), nullable=False),
         sa.Column("distance_miles", sa.Float(), nullable=False),
-        sa.Column("shelter_name", sa.String(length=160), nullable=False),
+        sa.Column("vendor_name", sa.String(length=160), nullable=False),
         sa.Column("image_url", sa.Text(), nullable=True),
-        sa.Column("compatibility_score", sa.Float(), nullable=False),
-        sa.Column("adoption_status", sa.String(length=32), nullable=False),
+        sa.Column("crave_score", sa.Float(), nullable=False),
+        sa.Column("availability_status", sa.String(length=32), nullable=False),
         sa.Column(
             "created_at",
             sa.DateTime(timezone=True),
@@ -59,4 +59,4 @@ def upgrade() -> None:
 def downgrade() -> None:
     op.drop_index("ix_swipe_events_user_profile", table_name="swipe_events")
     op.drop_table("swipe_events")
-    op.drop_table("dog_profiles")
+    op.drop_table("hotdog_profiles")
