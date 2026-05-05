@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from math import asin, cos, radians, sin, sqrt
 
 from fastapi import HTTPException, status
 
+from .menu import HTTPMenuIngestor, MenuIngestor
 from .repository import HotdogRepository
 from .schemas import (
     AdminApprovalRequest,
@@ -15,6 +17,7 @@ from .schemas import (
     DiscoveryResponse,
     HotdogProfile,
     MatchResponse,
+    MenuIngestionResponse,
     SwipeRequest,
     SwipeResponse,
     VendorSubmissionListResponse,
@@ -26,8 +29,13 @@ EARTH_RADIUS_MILES = 3958.8
 
 
 class DogSwipeService:
-    def __init__(self, repository: HotdogRepository) -> None:
+    def __init__(
+        self,
+        repository: HotdogRepository,
+        menu_ingestor: MenuIngestor | None = None,
+    ) -> None:
         self.repository = repository
+        self.menu_ingestor = menu_ingestor or HTTPMenuIngestor()
 
     async def discovery(
         self,
@@ -115,6 +123,43 @@ class DogSwipeService:
                 detail="Vendor submission not found",
             )
         return VendorSubmissionResponse(profile=profile)
+
+    async def ingest_vendor_submission_menu(
+        self,
+        *,
+        user_id: str,
+        profile_id: str,
+    ) -> MenuIngestionResponse:
+        profile = await self.repository.get_vendor_submission(
+            user_id=user_id,
+            profile_id=profile_id,
+        )
+        if profile is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Vendor submission not found",
+            )
+
+        status_value = "missing_url"
+        excerpt = None
+        if profile.menu_url:
+            result = await self.menu_ingestor.ingest(profile.menu_url)
+            status_value = result.status
+            excerpt = result.excerpt
+
+        updated = await self.repository.record_menu_ingestion(
+            user_id=user_id,
+            profile_id=profile_id,
+            status=status_value,
+            excerpt=excerpt,
+            checked_at=datetime.now(UTC),
+        )
+        if updated is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Vendor submission not found",
+            )
+        return MenuIngestionResponse(profile=updated)
 
     async def admin_review_queue(self) -> AdminReviewQueueResponse:
         return AdminReviewQueueResponse(

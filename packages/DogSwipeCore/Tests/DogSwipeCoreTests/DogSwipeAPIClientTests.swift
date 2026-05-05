@@ -286,6 +286,42 @@ final class DogSwipeAPIClientTests: XCTestCase {
         XCTAssertTrue(body.contains("\"price_dollars\":6.5"))
     }
 
+    func testIngestVendorSubmissionMenuUsesBackendContract() async throws {
+        let http = MockHTTPClient()
+        http.nextData = try JSONEncoder().encode(
+            MenuIngestionResponse(
+                profile: HotdogProfile(
+                    id: "submitted-hotdog",
+                    name: "Boardwalk Snap",
+                    style: "Classic cart dog",
+                    priceDollars: 6.25,
+                    signatureNotes: "Mustard, relish, and onion.",
+                    distanceMiles: 1.8,
+                    vendorName: "Boardwalk Dogs",
+                    menuURL: URL(string: "https://boardwalk.example.com/menu"),
+                    menuStatus: "ok",
+                    menuExcerpt: "Boardwalk Snap - mustard, relish, and onion.",
+                    menuCheckedAt: "2026-05-05T15:45:00Z",
+                    craveScore: 0.5,
+                    availabilityStatus: .pendingReview
+                )
+            )
+        )
+        let client = DogSwipeAPIClient(baseURL: URL(string: "http://localhost:8000")!, httpClient: http)
+
+        let profile = try await client.ingestVendorSubmissionMenu(profileID: "submitted-hotdog")
+
+        XCTAssertEqual(profile.menuStatus, "ok")
+        XCTAssertEqual(profile.menuExcerpt, "Boardwalk Snap - mustard, relish, and onion.")
+        XCTAssertEqual(profile.menuCheckedAt, "2026-05-05T15:45:00Z")
+        XCTAssertEqual(
+            http.requests.first?.url?.path,
+            "/v1/vendor/submissions/submitted-hotdog/ingest-menu"
+        )
+        XCTAssertEqual(http.requests.first?.httpMethod, "POST")
+        XCTAssertNil(http.requests.first?.httpBody)
+    }
+
     func testAdminReviewQueueDecodesBackendContract() async throws {
         let http = MockHTTPClient()
         http.nextData = try JSONEncoder().encode(

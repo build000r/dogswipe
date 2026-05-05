@@ -22,6 +22,7 @@ make backend-test
 | `GET` | `/v1/vendor/submissions` | Return the authenticated/local user's submitted hotdog listings |
 | `POST` | `/v1/vendor/submissions` | Submit a vendor-owned hotdog listing for review |
 | `PUT` | `/v1/vendor/submissions/{id}` | Revise an owned pending or change-requested listing |
+| `POST` | `/v1/vendor/submissions/{id}/ingest-menu` | Fetch and store a bounded menu URL snapshot for an owned listing |
 | `GET` | `/v1/admin/vendor/submissions` | Return pending vendor submissions for configured admins |
 | `POST` | `/v1/admin/vendor/submissions/{id}/approve` | Approve a pending submission into discovery |
 | `POST` | `/v1/admin/vendor/submissions/{id}/request-changes` | Send a pending submission back to the vendor with a note |
@@ -44,6 +45,9 @@ make backend-test
   "vendor_name": "Franklin Cart",
   "image_url": null,
   "menu_url": null,
+  "menu_status": null,
+  "menu_excerpt": null,
+  "menu_checked_at": null,
   "media_alt_text": null,
   "crave_score": 0.91,
   "availability_status": "available",
@@ -93,6 +97,8 @@ Client-supplied `user_id` fields are rejected here too.
 
 `GET /v1/vendor/submissions` returns only submissions owned by the authenticated/local user. `PUT /v1/vendor/submissions/{id}` lets that owner revise `pending_review` or `changes_requested` listings and returns the listing to `pending_review`. Client-supplied `user_id` fields are rejected.
 
+`POST /v1/vendor/submissions/{id}/ingest-menu` is owner-scoped. If the listing has a `menu_url`, the backend performs a bounded HTTP(S) fetch, extracts a short text snapshot from HTML or plain text, and stores `menu_status`, `menu_excerpt`, and `menu_checked_at` on the profile. Supported status values are `ok`, `missing_url`, `invalid_url`, `fetch_failed`, and `empty`. Revising a listing clears any stale menu snapshot fields.
+
 ## Admin Review Contract
 
 Admin routes use the same backend-owned identity path and require the resolved user id to appear in `DOGSWIPE_ADMIN_USER_IDS`. In auth-disabled local mode, that default user is `local-dev-user`.
@@ -124,4 +130,4 @@ DATABASE_URL=postgresql+asyncpg://... make migrate
 DATABASE_URL=postgresql+asyncpg://... make migration-current
 ```
 
-Current head is `0006`, which adds optional latitude/longitude coordinates after vendor-owned hotdog submissions, menu/media metadata, and moderation review notes.
+Current head is `0007`, which adds owner-scoped menu snapshot status, excerpt, and checked timestamp fields on hotdog profiles.

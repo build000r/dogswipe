@@ -12,6 +12,9 @@ public struct HotdogProfile: Identifiable, Codable, Equatable, Sendable {
     public let vendorName: String
     public let imageURL: URL?
     public let menuURL: URL?
+    public let menuStatus: String?
+    public let menuExcerpt: String?
+    public let menuCheckedAt: String?
     public let mediaAltText: String?
     public let craveScore: Double
     public let availabilityStatus: AvailabilityStatus
@@ -31,6 +34,9 @@ public struct HotdogProfile: Identifiable, Codable, Equatable, Sendable {
         vendorName: String,
         imageURL: URL? = nil,
         menuURL: URL? = nil,
+        menuStatus: String? = nil,
+        menuExcerpt: String? = nil,
+        menuCheckedAt: String? = nil,
         mediaAltText: String? = nil,
         craveScore: Double,
         availabilityStatus: AvailabilityStatus = .available,
@@ -49,6 +55,9 @@ public struct HotdogProfile: Identifiable, Codable, Equatable, Sendable {
         self.vendorName = vendorName
         self.imageURL = imageURL
         self.menuURL = menuURL
+        self.menuStatus = menuStatus
+        self.menuExcerpt = menuExcerpt
+        self.menuCheckedAt = menuCheckedAt
         self.mediaAltText = mediaAltText
         self.craveScore = craveScore
         self.availabilityStatus = availabilityStatus
@@ -76,6 +85,9 @@ public struct HotdogProfile: Identifiable, Codable, Equatable, Sendable {
         case vendorName = "vendor_name"
         case imageURL = "image_url"
         case menuURL = "menu_url"
+        case menuStatus = "menu_status"
+        case menuExcerpt = "menu_excerpt"
+        case menuCheckedAt = "menu_checked_at"
         case mediaAltText = "media_alt_text"
         case craveScore = "crave_score"
         case availabilityStatus = "availability_status"
@@ -165,6 +177,14 @@ public struct VendorSubmissionRequest: Codable, Equatable, Sendable {
 }
 
 public struct VendorSubmissionResponse: Codable, Equatable, Sendable {
+    public let profile: HotdogProfile
+
+    public init(profile: HotdogProfile) {
+        self.profile = profile
+    }
+}
+
+public struct MenuIngestionResponse: Codable, Equatable, Sendable {
     public let profile: HotdogProfile
 
     public init(profile: HotdogProfile) {

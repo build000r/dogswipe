@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import UTC, datetime
+
 import pytest
 
 from dogswipe_backend.repository import SqlAlchemyHotdogRepository
@@ -158,4 +160,43 @@ async def test_repository_rejects_pending_submission_as_terminal(database) -> No
                 distance_miles=1.8,
                 vendor_name="Reject Cart",
             ),
+        ) is None
+
+
+@pytest.mark.asyncio
+async def test_repository_records_menu_ingestion_for_owner(database) -> None:
+    async with database.session_factory() as session:
+        repository = SqlAlchemyHotdogRepository(session)
+        pending = await repository.submit_vendor_profile(
+            user_id="vendor-menu-owner",
+            submission=VendorSubmissionRequest(
+                name="Menu Snap",
+                style="Classic cart dog",
+                price_dollars=6.25,
+                signature_notes="Mustard, relish, and onion.",
+                distance_miles=1.8,
+                vendor_name="Menu Cart",
+                menu_url="https://menu.example.com/current",
+            ),
+        )
+        checked_at = datetime.now(UTC)
+
+        updated = await repository.record_menu_ingestion(
+            user_id="vendor-menu-owner",
+            profile_id=pending.id,
+            status="ok",
+            excerpt="Menu Snap - mustard, relish, and onion.",
+            checked_at=checked_at,
+        )
+
+        assert updated is not None
+        assert updated.menu_status == "ok"
+        assert updated.menu_excerpt == "Menu Snap - mustard, relish, and onion."
+        assert updated.menu_checked_at == checked_at
+        assert await repository.record_menu_ingestion(
+            user_id="other-vendor",
+            profile_id=pending.id,
+            status="ok",
+            excerpt=None,
+            checked_at=checked_at,
         ) is None

@@ -138,6 +138,15 @@ public struct DogSwipeAPIClient: Sendable {
         return response.profile
     }
 
+    @discardableResult
+    public func ingestVendorSubmissionMenu(profileID: String) async throws -> HotdogProfile {
+        let response: MenuIngestionResponse = try await send(
+            path: "/v1/vendor/submissions/\(profileID)/ingest-menu",
+            method: "POST"
+        )
+        return response.profile
+    }
+
     public func adminReviewQueue() async throws -> [HotdogProfile] {
         let response: AdminReviewQueueResponse = try await send(
             path: "/v1/admin/vendor/submissions"

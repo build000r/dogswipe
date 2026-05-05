@@ -145,18 +145,45 @@ struct VendorView: View {
         VStack(alignment: .leading, spacing: .dsSpace3) {
             SubmissionSummaryView(profile: profile)
 
-            if profile.canBeEditedByVendor {
-                Button {
-                    store.edit(profile)
-                } label: {
-                    Label("Edit", systemImage: "pencil")
+            if profile.canBeEditedByVendor || profile.menuURL != nil {
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: .dsSpace3) {
+                        submissionActions(for: profile)
+                    }
+
+                    VStack(alignment: .leading, spacing: .dsSpace2) {
+                        submissionActions(for: profile)
+                    }
                 }
-                .buttonStyle(.bordered)
-                .disabled(store.isSyncing)
             }
         }
         .padding(.dsSpace4)
         .dsCardSurface()
+    }
+
+    @ViewBuilder
+    private func submissionActions(for profile: HotdogProfile) -> some View {
+        if profile.canBeEditedByVendor {
+            Button {
+                store.edit(profile)
+            } label: {
+                Label("Edit", systemImage: "pencil")
+            }
+            .buttonStyle(.bordered)
+            .disabled(store.isSyncing)
+        }
+
+        if profile.menuURL != nil {
+            Button {
+                Task {
+                    await store.ingestMenu(profile)
+                }
+            } label: {
+                Label("Refresh menu", systemImage: "arrow.clockwise")
+            }
+            .buttonStyle(.bordered)
+            .disabled(store.isSyncing)
+        }
     }
 
     private func field(

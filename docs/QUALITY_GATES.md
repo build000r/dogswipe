@@ -4,20 +4,20 @@ Last verified: 2026-05-05
 
 | Gate | Command | Result |
 | --- | --- | --- |
-| Swift package tests | `make swift-test` | 26 tests passed |
+| Swift package tests | `make swift-test` | 27 tests passed |
 | iOS smoke build | `xcodebuild -quiet -project apps/ios/DogSwipe/DogSwipe.xcodeproj -scheme DogSwipe -destination 'generic/platform=iOS' build` | passed |
 | iOS unit tests | `xcodebuild -quiet -project apps/ios/DogSwipe/DogSwipe.xcodeproj -scheme DogSwipe -destination 'platform=iOS Simulator,name=iPhone 17' test` | passed |
-| Backend API tests | `make backend-test` | 53 tests passed |
-| Backend coverage | `make coverage` | 90.92% total coverage |
+| Backend API tests | `make backend-test` | 61 tests passed |
+| Backend coverage | `make coverage` | 90.31% total coverage |
 | Clean backend install | `python3.12 -m venv /tmp/... && pip install -e 'backend[test]'` | passed |
 | Backend lint | `make lint` | passed |
 | Backend typecheck | `make typecheck` | passed |
-| Alembic migration smoke | `make backend-test` | migration test upgraded to `0006` and downgraded to `base` |
-| Backend container build | `docker build -q backend` | built image `sha256:8a9efb635f2daea216e606de4839babd23f33d9892002356690ea92162c69050` |
+| Alembic migration smoke | `make backend-test` | migration test upgraded to `0007` and downgraded to `base` |
+| Backend container build | `docker build -q backend` | built image `sha256:fb8b3f59ecc22d2d0879e48e888708d88ec0a16a8bda37e117f79fe92948bf59` |
 | Production Compose config | `make deploy-config` | passed |
 | Deploy preflight | `make deploy-preflight` | 16 passed, 0 warnings, 0 failed |
 | SwiftUI drift scan | `make drift` | 0 Swift findings |
-| CRAP score | `make crap` | `FINAL_SCORE: 7.00` |
+| CRAP score | `make crap` | `FINAL_SCORE: 13.30` |
 | MMDX preflight | `python3 ../opensource/skills/mmdx/scripts/mmd.py docs/architecture.mmdx --preflight-only` | 3 charts passed |
 | SPAPS usage audit | `python3 ../sweet-potato/skills/sweet-potato-usage-audit/scripts/audit_sweet_potato_usage.py --sweet-potato-root ../sweet-potato .` | 0 high, 0 medium, 0 low |
 
@@ -39,6 +39,7 @@ Last verified: 2026-05-05
 - iOS discovery can pass a CoreLocation coordinate to the backend, and vendor submissions can include optional hotdog coordinates for dynamic response distances.
 - iOS native sign-in stores SPAPS access/refresh JWTs in Keychain, refreshes sessions, and injects only the access bearer into the shared API client.
 - `POST /v1/vendor/submissions` stores authenticated vendor hotdog listings as `pending_review`; `GET`/`PUT /v1/vendor/submissions` are user-scoped and the iOS Vendor tab can revise change-requested listings.
+- `POST /v1/vendor/submissions/{id}/ingest-menu` is owner-scoped, stores bounded menu URL snapshot status/excerpt/timestamp fields, and the iOS Vendor tab can refresh and render the snapshot state.
 - Configured admins can list pending vendor submissions, approve one into discovery, reject one, request edits with a review note, and production preflight requires `DOGSWIPE_ADMIN_USER_IDS` when SPAPS auth is enabled.
 - Production deploy artifacts define the Compose stack, env contract, preflight checks, post-deploy verification, reverse-proxy template, and CI workflow.
 

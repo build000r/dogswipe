@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+from datetime import datetime
+
 import pytest
 
+from dogswipe_backend.menu import MenuIngestionResult
 from dogswipe_backend.repository import HotdogRepository
 from dogswipe_backend.schemas import (
     AdminApprovalRequest,
@@ -39,6 +42,16 @@ def _profile(
         crave_score=crave_score,
         availability_status="available",
     )
+
+
+class FakeMenuIngestor:
+    def __init__(self, result: MenuIngestionResult) -> None:
+        self.result = result
+        self.urls: list[str] = []
+
+    async def ingest(self, url: str) -> MenuIngestionResult:
+        self.urls.append(url)
+        return self.result
 
 
 class FakeRepository(HotdogRepository):
@@ -156,6 +169,41 @@ class FakeRepository(HotdogRepository):
                 media_alt_text=submission.media_alt_text,
                 crave_score=0.5,
                 availability_status="pending_review",
+            )
+            self.submissions_by_user[user_id][index] = updated
+            return updated
+        return None
+
+    async def get_vendor_submission(
+        self,
+        *,
+        user_id: str,
+        profile_id: str,
+    ) -> HotdogProfile | None:
+        for profile in self.submissions_by_user.get(user_id, []):
+            if profile.id == profile_id:
+                return profile
+        return None
+
+    async def record_menu_ingestion(
+        self,
+        *,
+        user_id: str,
+        profile_id: str,
+        status: str,
+        excerpt: str | None,
+        checked_at: datetime,
+    ) -> HotdogProfile | None:
+        submissions = self.submissions_by_user.get(user_id, [])
+        for index, profile in enumerate(submissions):
+            if profile.id != profile_id:
+                continue
+            updated = profile.model_copy(
+                update={
+                    "menu_status": status,
+                    "menu_excerpt": excerpt,
+                    "menu_checked_at": checked_at,
+                }
             )
             self.submissions_by_user[user_id][index] = updated
             return updated
@@ -391,6 +439,70 @@ async def test_vendor_submission_round_trips_through_repository() -> None:
     assert response.profile.name == "Submitted Snap"
     assert response.profile.availability_status == "pending_review"
     assert submissions.submissions == [response.profile]
+
+
+@pytest.mark.asyncio
+async def test_vendor_can_ingest_menu_snapshot() -> None:
+    repository = FakeRepository()
+    ingestor = FakeMenuIngestor(
+        MenuIngestionResult(
+            status="ok",
+            excerpt="Boardwalk Snap - classic dog, relish, onion, and celery salt.",
+        )
+    )
+    service = DogSwipeService(repository, menu_ingestor=ingestor)
+    submitted = await service.submit_vendor_profile(
+        user_id="vendor-1",
+        submission=VendorSubmissionRequest(
+            name="Boardwalk Snap",
+            style="Classic cart dog",
+            price_dollars=6,
+            signature_notes="Mustard and onion",
+            distance_miles=2,
+            vendor_name="Submit Cart",
+            menu_url="https://submit.example.com/menu",
+        ),
+    )
+
+    response = await service.ingest_vendor_submission_menu(
+        user_id="vendor-1",
+        profile_id=submitted.profile.id,
+    )
+
+    assert ingestor.urls == ["https://submit.example.com/menu"]
+    assert response.profile.menu_status == "ok"
+    assert response.profile.menu_excerpt == (
+        "Boardwalk Snap - classic dog, relish, onion, and celery salt."
+    )
+    assert response.profile.menu_checked_at is not None
+
+
+@pytest.mark.asyncio
+async def test_menu_ingestion_records_missing_menu_url_without_fetch() -> None:
+    repository = FakeRepository()
+    ingestor = FakeMenuIngestor(MenuIngestionResult(status="ok", excerpt="unused"))
+    service = DogSwipeService(repository, menu_ingestor=ingestor)
+    submitted = await service.submit_vendor_profile(
+        user_id="vendor-1",
+        submission=VendorSubmissionRequest(
+            name="No Menu Snap",
+            style="Classic cart dog",
+            price_dollars=6,
+            signature_notes="Mustard and onion",
+            distance_miles=2,
+            vendor_name="Submit Cart",
+        ),
+    )
+
+    response = await service.ingest_vendor_submission_menu(
+        user_id="vendor-1",
+        profile_id=submitted.profile.id,
+    )
+
+    assert ingestor.urls == []
+    assert response.profile.menu_status == "missing_url"
+    assert response.profile.menu_excerpt is None
+    assert response.profile.menu_checked_at is not None
 
 
 @pytest.mark.asyncio

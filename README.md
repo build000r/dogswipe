@@ -24,7 +24,7 @@ The repo is intentionally split into three testable surfaces:
 | Swipe state | Swift package owns deterministic deck advancement, undo, and positive-signal tracking. |
 | Matches | `POST /v1/swipes` records likes/passes/super-likes; `GET /v1/matches` returns high-crave liked hotdogs. |
 | Preferences | `GET /v1/preferences` and `PUT /v1/preferences` persist user-scoped craving controls under the same backend-owned identity boundary; the backend discovery route and Swift local deck scorer both consume the same contract. |
-| Vendor submissions | `POST /v1/vendor/submissions` stores vendor-owned hotdog listings with optional coordinates as `pending_review`; `GET /v1/vendor/submissions` returns only the current user's submissions; `PUT /v1/vendor/submissions/{id}` lets owners resubmit change-requested drafts. |
+| Vendor submissions | `POST /v1/vendor/submissions` stores vendor-owned hotdog listings with optional coordinates as `pending_review`; `GET /v1/vendor/submissions` returns only the current user's submissions; `PUT /v1/vendor/submissions/{id}` lets owners resubmit change-requested drafts; `POST /v1/vendor/submissions/{id}/ingest-menu` records an owner-scoped menu URL snapshot status/excerpt. |
 | Admin review | Configured admins can list `GET /v1/admin/vendor/submissions`, approve reviewed hotdogs into discovery, reject bad listings, or request vendor edits with review notes. |
 | Auth boundary | User-scoped backend routes derive identity from SPAPS auth when enabled, with a local-only header fallback while auth is disabled. |
 | iOS transport | The Profile tab can request and verify SPAPS magic links with a publishable key, stores access/refresh JWTs in Keychain, and sends only the access bearer to the DogSwipe API. |
@@ -44,6 +44,9 @@ Hotdog profile payloads use this snake_case backend contract:
   "vendor_name": "Franklin Cart",
   "image_url": null,
   "menu_url": null,
+  "menu_status": null,
+  "menu_excerpt": null,
+  "menu_checked_at": null,
   "media_alt_text": null,
   "crave_score": 0.91,
   "availability_status": "available",
@@ -119,13 +122,13 @@ The placement decision is `NEW REPO`: this app owns a durable product boundary r
 
 ## Current Scope
 
-The current app can load local hotdog profiles, render cards with a local product visual when no image URL is available, request and verify SPAPS magic links, store access/refresh JWTs in Keychain, record swipes, persist shared craving controls that filter/rank discovery, use CoreLocation-backed coordinates for live distance ranking, submit and revise vendor-owned hotdog listings, approve/reject/request edits as an admin, and fetch matches through the shared Swift API client. Backend migrations are managed through Alembic up to `0006`, local Docker development can auto-create and seed the starter data with explicit local-only flags, and production deploy artifacts are ready for a concrete skillbox target.
+The current app can load local hotdog profiles, render cards with a local product visual when no image URL is available, request and verify SPAPS magic links, store access/refresh JWTs in Keychain, record swipes, persist shared craving controls that filter/rank discovery, use CoreLocation-backed coordinates for live distance ranking, submit and revise vendor-owned hotdog listings, refresh bounded menu URL snapshots, approve/reject/request edits as an admin, and fetch matches through the shared Swift API client. Backend migrations are managed through Alembic up to `0007`, local Docker development can auto-create and seed the starter data with explicit local-only flags, and production deploy artifacts are ready for a concrete skillbox target.
 
 ## Known Limits
 
 - Live deployment is blocked until a skillbox deploy overlay names a host, service, production origin, env source, deploy root, and health URL.
 - Final visual parity with the original reference image remains blocked because the image is not available in this context.
-- Live menu ingestion, deep-link handoff polish, address geocoding/travel-time routing, and App Store/TestFlight release assets are future slices.
+- Continuous menu crawling/full indexing, deep-link handoff polish, address geocoding/travel-time routing, and App Store/TestFlight release assets are future slices.
 
 ## About Contributions
 

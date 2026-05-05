@@ -66,6 +66,25 @@ class HotdogRepository:
     ) -> HotdogProfile | None:
         raise NotImplementedError
 
+    async def get_vendor_submission(
+        self,
+        *,
+        user_id: str,
+        profile_id: str,
+    ) -> HotdogProfile | None:
+        raise NotImplementedError
+
+    async def record_menu_ingestion(
+        self,
+        *,
+        user_id: str,
+        profile_id: str,
+        status: str,
+        excerpt: str | None,
+        checked_at: datetime,
+    ) -> HotdogProfile | None:
+        raise NotImplementedError
+
     async def list_pending_vendor_submissions(self) -> list[HotdogProfile]:
         raise NotImplementedError
 
@@ -225,6 +244,38 @@ class SqlAlchemyHotdogRepository(HotdogRepository):
         record.review_note = None
         record.last_reviewed_at = None
         record.last_verified_at = None
+        record.menu_status = None
+        record.menu_excerpt = None
+        record.menu_checked_at = None
+        await self.session.flush()
+        return HotdogProfile.model_validate(record)
+
+    async def get_vendor_submission(
+        self,
+        *,
+        user_id: str,
+        profile_id: str,
+    ) -> HotdogProfile | None:
+        record = await self.session.get(HotdogProfileRecord, profile_id)
+        if record is None or record.vendor_owner_user_id != user_id:
+            return None
+        return HotdogProfile.model_validate(record)
+
+    async def record_menu_ingestion(
+        self,
+        *,
+        user_id: str,
+        profile_id: str,
+        status: str,
+        excerpt: str | None,
+        checked_at: datetime,
+    ) -> HotdogProfile | None:
+        record = await self.session.get(HotdogProfileRecord, profile_id)
+        if record is None or record.vendor_owner_user_id != user_id:
+            return None
+        record.menu_status = status
+        record.menu_excerpt = excerpt
+        record.menu_checked_at = checked_at
         await self.session.flush()
         return HotdogProfile.model_validate(record)
 

@@ -254,6 +254,63 @@ final class DogSwipeSmokeTests: XCTestCase {
     }
 
     @MainActor
+    func testVendorSubmissionStoreRefreshesMenuSnapshot() async throws {
+        let http = MockHTTPClient()
+        let pending = HotdogProfile(
+            id: "pending-hotdog",
+            name: "Boardwalk Snap",
+            style: "Classic cart dog",
+            priceDollars: 6.25,
+            signatureNotes: "Mustard, relish, and onion.",
+            distanceMiles: 1.8,
+            vendorName: "Boardwalk Dogs",
+            menuURL: URL(string: "https://boardwalk.example.com/menu"),
+            craveScore: 0.5,
+            availabilityStatus: .pendingReview
+        )
+        let refreshed = HotdogProfile(
+            id: pending.id,
+            name: pending.name,
+            style: pending.style,
+            priceDollars: pending.priceDollars,
+            signatureNotes: pending.signatureNotes,
+            distanceMiles: pending.distanceMiles,
+            vendorName: pending.vendorName,
+            menuURL: pending.menuURL,
+            menuStatus: "ok",
+            menuExcerpt: "Boardwalk Snap - mustard, relish, and onion.",
+            menuCheckedAt: "2026-05-05T15:45:00Z",
+            craveScore: pending.craveScore,
+            availabilityStatus: pending.availabilityStatus
+        )
+        http.responses = [
+            try JSONEncoder().encode(VendorSubmissionListResponse(submissions: [pending])),
+            try JSONEncoder().encode(MenuIngestionResponse(profile: refreshed))
+        ]
+        let apiClient = DogSwipeAPIClient(
+            baseURL: URL(string: "http://localhost:8000")!,
+            httpClient: http
+        )
+        let store = VendorSubmissionStore(apiClient: apiClient)
+
+        await store.load()
+        await store.ingestMenu(pending)
+
+        XCTAssertEqual(store.submissions.first?.menuStatus, "ok")
+        XCTAssertEqual(
+            store.submissions.first?.menuExcerpt,
+            "Boardwalk Snap - mustard, relish, and onion."
+        )
+        XCTAssertEqual(store.message, "Boardwalk Snap menu refreshed.")
+        XCTAssertEqual(http.requests.map { $0.url?.path }, [
+            "/v1/vendor/submissions",
+            "/v1/vendor/submissions/pending-hotdog/ingest-menu"
+        ])
+        XCTAssertEqual(http.requests.last?.httpMethod, "POST")
+        XCTAssertNil(http.requests.last?.httpBody)
+    }
+
+    @MainActor
     func testAdminReviewStoreApprovesPendingSubmission() async throws {
         let http = MockHTTPClient()
         let pending = HotdogProfile(

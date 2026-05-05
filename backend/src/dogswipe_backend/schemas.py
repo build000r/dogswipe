@@ -32,6 +32,9 @@ class HotdogProfile(BaseModel):
     vendor_name: str
     image_url: str | None = None
     menu_url: str | None = None
+    menu_status: str | None = None
+    menu_excerpt: str | None = None
+    menu_checked_at: datetime | None = None
     media_alt_text: str | None = None
     crave_score: float = Field(ge=0, le=1)
     availability_status: str
@@ -92,6 +95,10 @@ class VendorSubmissionRequest(BaseModel):
 
 
 class VendorSubmissionResponse(BaseModel):
+    profile: HotdogProfile
+
+
+class MenuIngestionResponse(BaseModel):
     profile: HotdogProfile
 
 

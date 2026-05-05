@@ -94,6 +94,22 @@ final class VendorSubmissionStore: ObservableObject {
         message = nil
     }
 
+    func ingestMenu(_ profile: HotdogProfile) async {
+        guard profile.menuURL != nil else {
+            message = "Add a menu URL before refreshing."
+            return
+        }
+        isSyncing = true
+        defer { isSyncing = false }
+        do {
+            let updated = try await apiClient.ingestVendorSubmissionMenu(profileID: profile.id)
+            replaceSubmission(updated)
+            message = menuIngestionMessage(updated)
+        } catch {
+            message = "Menu could not be refreshed."
+        }
+    }
+
     private func submissionRequest() throws -> VendorSubmissionRequest {
         guard let priceDollars = Double(trimmed(price)) else {
             throw VendorSubmissionDraftError.invalidPrice
@@ -150,6 +166,23 @@ final class VendorSubmissionStore: ObservableObject {
             return
         }
         submissions[index] = profile
+    }
+
+    private func menuIngestionMessage(_ profile: HotdogProfile) -> String {
+        switch profile.menuStatus {
+        case "ok":
+            "\(profile.name) menu refreshed."
+        case "empty":
+            "Menu page was reachable, but no text was found."
+        case "invalid_url":
+            "Menu URL is invalid."
+        case "fetch_failed":
+            "Menu page could not be loaded."
+        case "missing_url":
+            "Add a menu URL before refreshing."
+        default:
+            "Menu refresh recorded."
+        }
     }
 
     private func optionalURL(_ value: String, error: VendorSubmissionDraftError) throws -> URL? {

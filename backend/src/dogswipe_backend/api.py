@@ -16,6 +16,7 @@ from .schemas import (
     CravingPreferences,
     DiscoveryResponse,
     MatchResponse,
+    MenuIngestionResponse,
     SwipeRequest,
     SwipeResponse,
     VendorSubmissionListResponse,
@@ -128,6 +129,20 @@ def build_api_router() -> APIRouter:
             user_id=user_id,
             profile_id=profile_id,
             submission=request,
+        )
+
+    @v1.post(
+        "/vendor/submissions/{profile_id}/ingest-menu",
+        response_model=MenuIngestionResponse,
+    )
+    async def ingest_vendor_submission_menu(
+        profile_id: str,
+        service: DogSwipeService = Depends(get_service),
+        user_id: str = Depends(get_current_user_id),
+    ) -> MenuIngestionResponse:
+        return await service.ingest_vendor_submission_menu(
+            user_id=user_id,
+            profile_id=profile_id,
         )
 
     @v1.get("/admin/vendor/submissions", response_model=AdminReviewQueueResponse)

@@ -36,11 +36,43 @@ struct SubmissionSummaryView: View {
                     .foregroundStyle(Color.dsMuted)
             }
 
+            if profile.menuStatus != nil {
+                Label(profile.menuStatusDisplayLabel, systemImage: "checklist")
+                    .font(.caption)
+                    .foregroundStyle(Color.dsMuted)
+            }
+
+            if let menuExcerpt = profile.menuExcerpt, !menuExcerpt.isEmpty {
+                Text(menuExcerpt)
+                    .font(.caption)
+                    .foregroundStyle(Color.dsMuted)
+                    .lineLimit(2)
+            }
+
             if let reviewNote = profile.reviewNote, !reviewNote.isEmpty {
                 Label(reviewNote, systemImage: "text.bubble")
                     .font(.caption)
                     .foregroundStyle(Color.dsMuted)
             }
+        }
+    }
+}
+
+private extension HotdogProfile {
+    var menuStatusDisplayLabel: String {
+        switch menuStatus {
+        case "ok":
+            "Menu refreshed"
+        case "empty":
+            "Menu empty"
+        case "invalid_url":
+            "Menu URL invalid"
+        case "fetch_failed":
+            "Menu unavailable"
+        case "missing_url":
+            "Menu URL missing"
+        default:
+            "Menu checked"
         }
     }
 }

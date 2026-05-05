@@ -335,6 +335,40 @@ async def test_vendor_submission_rejects_client_supplied_user_id(async_client) -
 
 
 @pytest.mark.asyncio
+async def test_vendor_can_record_missing_menu_ingestion(async_client) -> None:
+    submitted = await async_client.post(
+        "/v1/vendor/submissions",
+        headers={"X-DogSwipe-User-ID": "vendor-menu"},
+        json={
+            "name": "Menu Pending Snap",
+            "style": "Classic cart dog",
+            "price_dollars": 6.25,
+            "signature_notes": "Mustard, relish, and onion.",
+            "distance_miles": 1.8,
+            "vendor_name": "Menu Cart",
+        },
+    )
+    profile_id = submitted.json()["profile"]["id"]
+
+    response = await async_client.post(
+        f"/v1/vendor/submissions/{profile_id}/ingest-menu",
+        headers={"X-DogSwipe-User-ID": "vendor-menu"},
+    )
+
+    assert response.status_code == 200
+    profile = response.json()["profile"]
+    assert profile["menu_status"] == "missing_url"
+    assert profile["menu_excerpt"] is None
+    assert profile["menu_checked_at"] is not None
+
+    other_vendor = await async_client.post(
+        f"/v1/vendor/submissions/{profile_id}/ingest-menu",
+        headers={"X-DogSwipe-User-ID": "other-vendor"},
+    )
+    assert other_vendor.status_code == 404
+
+
+@pytest.mark.asyncio
 async def test_admin_can_approve_vendor_submission(
     async_client,
     clear_settings,
