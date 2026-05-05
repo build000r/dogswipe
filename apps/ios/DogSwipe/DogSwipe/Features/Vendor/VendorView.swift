@@ -18,6 +18,7 @@ struct VendorView: View {
                 }
                 .padding(.dsSpace5)
             }
+            .safeAreaPadding(.bottom, .dsSpace8)
             .navigationTitle("Vendor")
             .toolbar {
                 if store.isBusy {
@@ -33,6 +34,7 @@ struct VendorView: View {
                 }
             }
             .dsPageBackground()
+            .accessibilityIdentifier("dogswipe.vendor.screen")
         }
     }
 

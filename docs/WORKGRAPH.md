@@ -37,16 +37,17 @@ Status key: `done`, `active`, `ready`, `blocked`.
 | WG-031 Menu highlights | done | WG-023, WG-030 | `backend/**`, `packages/DogSwipeCore/**`, `apps/ios/DogSwipe/**`, `docs/**` | Bounded menu snapshots derive short `menu_highlights`, Swift decodes them, and iOS discovery/vendor summaries display the signals without adding crawler storage |
 | WG-032 Vendor address geocoding | done | WG-022, WG-030 | `apps/ios/DogSwipe/**`, `docs/**` | The iOS Vendor form can resolve pickup address text into latitude/longitude with an injected CoreLocation geocoder and tested success/failure states |
 | WG-033 iOS release surface | done | WG-030, WG-032 | `apps/ios/DogSwipe/**`, `scripts/**`, `.github/**`, `docs/**` | The iOS target has a hotdog-specific AppIcon catalog, accent color, privacy manifest, local verifier, and CI gate for release-facing asset drift |
+| WG-034 iOS screenshot smoke | done | WG-033 | `apps/ios/DogSwipe/**`, `scripts/**`, `.github/**`, `docs/**` | The iOS app has deterministic hotdog screenshot fixtures, a UI test target that covers Discover/Matches/Vendor/Review/Profile, local screenshot export, and CI smoke coverage |
 
 ## Ready Frontier
 
-The next ready work is to create a concrete skillbox deploy overlay or continue deeper product slices: live routing beyond Apple Maps handoff, universal-link polish, screenshot/TestFlight automation, and crawler-backed menu indexing if the lightweight snapshot model proves useful.
+The next ready work is to create a concrete skillbox deploy overlay or continue deeper product slices: live routing beyond Apple Maps handoff, universal-link polish, TestFlight automation, and crawler-backed menu indexing if the lightweight snapshot model proves useful.
 
 ## Risks
 
 - The original visual reference image is unavailable in this context; final visual parity is blocked on reacquiring that asset or a written design brief.
 - Live deploy is blocked until a skillbox overlay names a concrete host, deploy root, env source, production domain, and health check target.
-- App Store signing, screenshots, and TestFlight automation remain out of scope until signing assets and bundle ownership are known.
+- App Store signing and TestFlight automation remain out of scope until signing assets and bundle ownership are known.
 
 ## Remote Checkpoint
 

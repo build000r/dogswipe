@@ -6,7 +6,9 @@ Last verified: 2026-05-05
 | --- | --- | --- |
 | Swift package tests | `make swift-test` | 30 tests passed |
 | iOS smoke build | `xcodebuild -quiet -project apps/ios/DogSwipe/DogSwipe.xcodeproj -scheme DogSwipe -destination 'generic/platform=iOS' build` | passed |
-| iOS unit tests | `xcodebuild -quiet -project apps/ios/DogSwipe/DogSwipe.xcodeproj -scheme DogSwipe -destination 'platform=iOS Simulator,id=<available iPhone simulator UDID>' test` | passed |
+| iOS unit tests | `xcodebuild -quiet -project apps/ios/DogSwipe/DogSwipe.xcodeproj -scheme DogSwipe -destination 'platform=iOS Simulator,id=<available iPhone simulator UDID>' -only-testing:DogSwipeTests test` | passed |
+| iOS screenshot UI smoke | `make ios-ui-test` | 1 UI test passed across 5 hotdog app surfaces |
+| iOS screenshot export | `make ios-screenshots` | 5 PNG attachments exported under `.build/ios-screenshots/attachments` |
 | Backend API tests | `make backend-test` | 70 tests passed |
 | Backend coverage | `make coverage` | 89.63% total coverage |
 | Clean backend install | `python3.12 -m venv /tmp/... && pip install -e 'backend[test]'` | passed |
@@ -21,7 +23,7 @@ Last verified: 2026-05-05
 | iOS release assets | `make ios-release-assets` | passed |
 | CRAP score | `make crap` | `FINAL_SCORE: 7.00` |
 | MMDX preflight | `make mmdx-preflight` | 3 charts passed |
-| CI quality enforcement | GitHub Actions `backend`, `swift-package`, and `ios` jobs | coverage XML feeds blocking CRAP; MMDX, SwiftUI drift, deploy, Swift package, and iOS gates fail on regressions; iOS prefers a modern simulator, preboots it, disables parallel test workers, and uses bounded destination/job/test timeouts |
+| CI quality enforcement | GitHub Actions `backend`, `swift-package`, and `ios` jobs | coverage XML feeds blocking CRAP; MMDX, SwiftUI drift, deploy, Swift package, and iOS gates fail on regressions; iOS prefers a modern simulator, preboots it, disables parallel test workers, uses bounded destination/job/test timeouts, and runs screenshot UI smoke |
 | SPAPS usage audit | `python3 ../sweet-potato/skills/sweet-potato-usage-audit/scripts/audit_sweet_potato_usage.py --sweet-potato-root ../sweet-potato .` | 0 high, 0 medium, 0 low |
 
 ## Current Product Evidence
@@ -48,16 +50,17 @@ Last verified: 2026-05-05
 - iOS native sign-in stores SPAPS access/refresh JWTs in Keychain, refreshes sessions, and injects only the access bearer into the shared API client.
 - iOS registers `dogswipe://auth`, parses returned magic-link tokens, and verifies deep links through `AuthSessionStore`.
 - The iOS target includes a hotdog-specific AppIcon catalog, accent color, and `PrivacyInfo.xcprivacy` declaration for linked auth email and precise location data used only for app functionality; `make ios-release-assets` blocks missing icon slots, alpha-channel icons, and privacy manifest drift.
+- `--dogswipe-screenshot-mode` swaps in deterministic hotdog API fixtures, an in-memory token store, and a static location provider so UI smoke/screenshots cover Discover, Matches, Vendor, Review, and Profile without live auth, location prompts, or localhost state.
 - `POST /v1/vendor/submissions` stores authenticated vendor hotdog listings as `pending_review`; `GET`/`PUT /v1/vendor/submissions` are user-scoped and the iOS Vendor tab can revise change-requested listings.
 - `POST /v1/vendor/submissions/{id}/ingest-menu` is owner-scoped, stores bounded menu URL snapshot status/excerpt/timestamp fields, and the iOS Vendor tab can refresh and render the snapshot state.
 - `POST /v1/admin/vendor/menus/refresh` is admin-scoped, refreshes stale vendor menu snapshots in bounded batches, reports checked/refreshed/failed counts, and the iOS Admin tab can trigger the refresh.
 - Configured admins can list pending vendor submissions, approve one into discovery, reject one, request edits with a review note, and production preflight requires `DOGSWIPE_ADMIN_USER_IDS` when SPAPS auth is enabled.
 - Production deploy artifacts define the Compose stack, env contract, preflight checks, post-deploy verification, reverse-proxy template, and CI workflow.
-- GitHub Actions enforces backend coverage XML generation, scoped CRAP threshold, MMDX architecture preflight, SwiftUI drift, deploy preflight, and iOS build/test gates.
+- GitHub Actions enforces backend coverage XML generation, scoped CRAP threshold, MMDX architecture preflight, SwiftUI drift, deploy preflight, iOS build/test gates, and screenshot UI smoke.
 - A DogSwipe skillbox overlay template and validator exist so live deploy setup can be checked without committing host secrets.
 
 ## Known Blocks
 
 - Live deployment is blocked until a skillbox deploy overlay names a host, service, production origin, and health URL.
 - Visual parity with the original reference image is blocked because the image is not available in this compacted context.
-- App Store signing, screenshots, and TestFlight automation remain release-slice work because bundle ownership and signing assets are not available in this workspace.
+- App Store signing and TestFlight automation remain release-slice work because bundle ownership and signing assets are not available in this workspace.

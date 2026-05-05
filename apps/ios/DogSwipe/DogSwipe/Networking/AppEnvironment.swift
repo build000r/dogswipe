@@ -2,6 +2,13 @@ import DogSwipeCore
 import Foundation
 
 enum AppEnvironment {
+    static let screenshotModeArgument = "--dogswipe-screenshot-mode"
+
+    static var isScreenshotMode: Bool {
+        ProcessInfo.processInfo.arguments.contains(screenshotModeArgument)
+            || ProcessInfo.processInfo.environment["DOGSWIPE_SCREENSHOT_MODE"] == "1"
+    }
+
     static var apiBaseURL: URL {
         if let value = Bundle.main.object(forInfoDictionaryKey: "DOGSWIPE_API_BASE_URL") as? String,
            let url = URL(string: value) {
@@ -26,20 +33,30 @@ enum AppEnvironment {
         Bundle.main.object(forInfoDictionaryKey: "DOGSWIPE_SPAPS_ORIGIN") as? String
     }
 
+    static func accessTokenStore() -> BearerTokenStoring {
+        isScreenshotMode ? EphemeralBearerTokenStore() : KeychainBearerTokenStore()
+    }
+
+    static func refreshTokenStore() -> BearerTokenStoring {
+        isScreenshotMode
+            ? EphemeralBearerTokenStore()
+            : KeychainBearerTokenStore(account: "spaps-refresh-token")
+    }
+
     static func apiClient(
-        httpClient: DogSwipeHTTPClient = URLSessionDogSwipeHTTPClient(),
+        httpClient: DogSwipeHTTPClient? = nil,
         authorizationTokenProvider: DogSwipeAPIClient.AuthorizationTokenProvider? = nil
     ) -> DogSwipeAPIClient {
         DogSwipeAPIClient(
             baseURL: apiBaseURL,
-            httpClient: httpClient,
+            httpClient: httpClient ?? apiHTTPClient(),
             authorizationTokenProvider: authorizationTokenProvider
         )
     }
 
     static func apiClient(
         tokenStore: BearerTokenStoring,
-        httpClient: DogSwipeHTTPClient = URLSessionDogSwipeHTTPClient()
+        httpClient: DogSwipeHTTPClient? = nil
     ) -> DogSwipeAPIClient {
         apiClient(
             httpClient: httpClient,
@@ -50,13 +67,25 @@ enum AppEnvironment {
     }
 
     static func spapsAuthClient(
-        httpClient: DogSwipeHTTPClient = URLSessionDogSwipeHTTPClient()
+        httpClient: DogSwipeHTTPClient? = nil
     ) -> SPAPSAuthClient {
         SPAPSAuthClient(
             baseURL: spapsAPIBaseURL,
-            publishableKey: spapsPublishableKey,
+            publishableKey: screenshotPublishableKey,
             origin: spapsOrigin,
-            httpClient: httpClient
+            httpClient: httpClient ?? apiHTTPClient()
         )
+    }
+
+    private static func apiHTTPClient() -> DogSwipeHTTPClient {
+        isScreenshotMode ? ScreenshotDogSwipeHTTPClient() : URLSessionDogSwipeHTTPClient()
+    }
+
+    private static var screenshotPublishableKey: String {
+        let key = spapsPublishableKey.trimmingCharacters(in: .whitespacesAndNewlines)
+        if isScreenshotMode, key.isEmpty {
+            return "dogswipe-screenshot-publishable-key"
+        }
+        return key
     }
 }

@@ -8,7 +8,7 @@ struct HotdogIllustrationView: View {
         ZStack {
             Color.dsPrimarySoft
 
-            VStack(spacing: .dsSpace6) {
+            VStack {
                 Spacer()
 
                 ZStack {
@@ -31,17 +31,10 @@ struct HotdogIllustrationView: View {
                 }
                 .padding(.horizontal, .dsSpace6)
 
-                VStack(spacing: .dsSpace2) {
-                    Text(profile.style.uppercased())
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(Color.dsPrimary)
-                    Text(profile.priceLabel)
-                        .font(.title2.weight(.semibold).monospacedDigit())
-                        .foregroundStyle(Color.dsInk)
-                }
-                .padding(.bottom, .dsSpace8)
+                Spacer()
             }
         }
+        .accessibilityLabel(profile.mediaAltText ?? profile.name)
     }
 
     private func toppingLine(color: Color, yOffset: CGFloat) -> some View {

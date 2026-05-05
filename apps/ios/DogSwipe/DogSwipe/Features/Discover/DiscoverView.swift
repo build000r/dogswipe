@@ -37,6 +37,7 @@ struct DiscoverView: View {
             .navigationTitle("DogSwipe")
             .toolbarTitleDisplayMode(.inline)
             .dsPageBackground()
+            .accessibilityIdentifier("dogswipe.discover.screen")
             .task {
                 if case .idle = viewModel.state {
                     await viewModel.load()

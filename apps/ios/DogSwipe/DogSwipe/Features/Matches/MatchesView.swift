@@ -58,6 +58,7 @@ struct MatchesView: View {
                 }
             }
             .navigationTitle("Matches")
+            .accessibilityIdentifier("dogswipe.matches.screen")
             .task {
                 if case .idle = viewModel.state {
                     await viewModel.load()

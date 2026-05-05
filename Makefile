@@ -8,7 +8,7 @@ PIP := $(VENV)/bin/pip
 PYTEST := $(VENV)/bin/pytest
 ALEMBIC := $(VENV)/bin/alembic
 
-.PHONY: generate-ios ios-build ios-release-assets swift-test backend-install backend-install-local backend-test coverage lint typecheck migrate migration-current test drift crap mmdx-preflight deploy-config deploy-preflight deploy-overlay-template deploy-post-verify
+.PHONY: generate-ios ios-build ios-release-assets ios-ui-test ios-screenshots swift-test backend-install backend-install-local backend-test coverage lint typecheck migrate migration-current test drift crap mmdx-preflight deploy-config deploy-preflight deploy-overlay-template deploy-post-verify
 
 generate-ios:
 	cd apps/ios/DogSwipe && xcodegen generate
@@ -18,6 +18,12 @@ ios-build: generate-ios
 
 ios-release-assets:
 	python3 scripts/verify_ios_release_assets.py
+
+ios-ui-test: generate-ios
+	python3 scripts/capture_ios_screenshots.py --skip-export
+
+ios-screenshots: generate-ios
+	python3 scripts/capture_ios_screenshots.py
 
 swift-test:
 	swift test --package-path packages/DogSwipeCore

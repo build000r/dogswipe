@@ -64,6 +64,12 @@ final class CoreLocationUserLocationProvider: NSObject, UserLocationProviding {
     }
 }
 
+struct ScreenshotUserLocationProvider: UserLocationProviding {
+    func currentLocation() async -> DiscoveryLocation? {
+        DiscoveryLocation(latitude: 43.6532, longitude: -79.3832)
+    }
+}
+
 extension CoreLocationUserLocationProvider: CLLocationManagerDelegate {
     nonisolated func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         Task { @MainActor in

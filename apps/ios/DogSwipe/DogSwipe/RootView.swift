@@ -9,10 +9,8 @@ struct RootView: View {
     private let apiClient: DogSwipeAPIClient
 
     init(
-        accessTokenStore: BearerTokenStoring = KeychainBearerTokenStore(),
-        refreshTokenStore: BearerTokenStoring = KeychainBearerTokenStore(
-            account: "spaps-refresh-token"
-        ),
+        accessTokenStore: BearerTokenStoring = AppEnvironment.accessTokenStore(),
+        refreshTokenStore: BearerTokenStoring = AppEnvironment.refreshTokenStore(),
         authClient: SPAPSAuthClient = AppEnvironment.spapsAuthClient()
     ) {
         let apiClient = AppEnvironment.apiClient(tokenStore: accessTokenStore)
@@ -78,6 +76,7 @@ struct RootView: View {
                 }
         }
         .tint(.dsPrimary)
+        .accessibilityIdentifier("dogswipe.root")
         .task {
             authSessionStore.load()
             await preferencesStore.load()

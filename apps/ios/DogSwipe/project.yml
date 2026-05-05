@@ -54,3 +54,16 @@ targets:
         CODE_SIGNING_ALLOWED: NO
         CODE_SIGNING_REQUIRED: NO
         GENERATE_INFOPLIST_FILE: YES
+  DogSwipeUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: DogSwipeUITests
+    dependencies:
+      - target: DogSwipe
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.build000r.dogswipe.uitests
+        CODE_SIGNING_ALLOWED: NO
+        CODE_SIGNING_REQUIRED: NO
+        GENERATE_INFOPLIST_FILE: YES

@@ -24,9 +24,10 @@ struct ProfileView: View {
                     Text("Your cravings")
                         .font(.title2.weight(.semibold))
                         .foregroundStyle(Color.dsInk)
-                    Text("Tune the bite signal before the backend starts personalizing local picks.")
+                    Text("Tune distance and flavor filters for nearby hotdog picks.")
                         .font(.body)
                         .foregroundStyle(Color.dsMuted)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
 
                 VStack(alignment: .leading, spacing: .dsSpace4) {
@@ -89,6 +90,7 @@ struct ProfileView: View {
                 }
             }
             .dsPageBackground()
+            .accessibilityIdentifier("dogswipe.profile.screen")
         }
     }
 

@@ -19,6 +19,7 @@ The first production slice must prove three things:
 - Discovery cards represent hotdogs, not venues: the primary object is a specific item from a vendor.
 - A card must show name, style, price, signature notes, distance, walking time, vendor, crave score, and compact menu highlights when a bounded menu snapshot exists; when the app has current location permission, distance should be recomputed from profile coordinates rather than relying on static sample mileage, and users should be able to hand off to Apple Maps from coordinates or pickup address text.
 - Cards without remote media still need a product-specific hotdog visual, and craving controls should persist as user-scoped preferences that filter/rank both backend discovery and the local Swift deck.
+- Screenshot and demo fixtures must remain deterministic and hotdog-specific across Discover, Matches, Vendor, Review, and Profile so public app captures do not depend on live auth, location prompts, or localhost state.
 - Positive swipes are intent signals. Matches are high-crave liked items, not social matches.
 - Vendors can submit hotdog listings with menu/media metadata, optional coordinates, and pickup address text, use the iOS Vendor form to resolve pickup addresses into coordinates, refresh a bounded menu URL snapshot for their own listings, and revise change-requested listings back into review; configured admins can approve/reject/request edits and refresh stale vendor menu snapshots in bounded batches. Production can opt into the same stale-menu refresh as a bounded background worker, and the API can derive short menu highlights from those snapshots without turning DogSwipe into a full crawler.
 - Production identity is backend-owned through SPAPS; the app may use a publishable key for native magic-link auth, handle `dogswipe://auth` link returns, store access/refresh JWTs in Keychain, and send only user bearer tokens to the DogSwipe API.
@@ -29,7 +30,7 @@ The first production slice must prove three things:
 - Payments or booking
 - Real-time chat
 - Recommendation ML
-- App Store signing, screenshot capture, and TestFlight automation
+- App Store signing and TestFlight automation
 - Universal-link handoff polish
 - Live routing beyond Apple Maps handoff
 - Crawler-based menu indexing
@@ -43,5 +44,5 @@ These are valuable later, but they would dilute the core loop before the app has
 - Backend routes are covered by API and service tests with coverage above 80%.
 - Auth integration follows Sweet Potato contracts: JWTs for user-scoped routes, app keys for service calls, no local fake auth contract in production.
 - iOS release-facing metadata includes a hotdog-specific app icon, accent color, and privacy manifest for auth email and precise location use.
-- CI blocks regressions in backend coverage, scoped CRAP score, SwiftUI drift, architecture-diagram preflight, deploy preflight, iOS release assets, and iOS build/test gates.
+- CI blocks regressions in backend coverage, scoped CRAP score, SwiftUI drift, architecture-diagram preflight, deploy preflight, iOS release assets, iOS build/test gates, and screenshot UI smoke.
 - Public docs distinguish implemented behavior from roadmap.

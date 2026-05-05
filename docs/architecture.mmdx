@@ -107,7 +107,8 @@ stateDiagram-v2
   SwiftTests --> DriftScan
   DriftScan --> IOSBuild
   IOSBuild --> IOSTests
-  IOSTests --> [*]
+  IOSTests --> ScreenshotSmoke
+  ScreenshotSmoke --> [*]
 ```
 
 ## chart spaps SPAPS Boundary

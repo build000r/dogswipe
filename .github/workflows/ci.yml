@@ -68,7 +68,7 @@ jobs:
 
   ios:
     runs-on: macos-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - name: Install XcodeGen
@@ -82,57 +82,7 @@ jobs:
       - name: Unit tests
         run: |
           set -euo pipefail
-          selection="$(python3 <<'PY'
-          import json
-          import re
-          import subprocess
-
-          data = json.loads(
-              subprocess.check_output(
-                  ["xcrun", "simctl", "list", "devices", "available", "--json"],
-                  text=True,
-              )
-          )
-          devices = []
-          for runtime, runtime_devices in data["devices"].items():
-              for device in runtime_devices:
-                  if device.get("isAvailable") and device.get("name", "").startswith("iPhone"):
-                      devices.append((runtime, device))
-
-          if not devices:
-              raise SystemExit("No available iPhone simulators found")
-
-          def runtime_version(runtime):
-              match = re.search(r"iOS-(\d+(?:-\d+)*)$", runtime)
-              if not match:
-                  return ()
-              return tuple(int(part) for part in match.group(1).split("-"))
-
-          devices.sort(key=lambda item: runtime_version(item[0]), reverse=True)
-          preferred_names = [
-              "iPhone 17 Pro",
-              "iPhone 17",
-              "iPhone 16 Pro",
-              "iPhone 16",
-              "iPhone 16e",
-              "iPhone 15 Pro",
-              "iPhone 15",
-              "iPhone 14 Pro",
-              "iPhone 14",
-          ]
-
-          selected = None
-          for name in preferred_names:
-              selected = next((item for item in devices if item[1]["name"] == name), None)
-              if selected:
-                  break
-          if selected is None:
-              selected = next((item for item in devices if "SE" not in item[1]["name"]), devices[0])
-
-          runtime, device = selected
-          print(f"{device['udid']}|{device['name']}|{runtime}", end="")
-          PY
-          )"
+          selection="$(python3 scripts/select_ios_simulator.py)"
           IFS='|' read -r simulator_id simulator_name simulator_runtime <<< "$selection"
           test -n "$simulator_id"
           echo "Selected iOS simulator: ${simulator_name} (${simulator_id}) on ${simulator_runtime}"
@@ -147,4 +97,7 @@ jobs:
             -project apps/ios/DogSwipe/DogSwipe.xcodeproj \
             -scheme DogSwipe \
             -destination "platform=iOS Simulator,id=${simulator_id},arch=arm64" \
+            -only-testing:DogSwipeTests \
             test
+      - name: Screenshot UI smoke
+        run: make ios-ui-test

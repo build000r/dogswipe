@@ -18,6 +18,7 @@ struct AdminReviewView: View {
                 }
                 .padding(.dsSpace5)
             }
+            .safeAreaPadding(.bottom, .dsSpace8)
             .navigationTitle("Review")
             .toolbar {
                 if store.isReviewing {
@@ -36,6 +37,7 @@ struct AdminReviewView: View {
                 }
             }
             .dsPageBackground()
+            .accessibilityIdentifier("dogswipe.review.screen")
         }
     }
 
