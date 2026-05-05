@@ -9,6 +9,8 @@ services:
       REDIS_URL: redis://redis:6379/0
       CORS_ALLOW_ORIGINS: http://localhost:3000,http://localhost:5173
       SPAPS_AUTH_ENABLED: "false"
+      DOGSWIPE_AUTO_CREATE_SCHEMA: "true"
+      DOGSWIPE_SEED_SAMPLE_PROFILES: "true"
     ports:
       - "8000:8000"
     depends_on:

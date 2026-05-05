@@ -17,7 +17,7 @@ async def test_discovery_returns_ranked_profiles(async_client) -> None:
     response = await async_client.get("/v1/discovery", params={"limit": 2})
     assert response.status_code == 200
     profiles = response.json()["profiles"]
-    assert [profile["id"] for profile in profiles] == ["dog-luna", "dog-miso"]
+    assert [profile["id"] for profile in profiles] == ["dog-luna", "dog-sage"]
     assert profiles[0]["compatibility_score"] > profiles[1]["compatibility_score"]
 
 

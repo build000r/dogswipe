@@ -11,6 +11,7 @@ Status key: `done`, `active`, `ready`, `blocked`.
 | WG-005 Quality gates | done | WG-002, WG-003, WG-004 | `.drift/**`, coverage artifacts | drift scan and CRAP score meet target gates |
 | WG-006 Public repo + deploy | blocked | WG-005 | git remote, deployment overlay | public GitHub repo exists; live deploy remains blocked until an overlay identifies a safe target |
 | WG-007 iOS API bridge | done | WG-002, WG-003, WG-004 | `packages/DogSwipeCore/**`, `apps/ios/DogSwipe/**` | iOS app has a tested API client and view models that call backend discovery, swipe, and match routes |
+| WG-008 Local backend runtime | done | WG-004 | `backend/**`, `.env.example`, `docker-compose.yml` | Fresh local PostgreSQL can be schema-created and seeded through explicit local-only settings |
 
 ## Ready Frontier
 

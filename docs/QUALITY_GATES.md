@@ -6,8 +6,8 @@ Last verified: 2026-05-05
 | --- | --- | --- |
 | Swift package tests | `make swift-test` | 12 tests passed |
 | iOS smoke build | `xcodebuild -quiet -project apps/ios/DogSwipe/DogSwipe.xcodeproj -scheme DogSwipe -destination 'generic/platform=iOS' build` | passed |
-| Backend API tests | `make backend-test` | 8 tests passed |
-| Backend coverage | `make coverage` | 91.79% total coverage |
+| Backend API tests | `make backend-test` | 10 tests passed |
+| Backend coverage | `make coverage` | 92.56% total coverage |
 | Backend lint | `make lint` | passed |
 | Backend typecheck | `make typecheck` | passed |
 | SwiftUI drift scan | `make drift` | 0 Swift findings |
@@ -20,6 +20,7 @@ Last verified: 2026-05-05
 - `DogSwipeAPIClient` encodes swipe requests as `user_id`, `profile_id`, and `decision`.
 - `DiscoverViewModel` loads profiles from the backend client and falls back to sample profiles when offline.
 - `MatchesViewModel` fetches matches from the backend client and exposes a visible empty/loading/failure state.
+- Local backend startup can create the starter schema and idempotently seed sample profiles when explicit local-only env flags are enabled.
 
 ## Known Blocks
 
