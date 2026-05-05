@@ -3,7 +3,9 @@ import SwiftUI
 struct ProfileView: View {
     @ObservedObject private var preferencesStore: CravingPreferencesStore
     @ObservedObject private var authSessionStore: AuthSessionStore
-    @State private var sessionToken = ""
+    @State private var email = ""
+    @State private var magicLinkToken = ""
+    @State private var advancedToken = ""
 
     init(
         preferencesStore: CravingPreferencesStore = CravingPreferencesStore(),
@@ -73,13 +75,13 @@ struct ProfileView: View {
             .padding(.dsSpace5)
             .navigationTitle("Profile")
             .onAppear {
-                sessionToken = authSessionStore.bearerToken
+                advancedToken = authSessionStore.bearerToken
             }
             .onChange(of: authSessionStore.bearerToken) {
-                sessionToken = authSessionStore.bearerToken
+                advancedToken = authSessionStore.bearerToken
             }
             .toolbar {
-                if preferencesStore.isSyncing {
+                if preferencesStore.isSyncing || authSessionStore.isAuthenticating {
                     ToolbarItem(placement: .topBarTrailing) {
                         ProgressView()
                             .controlSize(.small)
@@ -95,30 +97,72 @@ struct ProfileView: View {
             HStack {
                 preferenceLabel(icon: "key.fill", title: "Session")
                 Spacer()
-                Text(authSessionStore.hasBearerToken ? "Connected" : "Signed out")
+                Text(sessionStatus)
                     .font(.headline)
                     .foregroundStyle(Color.dsMuted)
             }
 
-            SecureField("Bearer token", text: $sessionToken)
+            TextField("Email", text: $email)
+                .textInputAutocapitalization(.never)
+                .textContentType(.emailAddress)
+                .keyboardType(.emailAddress)
+                .autocorrectionDisabled()
+
+            SecureField("Magic link token", text: $magicLinkToken)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
 
-            HStack(spacing: .dsSpace3) {
-                Button {
-                    authSessionStore.save(sessionToken)
-                } label: {
-                    Label("Save", systemImage: "key")
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: .dsSpace3) {
+                    sendMagicLinkButton
+                    verifyMagicLinkButton
                 }
-                .buttonStyle(.borderedProminent)
+
+                VStack(alignment: .leading, spacing: .dsSpace3) {
+                    sendMagicLinkButton
+                    verifyMagicLinkButton
+                }
+            }
+
+            HStack(spacing: .dsSpace3) {
+                if authSessionStore.hasRefreshToken {
+                    Button {
+                        Task {
+                            await authSessionStore.refreshSession()
+                        }
+                    } label: {
+                        Label("Refresh", systemImage: "arrow.clockwise")
+                    }
+                    .disabled(authSessionStore.isAuthenticating)
+                }
+
+                Spacer()
 
                 Button(role: .destructive) {
                     authSessionStore.signOut()
-                    sessionToken = ""
+                    advancedToken = ""
+                    magicLinkToken = ""
                 } label: {
                     Label("Sign out", systemImage: "rectangle.portrait.and.arrow.right")
                 }
-                .disabled(!authSessionStore.hasBearerToken && sessionToken.isEmpty)
+                .disabled(!authSessionStore.hasBearerToken && !authSessionStore.hasRefreshToken)
+            }
+
+            DisclosureGroup {
+                VStack(alignment: .leading, spacing: .dsSpace3) {
+                    SecureField("Bearer token", text: $advancedToken)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                    Button {
+                        authSessionStore.save(advancedToken)
+                    } label: {
+                        Label("Save Token", systemImage: "key")
+                    }
+                    .buttonStyle(.bordered)
+                }
+                .padding(.top, .dsSpace2)
+            } label: {
+                preferenceLabel(icon: "terminal", title: "Advanced")
             }
 
             if let sessionMessage = authSessionStore.sessionMessage {
@@ -130,6 +174,40 @@ struct ProfileView: View {
         .tint(.dsPrimary)
         .padding(.dsSpace5)
         .dsCardSurface()
+    }
+
+    private var sendMagicLinkButton: some View {
+        Button {
+            Task {
+                await authSessionStore.requestMagicLink(email: email)
+            }
+        } label: {
+            Label("Send Link", systemImage: "envelope")
+        }
+        .buttonStyle(.borderedProminent)
+        .disabled(authSessionStore.isAuthenticating)
+    }
+
+    private var verifyMagicLinkButton: some View {
+        Button {
+            Task {
+                await authSessionStore.verifyMagicLink(token: magicLinkToken)
+                magicLinkToken = ""
+            }
+        } label: {
+            Label("Verify", systemImage: "checkmark.seal")
+        }
+        .disabled(authSessionStore.isAuthenticating)
+    }
+
+    private var sessionStatus: String {
+        if let sessionEmail = authSessionStore.sessionEmail, !sessionEmail.isEmpty {
+            return sessionEmail
+        }
+        if authSessionStore.hasBearerToken {
+            return authSessionStore.hasRefreshToken ? "Connected" : "Token saved"
+        }
+        return "Signed out"
     }
 
     private var spicyFriendlyBinding: Binding<Bool> {

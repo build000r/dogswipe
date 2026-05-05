@@ -25,6 +25,7 @@ Last verified: 2026-05-05
 - `DogSwipeAPIClient` decodes backend snake_case profile payloads.
 - `DogSwipeAPIClient` encodes swipe requests without client-controlled user identity.
 - `DogSwipeAPIClient` can attach a trimmed user bearer token from an injected provider and omits blank auth values.
+- `SPAPSAuthClient` requests and verifies magic links with a publishable key and optional native origin, never a secret SPAPS API key.
 - Product profiles represent local hotdogs with style, price, vendor, crave score, and availability fields.
 - `DiscoverViewModel` loads profiles from the backend client and falls back to sample profiles when offline.
 - `MatchesViewModel` fetches matches from the backend client and exposes a visible empty/loading/failure state.
@@ -33,7 +34,7 @@ Last verified: 2026-05-05
 - Alembic owns the production schema path with a tested initial upgrade/downgrade migration.
 - Hotdog cards render a local SwiftUI product visual when `image_url` is absent, and the profile tab exposes interactive craving controls backed by shared ranking preferences.
 - `GET /v1/preferences` and `PUT /v1/preferences` persist user-scoped craving preferences; the Swift client and iOS store round-trip the same snake_case contract.
-- iOS session bootstrap stores provided bearer JWTs in Keychain and injects them into the shared API client without exposing SPAPS API keys.
+- iOS native sign-in stores SPAPS access/refresh JWTs in Keychain, refreshes sessions, and injects only the access bearer into the shared API client.
 - Production deploy artifacts define the Compose stack, env contract, preflight checks, post-deploy verification, reverse-proxy template, and CI workflow.
 
 ## Known Blocks

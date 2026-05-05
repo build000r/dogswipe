@@ -18,12 +18,13 @@ Status key: `done`, `active`, `ready`, `blocked`.
 | WG-012 Hotdog discovery pivot | done | WG-002, WG-004, WG-010 | `backend/**`, `packages/DogSwipeCore/**`, `apps/ios/DogSwipe/**`, `docs/**` | Product contracts, sample data, migrations, tests, and app copy describe local hotdogs instead of the previous mistaken domain |
 | WG-013 Hotdog UI hardening | done | WG-012 | `apps/ios/DogSwipe/**`, `docs/**` | Cards render a local hotdog visual when no image URL exists and the profile tab exposes shared craving controls covered by an iOS unit test |
 | WG-014 User preference persistence | done | WG-009, WG-011, WG-013 | `backend/**`, `packages/DogSwipeCore/**`, `apps/ios/DogSwipe/**`, `docs/**` | Craving controls round-trip through user-scoped backend preferences with migration, API, Swift client, and tests |
-| WG-015 iOS auth session bootstrap | done | WG-011, WG-014 | `apps/ios/DogSwipe/**`, `docs/**` | The app stores provided bearer JWTs in Keychain and injects them into discovery, swipe, match, and preference API clients without exposing SPAPS API keys |
+| WG-015 iOS auth session bootstrap | done | WG-011, WG-014 | `apps/ios/DogSwipe/**`, `docs/**` | The app stores user bearer JWTs in Keychain and injects them into discovery, swipe, match, and preference API clients without exposing SPAPS API keys |
 | WG-016 Deploy contract | done | WG-006, WG-010 | `deploy/**`, `.github/**`, `Makefile`, `docs/**` | Production Compose, env template, pre/post verification scripts, reverse-proxy template, and CI preflight exist; live rollout remains overlay-gated |
+| WG-017 Native SPAPS magic-link sign-in | done | WG-015 | `apps/ios/DogSwipe/**`, `docs/**` | The Profile tab can request and verify SPAPS magic links with a publishable key, store access/refresh JWTs in Keychain, refresh sessions, and keep manual bearer entry as an advanced fallback |
 
 ## Ready Frontier
 
-The next ready work is to create a concrete skillbox deploy overlay or continue deeper product slices: native SPAPS sign-in UX, live menu media, and vendor workflows.
+The next ready work is to create a concrete skillbox deploy overlay or continue deeper product slices: live menu media, vendor workflows, location ranking, and release assets.
 
 ## Risks
 

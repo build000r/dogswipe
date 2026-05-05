@@ -6,10 +6,22 @@ struct RootView: View {
     @StateObject private var preferencesStore: CravingPreferencesStore
     private let apiClient: DogSwipeAPIClient
 
-    init(tokenStore: BearerTokenStoring = KeychainBearerTokenStore()) {
-        let apiClient = AppEnvironment.apiClient(tokenStore: tokenStore)
+    init(
+        accessTokenStore: BearerTokenStoring = KeychainBearerTokenStore(),
+        refreshTokenStore: BearerTokenStoring = KeychainBearerTokenStore(
+            account: "spaps-refresh-token"
+        ),
+        authClient: SPAPSAuthClient = AppEnvironment.spapsAuthClient()
+    ) {
+        let apiClient = AppEnvironment.apiClient(tokenStore: accessTokenStore)
         self.apiClient = apiClient
-        _authSessionStore = StateObject(wrappedValue: AuthSessionStore(tokenStore: tokenStore))
+        _authSessionStore = StateObject(
+            wrappedValue: AuthSessionStore(
+                accessTokenStore: accessTokenStore,
+                refreshTokenStore: refreshTokenStore,
+                authClient: authClient
+            )
+        )
         _preferencesStore = StateObject(
             wrappedValue: CravingPreferencesStore(apiClient: apiClient)
         )

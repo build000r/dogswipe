@@ -10,6 +10,22 @@ enum AppEnvironment {
         return URL(string: "http://localhost:8000")!
     }
 
+    static var spapsAPIBaseURL: URL {
+        if let value = Bundle.main.object(forInfoDictionaryKey: "DOGSWIPE_SPAPS_API_BASE_URL") as? String,
+           let url = URL(string: value) {
+            return url
+        }
+        return URL(string: "https://api.sweetpotato.dev")!
+    }
+
+    static var spapsPublishableKey: String {
+        Bundle.main.object(forInfoDictionaryKey: "DOGSWIPE_SPAPS_PUBLISHABLE_KEY") as? String ?? ""
+    }
+
+    static var spapsOrigin: String? {
+        Bundle.main.object(forInfoDictionaryKey: "DOGSWIPE_SPAPS_ORIGIN") as? String
+    }
+
     static func apiClient(
         httpClient: DogSwipeHTTPClient = URLSessionDogSwipeHTTPClient(),
         authorizationTokenProvider: DogSwipeAPIClient.AuthorizationTokenProvider? = nil
@@ -30,6 +46,17 @@ enum AppEnvironment {
             authorizationTokenProvider: {
                 try tokenStore.token()
             }
+        )
+    }
+
+    static func spapsAuthClient(
+        httpClient: DogSwipeHTTPClient = URLSessionDogSwipeHTTPClient()
+    ) -> SPAPSAuthClient {
+        SPAPSAuthClient(
+            baseURL: spapsAPIBaseURL,
+            publishableKey: spapsPublishableKey,
+            origin: spapsOrigin,
+            httpClient: httpClient
         )
     }
 }
