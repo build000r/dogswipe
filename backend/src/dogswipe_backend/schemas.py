@@ -31,7 +31,8 @@ class DiscoveryResponse(BaseModel):
 
 
 class SwipeRequest(BaseModel):
-    user_id: str = Field(min_length=1, max_length=128)
+    model_config = ConfigDict(extra="forbid")
+
     profile_id: str = Field(min_length=1, max_length=64)
     decision: SwipeDecision
 

@@ -57,7 +57,8 @@ async def test_swipe_returns_repository_match_signal() -> None:
     repository = FakeRepository()
     service = DogSwipeService(repository)
     response = await service.swipe(
-        SwipeRequest(user_id="u1", profile_id="dog-test", decision=SwipeDecision.super_like)
+        user_id="u1",
+        request=SwipeRequest(profile_id="dog-test", decision=SwipeDecision.super_like),
     )
     assert response.matched is True
     assert repository.swipes == [("u1", "dog-test", SwipeDecision.super_like)]

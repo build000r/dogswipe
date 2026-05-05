@@ -34,7 +34,7 @@ The backend defaults to local development mode with auth disabled. Production de
 
 For local Docker development, `DOGSWIPE_AUTO_CREATE_SCHEMA=true` and `DOGSWIPE_SEED_SAMPLE_PROFILES=true` create the starter tables and seed sample profiles at API startup. Keep those flags off in production and run managed migrations instead.
 
-The iOS target reads `DOGSWIPE_API_BASE_URL` from its generated Info.plist and defaults to `http://localhost:8000`, which works for simulator-local backend development.
+The iOS target reads `DOGSWIPE_API_BASE_URL` from its generated Info.plist and defaults to `http://localhost:8000`, which works for simulator-local backend development. User-scoped routes derive identity from SPAPS auth when enabled; local development can use `X-DogSwipe-User-ID` while auth is disabled.
 
 ## Verification Gates
 

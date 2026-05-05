@@ -14,20 +14,17 @@ final class MatchesViewModel: ObservableObject {
     @Published private(set) var matches: [DogProfile] = []
 
     private let apiClient: DogSwipeAPIClient
-    private let userID: String
 
     init(
-        apiClient: DogSwipeAPIClient = AppEnvironment.apiClient(),
-        userID: String = AppEnvironment.defaultUserID
+        apiClient: DogSwipeAPIClient = AppEnvironment.apiClient()
     ) {
         self.apiClient = apiClient
-        self.userID = userID
     }
 
     func load() async {
         state = .loading
         do {
-            matches = try await apiClient.matches(userID: userID)
+            matches = try await apiClient.matches()
             state = .ready
         } catch {
             matches = MatchScorer.ranked(

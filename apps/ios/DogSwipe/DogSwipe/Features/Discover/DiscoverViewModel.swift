@@ -16,14 +16,11 @@ final class DiscoverViewModel: ObservableObject {
     @Published private(set) var lastMatch: SwipeResponse?
 
     private let apiClient: DogSwipeAPIClient
-    private let userID: String
 
     init(
-        apiClient: DogSwipeAPIClient = AppEnvironment.apiClient(),
-        userID: String = AppEnvironment.defaultUserID
+        apiClient: DogSwipeAPIClient = AppEnvironment.apiClient()
     ) {
         self.apiClient = apiClient
-        self.userID = userID
     }
 
     var currentProfile: DogProfile? {
@@ -70,7 +67,6 @@ final class DiscoverViewModel: ObservableObject {
         Task {
             do {
                 lastMatch = try await apiClient.swipe(
-                    userID: userID,
                     profileID: profile.id,
                     decision: decision
                 )

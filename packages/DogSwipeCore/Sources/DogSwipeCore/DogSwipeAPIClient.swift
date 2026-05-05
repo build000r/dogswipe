@@ -64,17 +64,15 @@ public struct DogSwipeAPIClient: Sendable {
 
     @discardableResult
     public func swipe(
-        userID: String,
         profileID: String,
         decision: SwipeDecision
     ) async throws -> SwipeResponse {
-        let request = SwipeRequest(userID: userID, profileID: profileID, decision: decision)
+        let request = SwipeRequest(profileID: profileID, decision: decision)
         return try await send(path: "/v1/swipes", method: "POST", body: request)
     }
 
-    public func matches(userID: String) async throws -> [DogProfile] {
-        var components = components(path: "/v1/matches")
-        components.queryItems = [URLQueryItem(name: "user_id", value: userID)]
+    public func matches() async throws -> [DogProfile] {
+        let components = components(path: "/v1/matches")
         let response: MatchResponse = try await send(components: components)
         return response.matches
     }

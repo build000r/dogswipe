@@ -6,21 +6,22 @@ Last verified: 2026-05-05
 | --- | --- | --- |
 | Swift package tests | `make swift-test` | 12 tests passed |
 | iOS smoke build | `xcodebuild -quiet -project apps/ios/DogSwipe/DogSwipe.xcodeproj -scheme DogSwipe -destination 'generic/platform=iOS' build` | passed |
-| Backend API tests | `make backend-test` | 10 tests passed |
-| Backend coverage | `make coverage` | 92.56% total coverage |
+| Backend API tests | `make backend-test` | 19 tests passed |
+| Backend coverage | `make coverage` | 93.28% total coverage |
 | Backend lint | `make lint` | passed |
 | Backend typecheck | `make typecheck` | passed |
 | SwiftUI drift scan | `make drift` | 0 Swift findings |
-| CRAP score | `make crap` | `FINAL_SCORE: 4.68` |
+| CRAP score | `make crap` | `FINAL_SCORE: 5.00` |
 | MMDX preflight | `python3 ../opensource/skills/mmdx/scripts/mmd.py docs/architecture.mmdx --preflight-only` | 3 charts passed |
 
 ## Current Product Evidence
 
 - `DogSwipeAPIClient` decodes backend snake_case profile payloads.
-- `DogSwipeAPIClient` encodes swipe requests as `user_id`, `profile_id`, and `decision`.
+- `DogSwipeAPIClient` encodes swipe requests without client-controlled user identity.
 - `DiscoverViewModel` loads profiles from the backend client and falls back to sample profiles when offline.
 - `MatchesViewModel` fetches matches from the backend client and exposes a visible empty/loading/failure state.
 - Local backend startup can create the starter schema and idempotently seed sample profiles when explicit local-only env flags are enabled.
+- User-scoped backend routes prefer `AuthenticatedUser.user_id` from SPAPS middleware and reject forged `user_id` fields in swipe requests.
 
 ## Known Blocks
 

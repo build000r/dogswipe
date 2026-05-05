@@ -10,10 +10,6 @@ enum AppEnvironment {
         return URL(string: "http://localhost:8000")!
     }
 
-    static var defaultUserID: String {
-        "local-user"
-    }
-
     static func apiClient() -> DogSwipeAPIClient {
         DogSwipeAPIClient(baseURL: apiBaseURL)
     }

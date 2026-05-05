@@ -25,7 +25,8 @@ async def test_discovery_returns_ranked_profiles(async_client) -> None:
 async def test_swipe_like_can_create_match(async_client) -> None:
     response = await async_client.post(
         "/v1/swipes",
-        json={"user_id": "user-1", "profile_id": "dog-luna", "decision": "like"},
+        headers={"X-DogSwipe-User-ID": "user-1"},
+        json={"profile_id": "dog-luna", "decision": "like"},
     )
     assert response.status_code == 200
     assert response.json() == {
@@ -39,7 +40,8 @@ async def test_swipe_like_can_create_match(async_client) -> None:
 async def test_swipe_pass_does_not_create_match(async_client) -> None:
     response = await async_client.post(
         "/v1/swipes",
-        json={"user_id": "user-2", "profile_id": "dog-luna", "decision": "pass"},
+        headers={"X-DogSwipe-User-ID": "user-2"},
+        json={"profile_id": "dog-luna", "decision": "pass"},
     )
     assert response.status_code == 200
     assert response.json()["matched"] is False
@@ -49,14 +51,16 @@ async def test_swipe_pass_does_not_create_match(async_client) -> None:
 async def test_matches_only_returns_high_compatibility_likes(async_client) -> None:
     await async_client.post(
         "/v1/swipes",
-        json={"user_id": "user-3", "profile_id": "dog-luna", "decision": "super_like"},
+        headers={"X-DogSwipe-User-ID": "user-3"},
+        json={"profile_id": "dog-luna", "decision": "super_like"},
     )
     await async_client.post(
         "/v1/swipes",
-        json={"user_id": "user-3", "profile_id": "dog-miso", "decision": "like"},
+        headers={"X-DogSwipe-User-ID": "user-3"},
+        json={"profile_id": "dog-miso", "decision": "like"},
     )
 
-    response = await async_client.get("/v1/matches", params={"user_id": "user-3"})
+    response = await async_client.get("/v1/matches", headers={"X-DogSwipe-User-ID": "user-3"})
     assert response.status_code == 200
     matches = response.json()["matches"]
     assert [match["id"] for match in matches] == ["dog-luna"]
@@ -66,7 +70,29 @@ async def test_matches_only_returns_high_compatibility_likes(async_client) -> No
 async def test_unknown_profile_swipe_is_not_match(async_client) -> None:
     response = await async_client.post(
         "/v1/swipes",
-        json={"user_id": "user-4", "profile_id": "missing", "decision": "like"},
+        headers={"X-DogSwipe-User-ID": "user-4"},
+        json={"profile_id": "missing", "decision": "like"},
     )
     assert response.status_code == 200
     assert response.json()["matched"] is False
+
+
+@pytest.mark.asyncio
+async def test_swipe_rejects_client_supplied_user_id(async_client) -> None:
+    response = await async_client.post(
+        "/v1/swipes",
+        headers={"X-DogSwipe-User-ID": "user-5"},
+        json={"user_id": "forged", "profile_id": "dog-luna", "decision": "like"},
+    )
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_local_matches_use_default_user_when_auth_disabled(async_client) -> None:
+    await async_client.post(
+        "/v1/swipes",
+        json={"profile_id": "dog-luna", "decision": "like"},
+    )
+    response = await async_client.get("/v1/matches")
+    assert response.status_code == 200
+    assert [match["id"] for match in response.json()["matches"]] == ["dog-luna"]

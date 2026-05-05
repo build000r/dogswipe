@@ -35,18 +35,15 @@ public struct SwipeEvent: Identifiable, Codable, Equatable, Sendable {
 }
 
 public struct SwipeRequest: Codable, Equatable, Sendable {
-    public let userID: String
     public let profileID: String
     public let decision: SwipeDecision
 
-    public init(userID: String, profileID: String, decision: SwipeDecision) {
-        self.userID = userID
+    public init(profileID: String, decision: SwipeDecision) {
         self.profileID = profileID
         self.decision = decision
     }
 
     enum CodingKeys: String, CodingKey {
-        case userID = "user_id"
         case profileID = "profile_id"
         case decision
     }

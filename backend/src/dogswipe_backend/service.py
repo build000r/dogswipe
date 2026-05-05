@@ -12,9 +12,9 @@ class DogSwipeService:
         profiles = await self.repository.list_available_profiles(limit=max(1, min(limit, 50)))
         return DiscoveryResponse(profiles=profiles)
 
-    async def swipe(self, request: SwipeRequest) -> SwipeResponse:
+    async def swipe(self, *, user_id: str, request: SwipeRequest) -> SwipeResponse:
         matched = await self.repository.record_swipe(
-            user_id=request.user_id,
+            user_id=user_id,
             profile_id=request.profile_id,
             decision=request.decision,
         )

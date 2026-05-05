@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, Query
 from spaps_server_quickstart.api.health import HealthRouterFactory
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .auth import get_current_user_id
 from .db import get_db_session
 from .repository import DogRepository, SqlAlchemyDogRepository
 from .schemas import DiscoveryResponse, MatchResponse, SwipeRequest, SwipeResponse
@@ -44,13 +45,14 @@ def build_api_router() -> APIRouter:
     async def swipe(
         request: SwipeRequest,
         service: DogSwipeService = Depends(get_service),
+        user_id: str = Depends(get_current_user_id),
     ) -> SwipeResponse:
-        return await service.swipe(request)
+        return await service.swipe(user_id=user_id, request=request)
 
     @v1.get("/matches", response_model=MatchResponse)
     async def matches(
-        user_id: str = Query(min_length=1, max_length=128),
         service: DogSwipeService = Depends(get_service),
+        user_id: str = Depends(get_current_user_id),
     ) -> MatchResponse:
         return await service.matches(user_id=user_id)
 

@@ -57,7 +57,6 @@ final class DogSwipeAPIClientTests: XCTestCase {
         let client = DogSwipeAPIClient(baseURL: URL(string: "http://localhost:8000")!, httpClient: http)
 
         let response = try await client.swipe(
-            userID: "local-user",
             profileID: "dog-luna",
             decision: .superLike
         )
@@ -65,21 +64,21 @@ final class DogSwipeAPIClientTests: XCTestCase {
         XCTAssertEqual(response, SwipeResponse(profileID: "dog-luna", decision: .superLike, matched: true))
         XCTAssertEqual(http.requests.first?.httpMethod, "POST")
         let body = String(data: http.requests.first!.httpBody!, encoding: .utf8)!
-        XCTAssertTrue(body.contains("\"user_id\":\"local-user\""))
+        XCTAssertFalse(body.contains("user_id"))
         XCTAssertTrue(body.contains("\"profile_id\":\"dog-luna\""))
         XCTAssertTrue(body.contains("\"decision\":\"super_like\""))
     }
 
-    func testMatchesAddsUserIDQuery() async throws {
+    func testMatchesUsesAuthenticatedPrincipalEndpoint() async throws {
         let http = MockHTTPClient()
         http.nextData = #"{"matches":[]}"#.data(using: .utf8)!
         let client = DogSwipeAPIClient(baseURL: URL(string: "http://localhost:8000")!, httpClient: http)
 
-        let matches = try await client.matches(userID: "local-user")
+        let matches = try await client.matches()
 
         XCTAssertTrue(matches.isEmpty)
         XCTAssertEqual(http.requests.first?.url?.path, "/v1/matches")
-        XCTAssertEqual(http.requests.first?.url?.query, "user_id=local-user")
+        XCTAssertNil(http.requests.first?.url?.query)
     }
 
     func testNonSuccessStatusThrowsAPIError() async {
