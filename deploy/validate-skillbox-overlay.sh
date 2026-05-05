@@ -50,6 +50,8 @@ require_pattern "compose file points at production compose" '^[[:space:]]*compos
 require_pattern "compose project is dogswipe" '^[[:space:]]*compose_project:[[:space:]]*dogswipe[[:space:]]*$'
 require_pattern "compose service is api" '^[[:space:]]*compose_service:[[:space:]]*api[[:space:]]*$'
 require_pattern "health URL is present" '^[[:space:]]*health_url:[[:space:]]*https://[^[:space:]]+/health[[:space:]]*$'
+require_pattern "AASA URL is present" '^[[:space:]]*aasa_url:[[:space:]]*https://[^[:space:]]+/\.well-known/apple-app-site-association[[:space:]]*$'
+require_pattern "Apple Team ID is present" '^[[:space:]]*apple_team_id:[[:space:]]*([A-Z0-9]{10}|replace-me)[[:space:]]*$'
 require_pattern "env file is present" '^[[:space:]]*env_file:[[:space:]]*[^[:space:]]+prod\.env[[:space:]]*$'
 require_pattern "CI workflow is present" '^[[:space:]]*ci_workflow:[[:space:]]*\.github/workflows/ci\.yml[[:space:]]*$'
 

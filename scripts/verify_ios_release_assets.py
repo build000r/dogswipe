@@ -12,8 +12,11 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 APP_ROOT = ROOT / "apps" / "ios" / "DogSwipe" / "DogSwipe"
+PROJECT_YML = ROOT / "apps" / "ios" / "DogSwipe" / "project.yml"
 APP_ICON_SET = APP_ROOT / "Assets.xcassets" / "AppIcon.appiconset"
 PRIVACY_MANIFEST = APP_ROOT / "PrivacyInfo.xcprivacy"
+ENTITLEMENTS = APP_ROOT / "DogSwipe.entitlements"
+AASA_TEMPLATE = ROOT / "deploy" / "apple-app-site-association.template.json"
 
 
 def png_info(path: Path) -> tuple[int, int, int]:
@@ -114,8 +117,66 @@ def verify_privacy_manifest() -> list[str]:
     return failures
 
 
+def verify_universal_link_surface() -> list[str]:
+    failures: list[str] = []
+    if not ENTITLEMENTS.exists():
+        failures.append("DogSwipe.entitlements is missing")
+    else:
+        with ENTITLEMENTS.open("rb") as handle:
+            entitlements = plistlib.load(handle)
+        domains = entitlements.get("com.apple.developer.associated-domains")
+        if not isinstance(domains, list) or not domains:
+            failures.append("Associated domains entitlement is missing")
+        elif "applinks:$(DOGSWIPE_ASSOCIATED_DOMAIN)" not in domains:
+            failures.append(
+                "Associated domains must use applinks:$(DOGSWIPE_ASSOCIATED_DOMAIN)"
+            )
+
+    if not PROJECT_YML.exists():
+        failures.append("project.yml is missing")
+    else:
+        project_text = PROJECT_YML.read_text()
+        required_project_values = [
+            "CODE_SIGN_ENTITLEMENTS: DogSwipe/DogSwipe.entitlements",
+            "DOGSWIPE_ASSOCIATED_DOMAIN:",
+            "DOGSWIPE_AUTH_REDIRECT_URL:",
+            "DOGSWIPE_AUTH_UNIVERSAL_LINK_HOSTS:",
+        ]
+        for value in required_project_values:
+            if value not in project_text:
+                failures.append(f"project.yml missing {value}")
+
+    if not AASA_TEMPLATE.exists():
+        failures.append("Apple app-site association template is missing")
+    else:
+        try:
+            aasa = json.loads(AASA_TEMPLATE.read_text())
+        except json.JSONDecodeError as error:
+            failures.append(f"Apple app-site association template is invalid JSON: {error}")
+        else:
+            details = aasa.get("applinks", {}).get("details", [])
+            if not details:
+                failures.append("Apple app-site association template has no applinks details")
+            else:
+                app_ids = details[0].get("appIDs", [])
+                if "${APPLE_TEAM_ID}.com.build000r.dogswipe" not in app_ids:
+                    failures.append("Apple app-site association template has the wrong app ID")
+                components = details[0].get("components", [])
+                paths = {
+                    component.get("/")
+                    for component in components
+                    if isinstance(component, dict)
+                }
+                for path in ["/auth", "/auth/callback"]:
+                    if path not in paths:
+                        failures.append(
+                            f"Apple app-site association template missing path: {path}"
+                        )
+    return failures
+
+
 def main() -> int:
-    failures = verify_app_icons() + verify_privacy_manifest()
+    failures = verify_app_icons() + verify_privacy_manifest() + verify_universal_link_surface()
     if failures:
         print("iOS release asset verification failed:", file=sys.stderr)
         for failure in failures:

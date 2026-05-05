@@ -4,6 +4,7 @@ set -euo pipefail
 COMPOSE_FILE="${COMPOSE_FILE:-deploy/docker-compose.prod.yml}"
 COMPOSE_PROJECT="${COMPOSE_PROJECT:-dogswipe}"
 ENV_FILE="${ENV_FILE:-deploy/prod.env}"
+AASA_TEMPLATE="${AASA_TEMPLATE:-deploy/apple-app-site-association.template.json}"
 COMPOSE_CMD="${COMPOSE_CMD:-docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" -p "$COMPOSE_PROJECT"}"
 
 passed=0
@@ -47,6 +48,17 @@ if [[ -f "$ENV_FILE" ]]; then
   pass "production env file exists: $ENV_FILE"
 else
   fail "production env file missing: $ENV_FILE"
+fi
+
+if [[ -f "$AASA_TEMPLATE" ]]; then
+  pass "Apple app-site association template exists"
+  if python3 -m json.tool "$AASA_TEMPLATE" >/dev/null; then
+    pass "Apple app-site association template is valid JSON"
+  else
+    fail "Apple app-site association template must be valid JSON"
+  fi
+else
+  fail "Apple app-site association template missing: $AASA_TEMPLATE"
 fi
 
 if [[ -f "$ENV_FILE" ]]; then

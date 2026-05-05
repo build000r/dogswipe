@@ -11,6 +11,7 @@ final class AuthSessionStore: ObservableObject {
     private let refreshTokenStore: BearerTokenStoring
     private let authClient: SPAPSAuthClient
     private let magicLinkRedirectURL: URL?
+    private let universalLinkHosts: Set<String>
 
     init(
         accessTokenStore: BearerTokenStoring = KeychainBearerTokenStore(),
@@ -18,12 +19,17 @@ final class AuthSessionStore: ObservableObject {
             account: "spaps-refresh-token"
         ),
         authClient: SPAPSAuthClient = AppEnvironment.spapsAuthClient(),
-        magicLinkRedirectURL: URL? = URL(string: "dogswipe://auth")
+        magicLinkRedirectURL: URL? = AppEnvironment.magicLinkRedirectURL,
+        universalLinkHosts: Set<String> = AppEnvironment.authUniversalLinkHosts
     ) {
         self.accessTokenStore = accessTokenStore
         self.refreshTokenStore = refreshTokenStore
         self.authClient = authClient
         self.magicLinkRedirectURL = magicLinkRedirectURL
+        self.universalLinkHosts = Self.resolvedUniversalLinkHosts(
+            configuredHosts: universalLinkHosts,
+            redirectURL: magicLinkRedirectURL
+        )
     }
 
     var hasBearerToken: Bool {
@@ -103,7 +109,10 @@ final class AuthSessionStore: ObservableObject {
     @MainActor
     @discardableResult
     func handleDeepLink(_ url: URL) async -> Bool {
-        guard let deepLink = AuthDeepLink(url: url) else {
+        guard let deepLink = AuthDeepLink(
+            url: url,
+            allowedUniversalLinkHosts: universalLinkHosts
+        ) else {
             return false
         }
         await verifyMagicLink(token: deepLink.token, type: deepLink.type)
@@ -153,5 +162,22 @@ final class AuthSessionStore: ObservableObject {
         }
         bearerToken = session.accessToken
         sessionEmail = session.userEmail
+    }
+
+    private static func resolvedUniversalLinkHosts(
+        configuredHosts: Set<String>,
+        redirectURL: URL?
+    ) -> Set<String> {
+        var hosts = Set(
+            configuredHosts
+                .map { $0.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
+                .filter { !$0.isEmpty }
+        )
+        if redirectURL?.scheme?.lowercased() == "https",
+           let redirectHost = redirectURL?.host?.lowercased(),
+           !redirectHost.isEmpty {
+            hosts.insert(redirectHost)
+        }
+        return hosts
     }
 }

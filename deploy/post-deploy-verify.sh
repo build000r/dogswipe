@@ -7,6 +7,7 @@ ENV_FILE="${ENV_FILE:-deploy/prod.env}"
 COMPOSE_CMD="${COMPOSE_CMD:-docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" -p "$COMPOSE_PROJECT"}"
 HEALTH_ENDPOINT="${HEALTH_ENDPOINT:-http://localhost:8000/health}"
 PUBLIC_HEALTH_URL="${PUBLIC_HEALTH_URL:-}"
+PUBLIC_AASA_URL="${PUBLIC_AASA_URL:-}"
 
 passed=0
 failed=0
@@ -53,6 +54,20 @@ if [[ -n "$PUBLIC_HEALTH_URL" ]]; then
   fi
 else
   echo "SKIP: PUBLIC_HEALTH_URL is not set"
+fi
+
+if [[ -n "$PUBLIC_AASA_URL" ]]; then
+  aasa_payload="$(mktemp)"
+  if curl -fsS "$PUBLIC_AASA_URL" -o "$aasa_payload" \
+    && python3 -m json.tool "$aasa_payload" >/dev/null \
+    && grep -q '"applinks"' "$aasa_payload"; then
+    pass "public Apple app-site association responds"
+  else
+    fail "public Apple app-site association failed: $PUBLIC_AASA_URL"
+  fi
+  rm -f "$aasa_payload"
+else
+  echo "SKIP: PUBLIC_AASA_URL is not set"
 fi
 
 echo "Post-deploy summary: $passed passed, $failed failed"

@@ -31,6 +31,10 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>DOGSWIPE_API_BASE_URL</key>
 	<string>http://localhost:8000</string>
+	<key>DOGSWIPE_AUTH_REDIRECT_URL</key>
+	<string>dogswipe://auth</string>
+	<key>DOGSWIPE_AUTH_UNIVERSAL_LINK_HOSTS</key>
+	<string></string>
 	<key>DOGSWIPE_SPAPS_API_BASE_URL</key>
 	<string>https://api.sweetpotato.dev</string>
 	<key>DOGSWIPE_SPAPS_ORIGIN</key>

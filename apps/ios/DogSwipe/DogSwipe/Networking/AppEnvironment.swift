@@ -33,6 +33,32 @@ enum AppEnvironment {
         Bundle.main.object(forInfoDictionaryKey: "DOGSWIPE_SPAPS_ORIGIN") as? String
     }
 
+    static var magicLinkRedirectURL: URL? {
+        guard let value = Bundle.main.object(forInfoDictionaryKey: "DOGSWIPE_AUTH_REDIRECT_URL")
+            as? String else {
+            return URL(string: "dogswipe://auth")
+        }
+        let trimmedValue = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedValue.isEmpty else {
+            return URL(string: "dogswipe://auth")
+        }
+        return URL(string: trimmedValue)
+    }
+
+    static var authUniversalLinkHosts: Set<String> {
+        guard let value = Bundle.main.object(
+            forInfoDictionaryKey: "DOGSWIPE_AUTH_UNIVERSAL_LINK_HOSTS"
+        ) as? String else {
+            return []
+        }
+        return Set(
+            value
+                .split(separator: ",")
+                .map { $0.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
+                .filter { !$0.isEmpty }
+        )
+    }
+
     static func accessTokenStore() -> BearerTokenStoring {
         isScreenshotMode ? EphemeralBearerTokenStore() : KeychainBearerTokenStore()
     }

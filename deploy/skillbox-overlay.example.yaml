@@ -29,6 +29,8 @@ client:
           domain: dogswipe-api.example.com
           production_domain: https://dogswipe-api.example.com
           health_url: https://dogswipe-api.example.com/health
+          aasa_url: https://dogswipe-api.example.com/.well-known/apple-app-site-association
+          apple_team_id: replace-me
           env_file: /opt/dogswipe/prod.env
           ci_workflow: .github/workflows/ci.yml
 

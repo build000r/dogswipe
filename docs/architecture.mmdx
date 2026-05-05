@@ -24,7 +24,9 @@ flowchart LR
   user["iOS user"]
   ios["SwiftUI app"]
   authclient["SPAPSAuthClient"]
-  deeplink["dogswipe://auth"]
+  authlink["dogswipe://auth or HTTPS universal link"]
+  entitlement["Associated Domains entitlement"]
+  aasa["Apple app-site association"]
   pubkey["SPAPS publishable key"]
   keychain["Keychain access token"]
   refresh["Keychain refresh token"]
@@ -51,7 +53,9 @@ flowchart LR
 
   user --> ios
   ios --> authclient
-  ios --> deeplink
+  ios --> authlink
+  entitlement --> authlink
+  aasa --> authlink
   pubkey --> authclient
   authclient --> spaps
   ios --> keychain
@@ -86,6 +90,7 @@ flowchart LR
   deploy --> api
   deploy --> worker
   deploy --> db
+  deploy --> aasa
   core --> gates
   api --> gates
   migrations --> gates
@@ -115,7 +120,7 @@ stateDiagram-v2
 ```mermaid
 sequenceDiagram
   participant App as iOS App
-  participant AuthLink as dogswipe auth link
+  participant AuthLink as dogswipe or universal auth link
   participant Maps as Apple Maps
   participant API as DogSwipe API
   participant Worker as menu refresh worker
@@ -124,7 +129,7 @@ sequenceDiagram
   participant DB as PostgreSQL
 
   App->>SPAPS: X-API-Key spaps_pub... request magic link with redirect_url
-  SPAPS-->>App: Magic-link email token
+  SPAPS-->>AuthLink: Magic-link email token
   AuthLink-->>App: URL open with token_hash/code
   App->>SPAPS: Verify parsed magic-link token
   SPAPS-->>App: Access and refresh JWTs

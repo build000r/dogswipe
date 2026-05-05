@@ -145,6 +145,32 @@ final class DogSwipeSmokeTests: XCTestCase {
         XCTAssertNil(AuthDeepLink(url: URL(string: "dogswipe://vendor?token=link-token")!))
     }
 
+    func testAuthDeepLinkParsesUniversalLinkForAllowedHost() throws {
+        let deepLink = try XCTUnwrap(
+            AuthDeepLink(
+                url: URL(
+                    string: "https://links.dogswipe.test/auth/callback#code=link-token&type=magiclink"
+                )!,
+                allowedUniversalLinkHosts: ["links.dogswipe.test"]
+            )
+        )
+
+        XCTAssertEqual(deepLink.token, "link-token")
+        XCTAssertEqual(deepLink.type, "magiclink")
+        XCTAssertNil(
+            AuthDeepLink(
+                url: URL(string: "https://evil.example/auth?token=link-token")!,
+                allowedUniversalLinkHosts: ["links.dogswipe.test"]
+            )
+        )
+        XCTAssertNil(
+            AuthDeepLink(
+                url: URL(string: "https://links.dogswipe.test/vendor?token=link-token")!,
+                allowedUniversalLinkHosts: ["links.dogswipe.test"]
+            )
+        )
+    }
+
     func testAppEnvironmentUsesTokenStoreForAuthenticatedClient() async throws {
         let tokenStore = InMemoryBearerTokenStore()
         tokenStore.storedToken = " session-jwt "
@@ -574,6 +600,25 @@ final class DogSwipeSmokeTests: XCTestCase {
     }
 
     @MainActor
+    func testAuthSessionStoreRequestsMagicLinkWithUniversalRedirect() async throws {
+        let http = MockHTTPClient()
+        let store = AuthSessionStore(
+            accessTokenStore: InMemoryBearerTokenStore(),
+            refreshTokenStore: InMemoryBearerTokenStore(),
+            authClient: makeAuthClient(http: http),
+            magicLinkRedirectURL: URL(string: "https://links.dogswipe.test/auth")!,
+            universalLinkHosts: ["links.dogswipe.test"]
+        )
+
+        await store.requestMagicLink(email: "fan@example.com")
+
+        let request = try XCTUnwrap(http.requests.first)
+        let body = try jsonBody(request)
+        XCTAssertEqual(body["email"] as? String, "fan@example.com")
+        XCTAssertEqual(body["redirect_url"] as? String, "https://links.dogswipe.test/auth")
+    }
+
+    @MainActor
     func testAuthSessionStoreRequestsMagicLinkWithNativeRedirect() async throws {
         let http = MockHTTPClient()
         let store = AuthSessionStore(
@@ -619,6 +664,38 @@ final class DogSwipeSmokeTests: XCTestCase {
             context.store,
             accessStore: context.accessStore,
             refreshStore: context.refreshStore
+        )
+        try assertMagicLinkVerifyRequest(http, token: "token-from-email")
+    }
+
+    @MainActor
+    func testAuthSessionStoreHandlesUniversalMagicLink() async throws {
+        let accessStore = InMemoryBearerTokenStore()
+        let refreshStore = InMemoryBearerTokenStore()
+        let http = MockHTTPClient()
+        http.responses = [
+            try encodedAuthSessionResponse(
+                accessToken: "access-jwt",
+                refreshToken: "refresh-jwt",
+                email: "fan@example.com"
+            )
+        ]
+        let store = AuthSessionStore(
+            accessTokenStore: accessStore,
+            refreshTokenStore: refreshStore,
+            authClient: makeAuthClient(http: http),
+            magicLinkRedirectURL: URL(string: "https://links.dogswipe.test/auth")!
+        )
+
+        let handled = await store.handleDeepLink(
+            URL(string: "https://links.dogswipe.test/auth?token_hash=token-from-email")!
+        )
+
+        XCTAssertTrue(handled)
+        assertStoredSession(
+            store,
+            accessStore: accessStore,
+            refreshStore: refreshStore
         )
         try assertMagicLinkVerifyRequest(http, token: "token-from-email")
     }

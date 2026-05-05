@@ -20,6 +20,8 @@ A live `deploy.services.dogswipe_api` entry should provide:
 | `domain` | production API hostname |
 | `production_domain` | `https://<domain>` |
 | `health_url` | `https://<domain>/health` |
+| `aasa_url` | `https://<domain>/.well-known/apple-app-site-association` |
+| `apple_team_id` | Apple Developer Team ID for the associated-domain app ID |
 | `env_file` | remote `prod.env` path |
 
 Start from [`deploy/skillbox-overlay.example.yaml`](skillbox-overlay.example.yaml),
@@ -57,6 +59,23 @@ Optional bounded menu refresh values:
 - `DOGSWIPE_MENU_REFRESH_BATCH_SIZE=20`
 - `DOGSWIPE_MENU_REFRESH_MAX_AGE_HOURS=24`
 
+## Universal Links
+
+The iOS project includes an associated-domains entitlement that resolves
+`applinks:$(DOGSWIPE_ASSOCIATED_DOMAIN)` at build time. For a production build,
+set `DOGSWIPE_ASSOCIATED_DOMAIN` to the same domain used by the public API or
+auth frontdoor, set `DOGSWIPE_AUTH_REDIRECT_URL=https://<domain>/auth`, and set
+`DOGSWIPE_AUTH_UNIVERSAL_LINK_HOSTS=<domain>` in the app Info.plist/build
+configuration.
+
+Generate the deployed Apple app-site association file from
+[`deploy/apple-app-site-association.template.json`](apple-app-site-association.template.json)
+by replacing `${APPLE_TEAM_ID}` with the Apple Developer Team ID. The reverse
+proxy template serves the rendered file from both:
+
+- `https://<domain>/.well-known/apple-app-site-association`
+- `https://<domain>/apple-app-site-association`
+
 ## Preflight
 
 ```bash
@@ -67,8 +86,8 @@ bash deploy/pre-deploy-checks.sh
 ```
 
 The preflight checks Docker availability, Compose config, required env values,
-SPAPS auth requirements, local-only flags, optional menu-refresh controls, and
-the shared `reverse-proxy` network.
+SPAPS auth requirements, local-only flags, optional menu-refresh controls, the
+Apple app-site association template, and the shared `reverse-proxy` network.
 
 ## Rollout Shape
 
@@ -86,12 +105,15 @@ the shared `reverse-proxy` network.
 6. Link `deploy/reverse-proxy/dogswipe-api.conf.template` into the shared reverse proxy after substituting `DOGSWIPE_API_DOMAIN`.
 7. Verify:
    ```bash
-   PUBLIC_HEALTH_URL=https://<domain>/health bash deploy/post-deploy-verify.sh
+   PUBLIC_HEALTH_URL=https://<domain>/health \
+     PUBLIC_AASA_URL=https://<domain>/.well-known/apple-app-site-association \
+     bash deploy/post-deploy-verify.sh
    ```
 
 ## Known Block
 
 No live deployment should run until the skillbox overlay supplies the concrete
-host, deploy root, env source, production domain, and health URL. The current
-repo can prove the container, migration, and Compose contract locally; it cannot
-prove DNS, certificates, or production secrets by itself.
+host, deploy root, env source, production domain, Apple Team ID, health URL, and
+AASA URL. The current repo can prove the container, migration, universal-link
+asset template, and Compose contract locally; it cannot prove DNS,
+certificates, Apple account ownership, or production secrets by itself.

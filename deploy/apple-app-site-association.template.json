@@ -1,0 +1,21 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": [
+          "${APPLE_TEAM_ID}.com.build000r.dogswipe"
+        ],
+        "components": [
+          {
+            "/": "/auth",
+            "comment": "SPAPS magic-link callback"
+          },
+          {
+            "/": "/auth/callback",
+            "comment": "SPAPS magic-link callback"
+          }
+        ]
+      }
+    ]
+  }
+}

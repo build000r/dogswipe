@@ -27,6 +27,8 @@ targets:
         DOGSWIPE_SPAPS_API_BASE_URL: https://api.sweetpotato.dev
         DOGSWIPE_SPAPS_PUBLISHABLE_KEY: ""
         DOGSWIPE_SPAPS_ORIGIN: ""
+        DOGSWIPE_AUTH_REDIRECT_URL: dogswipe://auth
+        DOGSWIPE_AUTH_UNIVERSAL_LINK_HOSTS: ""
         CFBundleURLTypes:
           - CFBundleURLName: com.build000r.dogswipe
             CFBundleURLSchemes:
@@ -36,9 +38,11 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.build000r.dogswipe
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_ACCENT_COLOR_NAME: AccentColor
+        CODE_SIGN_ENTITLEMENTS: DogSwipe/DogSwipe.entitlements
         CODE_SIGNING_ALLOWED: NO
         CODE_SIGNING_REQUIRED: NO
         CURRENT_PROJECT_VERSION: 1
+        DOGSWIPE_ASSOCIATED_DOMAIN: dogswipe.example.com
         MARKETING_VERSION: 0.1.0
   DogSwipeTests:
     type: bundle.unit-test
