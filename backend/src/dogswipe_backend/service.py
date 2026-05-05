@@ -11,6 +11,7 @@ from .schemas import (
     AdminReviewQueueResponse,
     CravingPreferences,
     DiscoveryResponse,
+    HotdogProfile,
     MatchResponse,
     SwipeRequest,
     SwipeResponse,
@@ -24,9 +25,19 @@ class DogSwipeService:
     def __init__(self, repository: HotdogRepository) -> None:
         self.repository = repository
 
-    async def discovery(self, *, limit: int = 20) -> DiscoveryResponse:
-        profiles = await self.repository.list_available_profiles(limit=max(1, min(limit, 50)))
-        return DiscoveryResponse(profiles=profiles)
+    async def discovery(self, *, user_id: str, limit: int = 20) -> DiscoveryResponse:
+        preferences = await self.repository.get_preferences(user_id=user_id)
+        max_distance_miles = max(preferences.max_distance_miles, 1)
+        profiles = await self.repository.list_available_profiles(
+            limit=50,
+            max_distance_miles=max_distance_miles,
+        )
+        ranked = sorted(
+            (profile for profile in profiles if self._is_eligible(profile, preferences)),
+            key=lambda profile: self._score(profile, preferences),
+            reverse=True,
+        )
+        return DiscoveryResponse(profiles=ranked[: max(1, min(limit, 50))])
 
     async def swipe(self, *, user_id: str, request: SwipeRequest) -> SwipeResponse:
         matched = await self.repository.record_swipe(
@@ -145,3 +156,44 @@ class DogSwipeService:
                 detail="Vendor submission not found",
             )
         return AdminModerationResponse(profile=profile)
+
+    @staticmethod
+    def _is_eligible(profile: HotdogProfile, preferences: CravingPreferences) -> bool:
+        max_distance_miles = max(preferences.max_distance_miles, 1)
+        if profile.distance_miles > max_distance_miles:
+            return False
+        if preferences.classic_only and not DogSwipeService._is_classic(profile):
+            return False
+        return True
+
+    @staticmethod
+    def _score(profile: HotdogProfile, preferences: CravingPreferences) -> float:
+        max_distance_miles = max(preferences.max_distance_miles, 1)
+        distance_score = max(0.0, 1 - (profile.distance_miles / max_distance_miles))
+        spicy_score = (
+            1.0 if preferences.spicy_friendly or not DogSwipeService._is_spicy(profile) else 0.58
+        )
+        classic_score = (
+            1.0 if not preferences.classic_only or DogSwipeService._is_classic(profile) else 0.62
+        )
+        weighted_score = (
+            (profile.crave_score * 0.55)
+            + (distance_score * 0.25)
+            + (spicy_score * 0.10)
+            + (classic_score * 0.10)
+        )
+        return min(max(weighted_score, 0.0), 1.0)
+
+    @staticmethod
+    def _is_spicy(profile: HotdogProfile) -> bool:
+        flavor_text = DogSwipeService._flavor_text(profile)
+        return "jalapeno" in flavor_text or "gochujang" in flavor_text or "pepper" in flavor_text
+
+    @staticmethod
+    def _is_classic(profile: HotdogProfile) -> bool:
+        flavor_text = DogSwipeService._flavor_text(profile)
+        return "classic" in flavor_text or "chicago" in flavor_text or "mustard" in flavor_text
+
+    @staticmethod
+    def _flavor_text(profile: HotdogProfile) -> str:
+        return f"{profile.name} {profile.style} {profile.signature_notes}".lower()

@@ -52,8 +52,9 @@ def build_api_router() -> APIRouter:
     async def discovery(
         limit: int = Query(default=20, ge=1, le=50),
         service: DogSwipeService = Depends(get_service),
+        user_id: str = Depends(get_current_user_id),
     ) -> DiscoveryResponse:
-        return await service.discovery(limit=limit)
+        return await service.discovery(user_id=user_id, limit=limit)
 
     @v1.post("/swipes", response_model=SwipeResponse)
     async def swipe(

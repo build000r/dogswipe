@@ -11,7 +11,12 @@ from .schemas import CravingPreferences, HotdogProfile, SwipeDecision, VendorSub
 
 
 class HotdogRepository:
-    async def list_available_profiles(self, *, limit: int = 20) -> list[HotdogProfile]:
+    async def list_available_profiles(
+        self,
+        *,
+        limit: int = 20,
+        max_distance_miles: float | None = None,
+    ) -> list[HotdogProfile]:
         raise NotImplementedError
 
     async def record_swipe(
@@ -89,13 +94,21 @@ class SqlAlchemyHotdogRepository(HotdogRepository):
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
-    async def list_available_profiles(self, *, limit: int = 20) -> list[HotdogProfile]:
-        statement = (
-            select(HotdogProfileRecord)
-            .where(HotdogProfileRecord.availability_status == "available")
-            .order_by(HotdogProfileRecord.crave_score.desc(), HotdogProfileRecord.name.asc())
-            .limit(limit)
+    async def list_available_profiles(
+        self,
+        *,
+        limit: int = 20,
+        max_distance_miles: float | None = None,
+    ) -> list[HotdogProfile]:
+        statement = select(HotdogProfileRecord).where(
+            HotdogProfileRecord.availability_status == "available"
         )
+        if max_distance_miles is not None:
+            statement = statement.where(HotdogProfileRecord.distance_miles <= max_distance_miles)
+        statement = statement.order_by(
+            HotdogProfileRecord.crave_score.desc(),
+            HotdogProfileRecord.name.asc(),
+        ).limit(limit)
         return self._profiles(await self.session.scalars(statement))
 
     async def record_swipe(

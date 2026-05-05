@@ -24,6 +24,47 @@ async def test_discovery_returns_ranked_profiles(async_client) -> None:
 
 
 @pytest.mark.asyncio
+async def test_discovery_uses_saved_distance_preference(async_client) -> None:
+    headers = {"X-DogSwipe-User-ID": "distance-discovery-user"}
+    await async_client.put(
+        "/v1/preferences",
+        headers=headers,
+        json={
+            "max_distance_miles": 2,
+            "spicy_friendly": True,
+            "classic_only": False,
+        },
+    )
+
+    response = await async_client.get("/v1/discovery", headers=headers, params={"limit": 10})
+
+    assert response.status_code == 200
+    assert [profile["id"] for profile in response.json()["profiles"]] == ["hotdog-coney"]
+
+
+@pytest.mark.asyncio
+async def test_discovery_uses_saved_classic_preference(async_client) -> None:
+    headers = {"X-DogSwipe-User-ID": "classic-discovery-user"}
+    await async_client.put(
+        "/v1/preferences",
+        headers=headers,
+        json={
+            "max_distance_miles": 10,
+            "spicy_friendly": True,
+            "classic_only": True,
+        },
+    )
+
+    response = await async_client.get("/v1/discovery", headers=headers, params={"limit": 10})
+
+    assert response.status_code == 200
+    assert [profile["id"] for profile in response.json()["profiles"]] == [
+        "hotdog-coney",
+        "hotdog-chicago",
+    ]
+
+
+@pytest.mark.asyncio
 async def test_swipe_like_can_create_match(async_client) -> None:
     response = await async_client.post(
         "/v1/swipes",

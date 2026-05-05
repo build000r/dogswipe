@@ -14,7 +14,7 @@ make backend-test
 | Method | Path | Purpose |
 | --- | --- | --- |
 | `GET` | `/health` | Shared quickstart health endpoint |
-| `GET` | `/v1/discovery` | Ranked local hotdogs available for the swipe deck |
+| `GET` | `/v1/discovery` | Preference-filtered local hotdogs available for the swipe deck |
 | `POST` | `/v1/swipes` | Record a swipe decision for the authenticated/local user |
 | `GET` | `/v1/matches` | Return high-crave liked hotdogs for the authenticated/local user |
 | `GET` | `/v1/preferences` | Return user-scoped craving preferences |
@@ -66,6 +66,8 @@ make backend-test
 ```
 
 Client-supplied `user_id` fields are rejected here too.
+
+`GET /v1/discovery` resolves the same current user, loads saved preferences, removes hotdogs beyond `max_distance_miles`, removes non-classic items when `classic_only` is true, then ranks the remaining cards by crave score, distance fit, and spicy/classic fit. That keeps backend discovery aligned with the Swift `MatchScorer` used by the local deck and offline fallback data.
 
 ## Vendor Submission Contract
 

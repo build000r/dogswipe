@@ -18,7 +18,7 @@ The first production slice must prove three things:
 
 - Discovery cards represent hotdogs, not venues: the primary object is a specific item from a vendor.
 - A card must show name, style, price, signature notes, distance, vendor, and a crave score.
-- Cards without remote media still need a product-specific hotdog visual, and craving controls should persist as user-scoped preferences that feed the same ranking logic across discovery and matches.
+- Cards without remote media still need a product-specific hotdog visual, and craving controls should persist as user-scoped preferences that filter/rank both backend discovery and the local Swift deck.
 - Positive swipes are intent signals. Matches are high-crave liked items, not social matches.
 - Vendors can submit hotdog listings with menu/media metadata, configured admins can approve/reject/request edits, and vendors can revise change-requested listings back into review.
 - Production identity is backend-owned through SPAPS; the app may use a publishable key for native magic-link auth, store access/refresh JWTs in Keychain, and send only user bearer tokens to the DogSwipe API.
@@ -31,7 +31,7 @@ The first production slice must prove three things:
 - Recommendation ML
 - App Store release assets
 - Full deep-link handoff polish
-- Live location ranking
+- GPS/geocoding-backed proximity and live travel-time ranking
 - Real menu ingestion
 
 These are valuable later, but they would dilute the core loop before the app has a reliable discovery contract.

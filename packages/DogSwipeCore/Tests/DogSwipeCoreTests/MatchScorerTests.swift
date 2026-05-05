@@ -19,6 +19,22 @@ final class MatchScorerTests: XCTestCase {
         XCTAssertEqual(ranked.first?.id, "hotdog-coney")
     }
 
+    func testRankingFiltersDistantProfiles() {
+        let ranked = MatchScorer.ranked(
+            profiles: HotdogProfile.samples,
+            preferences: DiscoveryPreferences(maxDistanceMiles: 2, spicyFriendly: true)
+        )
+        XCTAssertEqual(ranked.map(\.id), ["hotdog-coney"])
+    }
+
+    func testRankingFiltersNonClassicProfilesWhenClassicOnly() {
+        let ranked = MatchScorer.ranked(
+            profiles: HotdogProfile.samples,
+            preferences: DiscoveryPreferences(maxDistanceMiles: 10, spicyFriendly: true, classicOnly: true)
+        )
+        XCTAssertEqual(ranked.map(\.id), ["hotdog-coney", "hotdog-chicago"])
+    }
+
     func testClassicPreferenceCanLiftClassicProfile() {
         let coney = HotdogProfile.samples[0]
         let openScore = MatchScorer.score(

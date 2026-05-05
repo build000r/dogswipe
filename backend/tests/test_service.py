@@ -15,28 +15,53 @@ from dogswipe_backend.schemas import (
 from dogswipe_backend.service import DogSwipeService
 
 
+def _profile(
+    profile_id: str,
+    *,
+    name: str = "Test",
+    style: str = "Classic",
+    signature_notes: str = "Gentle",
+    distance_miles: float = 1,
+    crave_score: float = 0.8,
+) -> HotdogProfile:
+    return HotdogProfile(
+        id=profile_id,
+        name=name,
+        style=style,
+        price_dollars=1,
+        signature_notes=signature_notes,
+        distance_miles=distance_miles,
+        vendor_name="Test Cart",
+        crave_score=crave_score,
+        availability_status="available",
+    )
+
+
 class FakeRepository(HotdogRepository):
     def __init__(self) -> None:
         self.limit_seen = 0
+        self.max_distance_seen: float | None = None
+        self.available_profiles = [_profile("hotdog-test")]
         self.swipes: list[tuple[str, str, SwipeDecision]] = []
         self.preferences_by_user: dict[str, CravingPreferences] = {}
         self.submissions_by_user: dict[str, list[HotdogProfile]] = {}
 
-    async def list_available_profiles(self, *, limit: int = 20) -> list[HotdogProfile]:
+    async def list_available_profiles(
+        self,
+        *,
+        limit: int = 20,
+        max_distance_miles: float | None = None,
+    ) -> list[HotdogProfile]:
         self.limit_seen = limit
-        return [
-            HotdogProfile(
-                id="hotdog-test",
-                name="Test",
-                style="Classic",
-                price_dollars=1,
-                signature_notes="Gentle",
-                distance_miles=1,
-                vendor_name="Test Cart",
-                crave_score=0.8,
-                availability_status="available",
-            )
-        ]
+        self.max_distance_seen = max_distance_miles
+        profiles = self.available_profiles
+        if max_distance_miles is not None:
+            profiles = [
+                profile
+                for profile in profiles
+                if profile.distance_miles <= max_distance_miles
+            ]
+        return profiles[:limit]
 
     async def record_swipe(
         self,
@@ -218,9 +243,47 @@ class FakeRepository(HotdogRepository):
 async def test_discovery_clamps_limit() -> None:
     repository = FakeRepository()
     service = DogSwipeService(repository)
-    response = await service.discovery(limit=1000)
+    response = await service.discovery(user_id="u1", limit=1000)
     assert repository.limit_seen == 50
+    assert repository.max_distance_seen == 10
     assert response.profiles[0].id == "hotdog-test"
+
+
+@pytest.mark.asyncio
+async def test_discovery_filters_by_saved_distance_preference() -> None:
+    repository = FakeRepository()
+    repository.available_profiles = [
+        _profile("near-classic", name="Near Classic", distance_miles=1.2, crave_score=0.8),
+        _profile("far-classic", name="Far Classic", distance_miles=4.2, crave_score=0.99),
+    ]
+    repository.preferences_by_user["u1"] = CravingPreferences(max_distance_miles=2)
+    service = DogSwipeService(repository)
+
+    response = await service.discovery(user_id="u1", limit=10)
+
+    assert [profile.id for profile in response.profiles] == ["near-classic"]
+
+
+@pytest.mark.asyncio
+async def test_discovery_filters_by_classic_preference() -> None:
+    repository = FakeRepository()
+    repository.available_profiles = [
+        _profile("classic", name="Coney Classic", distance_miles=1.2, crave_score=0.8),
+        _profile(
+            "modern",
+            name="Kimchi Crunch",
+            style="Korean street dog",
+            signature_notes="Gochujang mayo and sesame crunch.",
+            distance_miles=1.1,
+            crave_score=0.99,
+        ),
+    ]
+    repository.preferences_by_user["u1"] = CravingPreferences(classic_only=True)
+    service = DogSwipeService(repository)
+
+    response = await service.discovery(user_id="u1", limit=10)
+
+    assert [profile.id for profile in response.profiles] == ["classic"]
 
 
 @pytest.mark.asyncio

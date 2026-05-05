@@ -23,17 +23,24 @@ public struct DiscoveryPreferences: Codable, Equatable, Sendable {
 }
 
 public enum MatchScorer {
+    public static func isEligible(
+        profile: HotdogProfile,
+        preferences: DiscoveryPreferences
+    ) -> Bool {
+        let maxDistanceMiles = max(preferences.maxDistanceMiles, 1)
+        if profile.distanceMiles > maxDistanceMiles {
+            return false
+        }
+        if preferences.classicOnly && !isClassic(profile: profile) {
+            return false
+        }
+        return true
+    }
+
     public static func score(profile: HotdogProfile, preferences: DiscoveryPreferences) -> Double {
         let distanceScore = max(0, 1 - (profile.distanceMiles / max(preferences.maxDistanceMiles, 1)))
-        let flavorText = "\(profile.name) \(profile.style) \(profile.signatureNotes)".lowercased()
-        let isSpicy = flavorText.contains("jalapeno")
-            || flavorText.contains("gochujang")
-            || flavorText.contains("pepper")
-        let spicyScore = preferences.spicyFriendly || !isSpicy ? 1.0 : 0.58
-        let isClassic = flavorText.contains("classic")
-            || flavorText.contains("chicago")
-            || flavorText.contains("mustard")
-        let classicScore = !preferences.classicOnly || isClassic ? 1.0 : 0.62
+        let spicyScore = preferences.spicyFriendly || !isSpicy(profile: profile) ? 1.0 : 0.58
+        let classicScore = !preferences.classicOnly || isClassic(profile: profile) ? 1.0 : 0.62
         let weightedScore = (profile.craveScore * 0.55)
             + (distanceScore * 0.25)
             + (spicyScore * 0.10)
@@ -45,8 +52,28 @@ public enum MatchScorer {
         profiles: [HotdogProfile],
         preferences: DiscoveryPreferences
     ) -> [HotdogProfile] {
-        profiles.sorted {
-            score(profile: $0, preferences: preferences) > score(profile: $1, preferences: preferences)
-        }
+        profiles
+            .filter { isEligible(profile: $0, preferences: preferences) }
+            .sorted {
+                score(profile: $0, preferences: preferences) > score(profile: $1, preferences: preferences)
+            }
+    }
+
+    private static func isSpicy(profile: HotdogProfile) -> Bool {
+        let text = flavorText(profile: profile)
+        return text.contains("jalapeno")
+            || text.contains("gochujang")
+            || text.contains("pepper")
+    }
+
+    private static func isClassic(profile: HotdogProfile) -> Bool {
+        let text = flavorText(profile: profile)
+        return text.contains("classic")
+            || text.contains("chicago")
+            || text.contains("mustard")
+    }
+
+    private static func flavorText(profile: HotdogProfile) -> String {
+        "\(profile.name) \(profile.style) \(profile.signatureNotes)".lowercased()
     }
 }

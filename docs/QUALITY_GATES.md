@@ -4,21 +4,22 @@ Last verified: 2026-05-05
 
 | Gate | Command | Result |
 | --- | --- | --- |
-| Swift package tests | `make swift-test` | 23 tests passed |
+| Swift package tests | `make swift-test` | 25 tests passed |
 | iOS smoke build | `xcodebuild -quiet -project apps/ios/DogSwipe/DogSwipe.xcodeproj -scheme DogSwipe -destination 'generic/platform=iOS' build` | passed |
 | iOS unit tests | `xcodebuild -quiet -project apps/ios/DogSwipe/DogSwipe.xcodeproj -scheme DogSwipe -destination 'platform=iOS Simulator,name=iPhone 17' test` | passed |
-| Backend API tests | `make backend-test` | 45 tests passed |
-| Backend coverage | `make coverage` | 90.10% total coverage |
+| Backend API tests | `make backend-test` | 49 tests passed |
+| Backend coverage | `make coverage` | 90.07% total coverage |
 | Clean backend install | `python3.12 -m venv /tmp/... && pip install -e 'backend[test]'` | passed |
 | Backend lint | `make lint` | passed |
 | Backend typecheck | `make typecheck` | passed |
 | Alembic migration smoke | `make backend-test` | migration test upgraded to `0005` and downgraded to `base` |
-| Backend container build | `docker build -q backend` | built image `sha256:6e5dadf2b5ae40e255a55a537a1d840e3abaea1a90d0a24d0e113f0ee8dc8572` |
+| Backend container build | `docker build -q backend` | built image `sha256:aa99a191a6b2c6956e6d409e3332933d21d2bbe5b2991a9287fc1930ad0dad68` |
 | Production Compose config | `make deploy-config` | passed |
 | Deploy preflight | `make deploy-preflight` | 16 passed, 0 warnings, 0 failed |
 | SwiftUI drift scan | `make drift` | 0 Swift findings |
-| CRAP score | `make crap` | `FINAL_SCORE: 5.00` |
+| CRAP score | `make crap` | `FINAL_SCORE: 5.67` |
 | MMDX preflight | `python3 ../opensource/skills/mmdx/scripts/mmd.py docs/architecture.mmdx --preflight-only` | 3 charts passed |
+| SPAPS usage audit | `python3 ../sweet-potato/skills/sweet-potato-usage-audit/scripts/audit_sweet_potato_usage.py --sweet-potato-root ../sweet-potato .` | 0 high, 0 medium, 0 low |
 
 ## Current Product Evidence
 
@@ -34,6 +35,7 @@ Last verified: 2026-05-05
 - Alembic owns the production schema path with a tested initial upgrade/downgrade migration.
 - Hotdog cards render a local SwiftUI product visual when `image_url` is absent, and the profile tab exposes interactive craving controls backed by shared ranking preferences.
 - `GET /v1/preferences` and `PUT /v1/preferences` persist user-scoped craving preferences; the Swift client and iOS store round-trip the same snake_case contract.
+- `GET /v1/discovery` resolves the current user, applies saved max-distance/classic filters, and shares the same ranking semantics as the Swift local deck scorer.
 - iOS native sign-in stores SPAPS access/refresh JWTs in Keychain, refreshes sessions, and injects only the access bearer into the shared API client.
 - `POST /v1/vendor/submissions` stores authenticated vendor hotdog listings as `pending_review`; `GET`/`PUT /v1/vendor/submissions` are user-scoped and the iOS Vendor tab can revise change-requested listings.
 - Configured admins can list pending vendor submissions, approve one into discovery, reject one, request edits with a review note, and production preflight requires `DOGSWIPE_ADMIN_USER_IDS` when SPAPS auth is enabled.

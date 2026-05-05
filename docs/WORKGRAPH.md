@@ -24,10 +24,11 @@ Status key: `done`, `active`, `ready`, `blocked`.
 | WG-018 Vendor listing submissions | done | WG-014, WG-017 | `backend/**`, `packages/DogSwipeCore/**`, `apps/ios/DogSwipe/**`, `docs/**` | Authenticated vendors can submit hotdog listings with menu/media metadata, list only their own submissions, and keep drafts out of discovery as `pending_review` |
 | WG-019 Admin approval queue | done | WG-018 | `backend/**`, `packages/DogSwipeCore/**`, `apps/ios/DogSwipe/**`, `deploy/**`, `docs/**` | Configured admins can list pending vendor submissions, approve them into discovery, and production preflight requires an admin user contract |
 | WG-020 Review moderation loop | done | WG-019 | `backend/**`, `packages/DogSwipeCore/**`, `apps/ios/DogSwipe/**`, `docs/**` | Admins can reject or request edits with notes, vendors can resubmit change-requested listings, and only available hotdogs enter discovery |
+| WG-021 Preference-aware discovery ranking | done | WG-014, WG-020 | `backend/**`, `packages/DogSwipeCore/**`, `docs/**` | Backend discovery and Swift local ranking both filter by saved max-distance/classic preferences before ordering local hotdog cards by crave/distance fit |
 
 ## Ready Frontier
 
-The next ready work is to create a concrete skillbox deploy overlay or continue deeper product slices: live menu ingestion, location ranking, and release assets.
+The next ready work is to create a concrete skillbox deploy overlay or continue deeper product slices: live menu ingestion, GPS/geocoding-backed proximity, and release assets.
 
 ## Risks
 

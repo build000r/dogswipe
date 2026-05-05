@@ -102,8 +102,10 @@ sequenceDiagram
   App->>API: Keychain-backed Authorization: Bearer access JWT
   API->>SPAPS: Validate user/session
   SPAPS-->>API: AuthenticatedUser.user_id
-  API->>DB: Read hotdog profiles, swipes, or preferences
-  API-->>App: Hotdog discovery, match, or preference response
+  API->>DB: Read preferences and available hotdog profiles
+  API-->>App: Preference-filtered hotdog discovery
+  API->>DB: Read swipes, matches, or preferences
+  API-->>App: Match or preference response
   App->>API: Submit vendor hotdog listing
   API->>DB: Store pending_review listing owned by user_id
   API-->>App: Vendor submission response
