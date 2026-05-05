@@ -43,12 +43,41 @@ public struct DogProfile: Identifiable, Codable, Equatable, Sendable {
         let roundedAge = Int(ageYears.rounded())
         return "\(roundedAge) year\(roundedAge == 1 ? "" : "s")"
     }
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case name
+        case breed
+        case ageYears = "age_years"
+        case temperament
+        case distanceMiles = "distance_miles"
+        case shelterName = "shelter_name"
+        case imageURL = "image_url"
+        case compatibilityScore = "compatibility_score"
+        case adoptionStatus = "adoption_status"
+    }
 }
 
 public enum AdoptionStatus: String, Codable, Equatable, Sendable {
     case available
     case pending
     case adopted
+}
+
+public struct DiscoveryResponse: Codable, Equatable, Sendable {
+    public let profiles: [DogProfile]
+
+    public init(profiles: [DogProfile]) {
+        self.profiles = profiles
+    }
+}
+
+public struct MatchResponse: Codable, Equatable, Sendable {
+    public let matches: [DogProfile]
+
+    public init(matches: [DogProfile]) {
+        self.matches = matches
+    }
 }
 
 public extension DogProfile {

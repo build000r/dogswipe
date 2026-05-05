@@ -8,8 +8,8 @@ The repo is intentionally split into three testable surfaces:
 
 | Surface | Path | Purpose |
 | --- | --- | --- |
-| iOS app | `apps/ios/DogSwipe` | SwiftUI app shell, generated with XcodeGen |
-| Swift domain package | `packages/DogSwipeCore` | Matching, swipe state, and domain models with fast `swift test` coverage |
+| iOS app | `apps/ios/DogSwipe` | SwiftUI app shell, generated with XcodeGen, backed by the local API client |
+| Swift domain package | `packages/DogSwipeCore` | Matching, swipe state, API contracts, and domain models with fast `swift test` coverage |
 | Python backend | `backend` | FastAPI + PostgreSQL starter using `spaps-server-quickstart` contracts |
 
 ## Quick Start
@@ -31,6 +31,8 @@ curl http://localhost:8000/health
 ```
 
 The backend defaults to local development mode with auth disabled. Production deployments should set `SPAPS_AUTH_ENABLED=true`, `SPAPS_API_KEY`, `SPAPS_APPLICATION_ID`, and a managed PostgreSQL `DATABASE_URL`.
+
+The iOS target reads `DOGSWIPE_API_BASE_URL` from its generated Info.plist and defaults to `http://localhost:8000`, which works for simulator-local backend development.
 
 ## Verification Gates
 
@@ -54,4 +56,4 @@ The placement decision is `NEW REPO`: this app owns a durable product boundary r
 
 ## Current Scope
 
-This first slice establishes the production skeleton and contracts. The attached design image from the original request is not available in this compacted context, so the current SwiftUI surface uses a restrained native design system and records that visual parity is still an open design verification gate.
+The current app can load discovery profiles, record swipes, and fetch matches through the shared Swift API client. The attached design image from the original request is not available in this compacted context, so final visual parity remains an open design verification gate.

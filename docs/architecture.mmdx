@@ -23,15 +23,19 @@
 flowchart LR
   user["iOS user"]
   ios["SwiftUI app"]
+  vm["View models"]
   core["DogSwipeCore package"]
+  client["DogSwipeAPIClient"]
   api["FastAPI backend"]
   db["PostgreSQL"]
   spaps["SPAPS auth"]
   gates["Quality Gates"]
 
   user --> ios
-  ios --> core
-  ios --> api
+  ios --> vm
+  vm --> core
+  vm --> client
+  client --> api
   api --> db
   api --> spaps
   core --> gates

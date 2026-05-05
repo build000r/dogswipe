@@ -33,3 +33,39 @@ public struct SwipeEvent: Identifiable, Codable, Equatable, Sendable {
         self.createdAt = createdAt
     }
 }
+
+public struct SwipeRequest: Codable, Equatable, Sendable {
+    public let userID: String
+    public let profileID: String
+    public let decision: SwipeDecision
+
+    public init(userID: String, profileID: String, decision: SwipeDecision) {
+        self.userID = userID
+        self.profileID = profileID
+        self.decision = decision
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case userID = "user_id"
+        case profileID = "profile_id"
+        case decision
+    }
+}
+
+public struct SwipeResponse: Codable, Equatable, Sendable {
+    public let profileID: String
+    public let decision: SwipeDecision
+    public let matched: Bool
+
+    public init(profileID: String, decision: SwipeDecision, matched: Bool) {
+        self.profileID = profileID
+        self.decision = decision
+        self.matched = matched
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case profileID = "profile_id"
+        case decision
+        case matched
+    }
+}

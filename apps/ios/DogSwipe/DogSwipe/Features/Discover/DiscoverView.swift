@@ -2,15 +2,21 @@ import DogSwipeCore
 import SwiftUI
 
 struct DiscoverView: View {
-    @State private var allProfiles = DogProfile.samples
-    @State private var deck = SwipeDeckState(profiles: DogProfile.samples)
+    @StateObject private var viewModel: DiscoverViewModel
+
+    @MainActor
+    init(viewModel: DiscoverViewModel? = nil) {
+        _viewModel = StateObject(wrappedValue: viewModel ?? DiscoverViewModel())
+    }
 
     var body: some View {
         NavigationStack {
             VStack(spacing: .dsSpace5) {
                 header
 
-                if let profile = deck.currentProfile {
+                if case .loading = viewModel.state {
+                    loadingState
+                } else if let profile = viewModel.currentProfile {
                     DogCardView(profile: profile)
                         .transition(.scale.combined(with: .opacity))
                 } else {
@@ -24,6 +30,11 @@ struct DiscoverView: View {
             .navigationTitle("DogSwipe")
             .toolbarTitleDisplayMode(.inline)
             .dsPageBackground()
+            .task {
+                if case .idle = viewModel.state {
+                    await viewModel.load()
+                }
+            }
         }
     }
 
@@ -33,11 +44,22 @@ struct DiscoverView: View {
                 .font(.title2.weight(.semibold))
                 .foregroundStyle(Color.dsInk)
 
-            Text("\(deck.remainingCount) profiles ready for review")
+            Text(statusText)
                 .font(.subheadline)
                 .foregroundStyle(Color.dsMuted)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var statusText: String {
+        switch viewModel.state {
+        case .idle, .loading:
+            "Refreshing profiles"
+        case .ready:
+            "\(viewModel.remainingCount) profiles ready for review"
+        case .failed:
+            "Showing offline profiles"
+        }
     }
 
     private var controls: some View {
@@ -53,6 +75,20 @@ struct DiscoverView: View {
             }
         }
         .frame(maxWidth: .infinity)
+        .disabled(!viewModel.canSwipe)
+        .opacity(viewModel.canSwipe ? 1 : 0.45)
+    }
+
+    private var loadingState: some View {
+        VStack(spacing: .dsSpace3) {
+            ProgressView()
+                .tint(.dsPrimary)
+            Text("Loading profiles")
+                .font(.headline)
+                .foregroundStyle(Color.dsInk)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .dsCardSurface()
     }
 
     private var emptyState: some View {
@@ -64,8 +100,7 @@ struct DiscoverView: View {
                 .font(.headline)
                 .foregroundStyle(Color.dsInk)
             Button("Start over") {
-                allProfiles = DogProfile.samples
-                deck = SwipeDeckState(profiles: allProfiles)
+                viewModel.resetToSamples()
             }
             .buttonStyle(.borderedProminent)
             .tint(.dsPrimary)
@@ -76,7 +111,7 @@ struct DiscoverView: View {
 
     private func advance(_ decision: SwipeDecision) {
         withAnimation(.spring(response: 0.28, dampingFraction: 0.86)) {
-            _ = deck.record(decision)
+            viewModel.record(decision)
         }
     }
 }

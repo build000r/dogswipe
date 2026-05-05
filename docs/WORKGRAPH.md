@@ -10,10 +10,11 @@ Status key: `done`, `active`, `ready`, `blocked`.
 | WG-004 Python starter | done | WG-001 | `backend/**`, `docker-compose.yml` | FastAPI discovery/swipe API passes tests with coverage above 80 |
 | WG-005 Quality gates | done | WG-002, WG-003, WG-004 | `.drift/**`, coverage artifacts | drift scan and CRAP score meet target gates |
 | WG-006 Public repo + deploy | blocked | WG-005 | git remote, deployment overlay | public GitHub repo exists; live deploy remains blocked until an overlay identifies a safe target |
+| WG-007 iOS API bridge | done | WG-002, WG-003, WG-004 | `packages/DogSwipeCore/**`, `apps/ios/DogSwipe/**` | iOS app has a tested API client and view models that call backend discovery, swipe, and match routes |
 
 ## Ready Frontier
 
-The next ready work is to create a skillbox deploy overlay or continue product slices above the starter shell.
+The next ready work is to create a skillbox deploy overlay or continue deeper product slices: auth-gated user state, persistence/migrations, richer profile media, and shelter workflows.
 
 ## Risks
 

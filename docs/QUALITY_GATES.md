@@ -4,7 +4,7 @@ Last verified: 2026-05-05
 
 | Gate | Command | Result |
 | --- | --- | --- |
-| Swift package tests | `make swift-test` | 8 tests passed |
+| Swift package tests | `make swift-test` | 12 tests passed |
 | iOS smoke build | `xcodebuild -quiet -project apps/ios/DogSwipe/DogSwipe.xcodeproj -scheme DogSwipe -destination 'generic/platform=iOS' build` | passed |
 | Backend API tests | `make backend-test` | 8 tests passed |
 | Backend coverage | `make coverage` | 91.79% total coverage |
@@ -13,6 +13,13 @@ Last verified: 2026-05-05
 | SwiftUI drift scan | `make drift` | 0 Swift findings |
 | CRAP score | `make crap` | `FINAL_SCORE: 4.68` |
 | MMDX preflight | `python3 ../opensource/skills/mmdx/scripts/mmd.py docs/architecture.mmdx --preflight-only` | 3 charts passed |
+
+## Current Product Evidence
+
+- `DogSwipeAPIClient` decodes backend snake_case profile payloads.
+- `DogSwipeAPIClient` encodes swipe requests as `user_id`, `profile_id`, and `decision`.
+- `DiscoverViewModel` loads profiles from the backend client and falls back to sample profiles when offline.
+- `MatchesViewModel` fetches matches from the backend client and exposes a visible empty/loading/failure state.
 
 ## Known Blocks
 
