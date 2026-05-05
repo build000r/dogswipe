@@ -18,9 +18,25 @@ private final class MockPreferencesHTTPClient: DogSwipeHTTPClient, @unchecked Se
     }
 }
 
+private final class InMemoryBearerTokenStore: BearerTokenStoring, @unchecked Sendable {
+    var storedToken: String?
+
+    func token() throws -> String? {
+        storedToken
+    }
+
+    func save(_ token: String) throws {
+        storedToken = token
+    }
+
+    func clear() throws {
+        storedToken = nil
+    }
+}
+
 final class DogSwipeSmokeTests: XCTestCase {
     func testRootViewCanBeCreated() {
-        _ = RootView()
+        _ = RootView(tokenStore: InMemoryBearerTokenStore())
     }
 
     func testCravingPreferencesStoreBuildsDiscoveryPreferences() {
@@ -61,5 +77,36 @@ final class DogSwipeSmokeTests: XCTestCase {
         let body = String(data: http.requests.last!.httpBody!, encoding: .utf8)!
         XCTAssertTrue(body.contains("\"max_distance_miles\":9"))
         XCTAssertFalse(body.contains("user_id"))
+    }
+
+    @MainActor
+    func testAuthSessionStoreTrimsAndClearsBearerToken() {
+        let tokenStore = InMemoryBearerTokenStore()
+        let store = AuthSessionStore(tokenStore: tokenStore)
+
+        store.save(" jwt-token ")
+
+        XCTAssertEqual(store.bearerToken, "jwt-token")
+        XCTAssertEqual(tokenStore.storedToken, "jwt-token")
+
+        store.signOut()
+
+        XCTAssertFalse(store.hasBearerToken)
+        XCTAssertNil(tokenStore.storedToken)
+    }
+
+    func testAppEnvironmentUsesTokenStoreForAuthenticatedClient() async throws {
+        let tokenStore = InMemoryBearerTokenStore()
+        tokenStore.storedToken = " session-jwt "
+        let http = MockPreferencesHTTPClient()
+        http.responses = [#"{"profiles":[]}"#.data(using: .utf8)!]
+        let client = AppEnvironment.apiClient(tokenStore: tokenStore, httpClient: http)
+
+        _ = try await client.discovery()
+
+        XCTAssertEqual(
+            http.requests.first?.value(forHTTPHeaderField: "Authorization"),
+            "Bearer session-jwt"
+        )
     }
 }

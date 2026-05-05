@@ -1,27 +1,55 @@
+import DogSwipeCore
 import SwiftUI
 
 struct RootView: View {
-    @StateObject private var preferencesStore = CravingPreferencesStore()
+    @StateObject private var authSessionStore: AuthSessionStore
+    @StateObject private var preferencesStore: CravingPreferencesStore
+    private let apiClient: DogSwipeAPIClient
+
+    init(tokenStore: BearerTokenStoring = KeychainBearerTokenStore()) {
+        let apiClient = AppEnvironment.apiClient(tokenStore: tokenStore)
+        self.apiClient = apiClient
+        _authSessionStore = StateObject(wrappedValue: AuthSessionStore(tokenStore: tokenStore))
+        _preferencesStore = StateObject(
+            wrappedValue: CravingPreferencesStore(apiClient: apiClient)
+        )
+    }
 
     var body: some View {
         TabView {
-            DiscoverView(preferencesStore: preferencesStore)
+            DiscoverView(
+                preferencesStore: preferencesStore,
+                viewModel: DiscoverViewModel(
+                    apiClient: apiClient,
+                    preferencesStore: preferencesStore
+                )
+            )
                 .tabItem {
                     Label("Discover", systemImage: "fork.knife.circle.fill")
                 }
 
-            MatchesView(preferencesStore: preferencesStore)
+            MatchesView(
+                preferencesStore: preferencesStore,
+                viewModel: MatchesViewModel(
+                    apiClient: apiClient,
+                    preferencesStore: preferencesStore
+                )
+            )
                 .tabItem {
                     Label("Matches", systemImage: "heart.fill")
                 }
 
-            ProfileView(preferencesStore: preferencesStore)
+            ProfileView(
+                preferencesStore: preferencesStore,
+                authSessionStore: authSessionStore
+            )
                 .tabItem {
                     Label("Profile", systemImage: "person.crop.circle")
                 }
         }
         .tint(.dsPrimary)
         .task {
+            authSessionStore.load()
             await preferencesStore.load()
         }
     }

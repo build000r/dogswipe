@@ -2,14 +2,22 @@ import SwiftUI
 
 struct ProfileView: View {
     @ObservedObject private var preferencesStore: CravingPreferencesStore
+    @ObservedObject private var authSessionStore: AuthSessionStore
+    @State private var sessionToken = ""
 
-    init(preferencesStore: CravingPreferencesStore = CravingPreferencesStore()) {
+    init(
+        preferencesStore: CravingPreferencesStore = CravingPreferencesStore(),
+        authSessionStore: AuthSessionStore = AuthSessionStore()
+    ) {
         self.preferencesStore = preferencesStore
+        self.authSessionStore = authSessionStore
     }
 
     var body: some View {
         NavigationStack {
             VStack(alignment: .leading, spacing: .dsSpace5) {
+                sessionSection
+
                 VStack(alignment: .leading, spacing: .dsSpace2) {
                     Text("Your cravings")
                         .font(.title2.weight(.semibold))
@@ -64,6 +72,12 @@ struct ProfileView: View {
             }
             .padding(.dsSpace5)
             .navigationTitle("Profile")
+            .onAppear {
+                sessionToken = authSessionStore.bearerToken
+            }
+            .onChange(of: authSessionStore.bearerToken) {
+                sessionToken = authSessionStore.bearerToken
+            }
             .toolbar {
                 if preferencesStore.isSyncing {
                     ToolbarItem(placement: .topBarTrailing) {
@@ -74,6 +88,48 @@ struct ProfileView: View {
             }
             .dsPageBackground()
         }
+    }
+
+    private var sessionSection: some View {
+        VStack(alignment: .leading, spacing: .dsSpace4) {
+            HStack {
+                preferenceLabel(icon: "key.fill", title: "Session")
+                Spacer()
+                Text(authSessionStore.hasBearerToken ? "Connected" : "Signed out")
+                    .font(.headline)
+                    .foregroundStyle(Color.dsMuted)
+            }
+
+            SecureField("Bearer token", text: $sessionToken)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+
+            HStack(spacing: .dsSpace3) {
+                Button {
+                    authSessionStore.save(sessionToken)
+                } label: {
+                    Label("Save", systemImage: "key")
+                }
+                .buttonStyle(.borderedProminent)
+
+                Button(role: .destructive) {
+                    authSessionStore.signOut()
+                    sessionToken = ""
+                } label: {
+                    Label("Sign out", systemImage: "rectangle.portrait.and.arrow.right")
+                }
+                .disabled(!authSessionStore.hasBearerToken && sessionToken.isEmpty)
+            }
+
+            if let sessionMessage = authSessionStore.sessionMessage {
+                Text(sessionMessage)
+                    .font(.footnote)
+                    .foregroundStyle(Color.dsMuted)
+            }
+        }
+        .tint(.dsPrimary)
+        .padding(.dsSpace5)
+        .dsCardSurface()
     }
 
     private var spicyFriendlyBinding: Binding<Bool> {

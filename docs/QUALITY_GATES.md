@@ -30,6 +30,7 @@ Last verified: 2026-05-05
 - Alembic owns the production schema path with a tested initial upgrade/downgrade migration.
 - Hotdog cards render a local SwiftUI product visual when `image_url` is absent, and the profile tab exposes interactive craving controls backed by shared ranking preferences.
 - `GET /v1/preferences` and `PUT /v1/preferences` persist user-scoped craving preferences; the Swift client and iOS store round-trip the same snake_case contract.
+- iOS session bootstrap stores provided bearer JWTs in Keychain and injects them into the shared API client without exposing SPAPS API keys.
 
 ## Known Blocks
 

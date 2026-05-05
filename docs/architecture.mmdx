@@ -23,6 +23,7 @@
 flowchart LR
   user["iOS user"]
   ios["SwiftUI app"]
+  keychain["Keychain bearer token"]
   vm["View models"]
   core["DogSwipeCore package"]
   client["DogSwipeAPIClient"]
@@ -36,12 +37,14 @@ flowchart LR
   gates["Quality Gates"]
 
   user --> ios
+  ios --> keychain
   ios --> vm
   vm --> core
   vm --> client
   core --> profiles
   core --> preferences
   client --> api
+  keychain --> client
   api --> profiles
   api --> preferences
   api --> principal
@@ -75,7 +78,7 @@ sequenceDiagram
   participant SPAPS as Sweet Potato/SPAPS
   participant DB as PostgreSQL
 
-  App->>API: Authorization: Bearer JWT
+  App->>API: Keychain-backed Authorization: Bearer JWT
   API->>SPAPS: Validate user/session
   SPAPS-->>API: AuthenticatedUser.user_id
   API->>DB: Read hotdog profiles, swipes, or preferences

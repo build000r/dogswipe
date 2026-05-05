@@ -11,11 +11,25 @@ enum AppEnvironment {
     }
 
     static func apiClient(
+        httpClient: DogSwipeHTTPClient = URLSessionDogSwipeHTTPClient(),
         authorizationTokenProvider: DogSwipeAPIClient.AuthorizationTokenProvider? = nil
     ) -> DogSwipeAPIClient {
         DogSwipeAPIClient(
             baseURL: apiBaseURL,
+            httpClient: httpClient,
             authorizationTokenProvider: authorizationTokenProvider
+        )
+    }
+
+    static func apiClient(
+        tokenStore: BearerTokenStoring,
+        httpClient: DogSwipeHTTPClient = URLSessionDogSwipeHTTPClient()
+    ) -> DogSwipeAPIClient {
+        apiClient(
+            httpClient: httpClient,
+            authorizationTokenProvider: {
+                try tokenStore.token()
+            }
         )
     }
 }

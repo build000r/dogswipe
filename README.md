@@ -25,7 +25,7 @@ The repo is intentionally split into three testable surfaces:
 | Matches | `POST /v1/swipes` records likes/passes/super-likes; `GET /v1/matches` returns high-crave liked hotdogs. |
 | Preferences | `GET /v1/preferences` and `PUT /v1/preferences` persist user-scoped craving controls under the same backend-owned identity boundary. |
 | Auth boundary | User-scoped backend routes derive identity from SPAPS auth when enabled, with a local-only header fallback while auth is disabled. |
-| iOS transport | `DogSwipeAPIClient` can attach user bearer tokens through an injected provider without embedding SPAPS API keys. |
+| iOS transport | `DogSwipeAPIClient` can attach user bearer tokens from a Keychain-backed provider without embedding SPAPS API keys. |
 
 Hotdog profile payloads use this snake_case backend contract:
 
@@ -81,7 +81,7 @@ DATABASE_URL=postgresql+asyncpg://... make migrate
 DATABASE_URL=postgresql+asyncpg://... make migration-current
 ```
 
-The iOS target reads `DOGSWIPE_API_BASE_URL` from its generated Info.plist and defaults to `http://localhost:8000`, which works for simulator-local backend development. User-scoped routes derive identity from SPAPS auth when enabled; local development can use `X-DogSwipe-User-ID` while auth is disabled. For auth-enabled environments, initialize `DogSwipeAPIClient` with an authorization-token provider that returns a user bearer token, not a SPAPS API key.
+The iOS target reads `DOGSWIPE_API_BASE_URL` from its generated Info.plist and defaults to `http://localhost:8000`, which works for simulator-local backend development. User-scoped routes derive identity from SPAPS auth when enabled; local development can use `X-DogSwipe-User-ID` while auth is disabled. For auth-enabled environments, the app stores a provided user bearer token in Keychain and injects it through `DogSwipeAPIClient`; it must never embed or send a SPAPS API key from the client.
 
 ## Verification Gates
 
@@ -107,13 +107,13 @@ The placement decision is `NEW REPO`: this app owns a durable product boundary r
 
 ## Current Scope
 
-The current app can load local hotdog profiles, render cards with a local product visual when no image URL is available, record swipes, persist shared craving controls, and fetch matches through the shared Swift API client. Backend migrations are managed through Alembic up to `0003`, and local Docker development can auto-create and seed the starter data with explicit local-only flags.
+The current app can load local hotdog profiles, render cards with a local product visual when no image URL is available, store a user bearer token in Keychain, record swipes, persist shared craving controls, and fetch matches through the shared Swift API client. Backend migrations are managed through Alembic up to `0003`, and local Docker development can auto-create and seed the starter data with explicit local-only flags.
 
 ## Known Limits
 
 - Live deployment is blocked until a skillbox deploy overlay names a host, service, production origin, and health URL.
 - Final visual parity with the original reference image remains blocked because the image is not available in this context.
-- Real vendor onboarding, live menu inventory, location services, and App Store/TestFlight release assets are future slices.
+- Native SPAPS sign-in, real vendor onboarding, live menu inventory, location services, and App Store/TestFlight release assets are future slices.
 
 ## About Contributions
 

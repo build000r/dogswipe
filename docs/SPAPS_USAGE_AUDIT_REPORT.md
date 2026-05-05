@@ -23,3 +23,4 @@ DogSwipe follows the current quickstart contract:
 - local dev may disable SPAPS auth explicitly
 - no browser/client code should send a secret SPAPS API key
 - user-scoped swipes, matches, and craving preferences derive identity from backend auth context
+- iOS stores provided user bearer JWTs in Keychain before injecting `Authorization`
