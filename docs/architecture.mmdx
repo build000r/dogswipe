@@ -28,6 +28,7 @@ flowchart LR
   client["DogSwipeAPIClient"]
   api["FastAPI backend"]
   principal["Principal resolver"]
+  migrations["Alembic migrations"]
   db["PostgreSQL"]
   spaps["SPAPS auth"]
   gates["Quality Gates"]
@@ -40,8 +41,10 @@ flowchart LR
   api --> principal
   principal --> spaps
   api --> db
+  migrations --> db
   core --> gates
   api --> gates
+  migrations --> gates
 
   gates["Quality Gates"]
   spaps["SPAPS Boundary"]

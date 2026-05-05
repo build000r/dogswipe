@@ -3,8 +3,9 @@ VENV ?= .venv
 SKILLS_ROOT ?= ../opensource/skills
 PIP := $(VENV)/bin/pip
 PYTEST := $(VENV)/bin/pytest
+ALEMBIC := $(VENV)/bin/alembic
 
-.PHONY: generate-ios ios-build swift-test backend-install backend-install-local backend-test coverage lint typecheck test drift crap
+.PHONY: generate-ios ios-build swift-test backend-install backend-install-local backend-test coverage lint typecheck migrate migration-current test drift crap
 
 generate-ios:
 	cd apps/ios/DogSwipe && xcodegen generate
@@ -34,10 +35,16 @@ coverage:
 	cd backend && ../$(PYTEST) --cov=dogswipe_backend --cov-report=term-missing --cov-report=xml -q
 
 lint:
-	cd backend && ../$(VENV)/bin/ruff check src tests
+	cd backend && ../$(VENV)/bin/ruff check src tests migrations
 
 typecheck:
 	cd backend && ../$(VENV)/bin/mypy src
+
+migrate:
+	cd backend && ../$(ALEMBIC) upgrade head
+
+migration-current:
+	cd backend && ../$(ALEMBIC) current
 
 test: swift-test backend-test
 

@@ -6,10 +6,12 @@ Last verified: 2026-05-05
 | --- | --- | --- |
 | Swift package tests | `make swift-test` | 12 tests passed |
 | iOS smoke build | `xcodebuild -quiet -project apps/ios/DogSwipe/DogSwipe.xcodeproj -scheme DogSwipe -destination 'generic/platform=iOS' build` | passed |
-| Backend API tests | `make backend-test` | 19 tests passed |
+| Backend API tests | `make backend-test` | 20 tests passed |
 | Backend coverage | `make coverage` | 93.28% total coverage |
 | Backend lint | `make lint` | passed |
 | Backend typecheck | `make typecheck` | passed |
+| Alembic migration smoke | `DATABASE_URL=sqlite+aiosqlite:////tmp/dogswipe-migrate-smoke.sqlite make migrate` | upgraded to `0001`; `make migration-current` reports `0001 (head)` |
+| Backend container build | `docker build -q backend` | built image `sha256:10a7e4ab0ce6c4ccff5b3a587abd171df4d05a848c3bd63a8ea524779f158f23` |
 | SwiftUI drift scan | `make drift` | 0 Swift findings |
 | CRAP score | `make crap` | `FINAL_SCORE: 5.00` |
 | MMDX preflight | `python3 ../opensource/skills/mmdx/scripts/mmd.py docs/architecture.mmdx --preflight-only` | 3 charts passed |
@@ -22,6 +24,7 @@ Last verified: 2026-05-05
 - `MatchesViewModel` fetches matches from the backend client and exposes a visible empty/loading/failure state.
 - Local backend startup can create the starter schema and idempotently seed sample profiles when explicit local-only env flags are enabled.
 - User-scoped backend routes prefer `AuthenticatedUser.user_id` from SPAPS middleware and reject forged `user_id` fields in swipe requests.
+- Alembic owns the production schema path with a tested initial upgrade/downgrade migration.
 
 ## Known Blocks
 
