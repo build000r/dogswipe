@@ -20,7 +20,7 @@ The repo is intentionally split into three testable surfaces:
 
 | Surface | Implemented behavior |
 | --- | --- |
-| Discovery | `GET /v1/discovery` returns available `HotdogProfile` records filtered by the user's saved max-distance/classic preferences and ranked by crave/distance fit; optional `latitude`/`longitude` query params recompute card distance from the user's current location; iOS cards can open Apple Maps directions from coordinates or address text. |
+| Discovery | `GET /v1/discovery` returns available `HotdogProfile` records filtered by the user's saved max-distance/classic preferences and ranked by crave/distance fit; optional `latitude`/`longitude` query params recompute card distance from the user's current location; responses include deterministic walking-time estimates, and iOS cards can open Apple Maps directions from coordinates or address text. |
 | Swipe state | Swift package owns deterministic deck advancement, undo, and positive-signal tracking. |
 | Matches | `POST /v1/swipes` records likes/passes/super-likes; `GET /v1/matches` returns high-crave liked hotdogs. |
 | Preferences | `GET /v1/preferences` and `PUT /v1/preferences` persist user-scoped craving controls under the same backend-owned identity boundary; the backend discovery route and Swift local deck scorer both consume the same contract. |
@@ -41,6 +41,7 @@ Hotdog profile payloads use this snake_case backend contract:
   "distance_miles": 1.2,
   "latitude": 43.6539,
   "longitude": -79.3843,
+  "walking_time_minutes": 24,
   "vendor_name": "Franklin Cart",
   "address_text": "100 Queen St W, Toronto, ON",
   "image_url": null,
@@ -125,13 +126,13 @@ The placement decision is `NEW REPO`: this app owns a durable product boundary r
 
 ## Current Scope
 
-The current app can load local hotdog profiles, render cards with a local product visual when no image URL is available, request and verify SPAPS magic links including native `dogswipe://auth` returns, store access/refresh JWTs in Keychain, record swipes, persist shared craving controls that filter/rank discovery, use CoreLocation-backed coordinates for live distance ranking, open Apple Maps directions from coordinates or pickup address text, submit and revise vendor-owned hotdog listings, refresh bounded menu URL snapshots as a vendor, refresh stale vendor menu snapshots as an admin or optional background worker, approve/reject/request edits as an admin, and fetch matches through the shared Swift API client. Backend migrations are managed through Alembic up to `0008`, local Docker development can auto-create and seed the starter data with explicit local-only flags, and production deploy artifacts are ready for a concrete skillbox target.
+The current app can load local hotdog profiles, render cards with a local product visual when no image URL is available, request and verify SPAPS magic links including native `dogswipe://auth` returns, store access/refresh JWTs in Keychain, record swipes, persist shared craving controls that filter/rank discovery, use CoreLocation-backed coordinates for live distance ranking, show deterministic walking-time estimates, open Apple Maps directions from coordinates or pickup address text, submit and revise vendor-owned hotdog listings, refresh bounded menu URL snapshots as a vendor, refresh stale vendor menu snapshots as an admin or optional background worker, approve/reject/request edits as an admin, and fetch matches through the shared Swift API client. Backend migrations are managed through Alembic up to `0008`, local Docker development can auto-create and seed the starter data with explicit local-only flags, and production deploy artifacts are ready for a concrete skillbox target.
 
 ## Known Limits
 
 - Live deployment is blocked until a skillbox deploy overlay names a host, service, production origin, env source, deploy root, and health URL.
 - Final visual parity with the original reference image remains blocked because the image is not available in this context.
-- Full menu indexing/enrichment, universal-link polish, server-side address geocoding/travel-time ranking, and App Store/TestFlight release assets are future slices.
+- Full menu indexing/enrichment, universal-link polish, provider-backed address geocoding/live routing, and App Store/TestFlight release assets are future slices.
 
 ## About Contributions
 

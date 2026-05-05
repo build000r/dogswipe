@@ -9,6 +9,7 @@ public struct HotdogProfile: Identifiable, Codable, Equatable, Sendable {
     public let distanceMiles: Double
     public let latitude: Double?
     public let longitude: Double?
+    public let walkingTimeMinutes: Int?
     public let vendorName: String
     public let addressText: String?
     public let imageURL: URL?
@@ -32,6 +33,7 @@ public struct HotdogProfile: Identifiable, Codable, Equatable, Sendable {
         distanceMiles: Double,
         latitude: Double? = nil,
         longitude: Double? = nil,
+        walkingTimeMinutes: Int? = nil,
         vendorName: String,
         addressText: String? = nil,
         imageURL: URL? = nil,
@@ -54,6 +56,7 @@ public struct HotdogProfile: Identifiable, Codable, Equatable, Sendable {
         self.distanceMiles = distanceMiles
         self.latitude = latitude
         self.longitude = longitude
+        self.walkingTimeMinutes = walkingTimeMinutes
         self.vendorName = vendorName
         self.addressText = addressText
         self.imageURL = imageURL
@@ -74,6 +77,11 @@ public struct HotdogProfile: Identifiable, Codable, Equatable, Sendable {
             return "$\(Int(priceDollars))"
         }
         return String(format: "$%.2f", priceDollars)
+    }
+
+    public var walkingTimeLabel: String {
+        let minutes = walkingTimeMinutes ?? max(1, Int(((distanceMiles / 3) * 60).rounded()))
+        return "\(minutes) min"
     }
 
     public var directionsURL: URL? {
@@ -105,6 +113,7 @@ public struct HotdogProfile: Identifiable, Codable, Equatable, Sendable {
         case distanceMiles = "distance_miles"
         case latitude
         case longitude
+        case walkingTimeMinutes = "walking_time_minutes"
         case vendorName = "vendor_name"
         case addressText = "address_text"
         case imageURL = "image_url"

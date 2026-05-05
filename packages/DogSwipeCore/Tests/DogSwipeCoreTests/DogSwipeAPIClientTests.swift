@@ -34,6 +34,7 @@ final class DogSwipeAPIClientTests: XCTestCase {
               "distance_miles": 1.2,
               "latitude": 43.6539,
               "longitude": -79.3843,
+              "walking_time_minutes": 24,
               "vendor_name": "Franklin Cart",
               "address_text": "100 Queen St W, Toronto, ON",
               "image_url": null,
@@ -55,6 +56,8 @@ final class DogSwipeAPIClientTests: XCTestCase {
         XCTAssertEqual(profiles.first?.vendorName, "Franklin Cart")
         XCTAssertEqual(profiles.first?.latitude, 43.6539)
         XCTAssertEqual(profiles.first?.longitude, -79.3843)
+        XCTAssertEqual(profiles.first?.walkingTimeMinutes, 24)
+        XCTAssertEqual(profiles.first?.walkingTimeLabel, "24 min")
         XCTAssertEqual(profiles.first?.addressText, "100 Queen St W, Toronto, ON")
         XCTAssertTrue(
             profiles.first?.directionsURL?.absoluteString.contains("daddr=43.6539,-79.3843")
@@ -318,6 +321,22 @@ final class DogSwipeAPIClientTests: XCTestCase {
         XCTAssertEqual(components.host, "maps.apple.com")
         XCTAssertEqual(query["daddr"], "100 Queen St W, Toronto, ON")
         XCTAssertEqual(query["dirflg"], "w")
+    }
+
+    func testWalkingTimeLabelFallsBackToDistance() {
+        let profile = HotdogProfile(
+            id: "address-only",
+            name: "Address Snap",
+            style: "Classic cart dog",
+            priceDollars: 6.25,
+            signatureNotes: "Mustard, relish, and onion.",
+            distanceMiles: 1.8,
+            vendorName: "Boardwalk Dogs",
+            addressText: "100 Queen St W, Toronto, ON",
+            craveScore: 0.5
+        )
+
+        XCTAssertEqual(profile.walkingTimeLabel, "36 min")
     }
 
     func testIngestVendorSubmissionMenuUsesBackendContract() async throws {

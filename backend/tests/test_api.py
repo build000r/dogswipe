@@ -92,6 +92,7 @@ async def test_discovery_can_compute_distance_from_query_location(async_client) 
     assert profile["latitude"] == 43.6539
     assert profile["longitude"] == -79.3843
     assert profile["distance_miles"] < 0.1
+    assert profile["walking_time_minutes"] == 1
 
 
 @pytest.mark.asyncio

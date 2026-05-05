@@ -17,7 +17,7 @@ The first production slice must prove three things:
 ## Current Product Contract
 
 - Discovery cards represent hotdogs, not venues: the primary object is a specific item from a vendor.
-- A card must show name, style, price, signature notes, distance, vendor, and a crave score; when the app has current location permission, distance should be recomputed from profile coordinates rather than relying on static sample mileage, and users should be able to hand off to Apple Maps from coordinates or pickup address text.
+- A card must show name, style, price, signature notes, distance, walking time, vendor, and a crave score; when the app has current location permission, distance should be recomputed from profile coordinates rather than relying on static sample mileage, and users should be able to hand off to Apple Maps from coordinates or pickup address text.
 - Cards without remote media still need a product-specific hotdog visual, and craving controls should persist as user-scoped preferences that filter/rank both backend discovery and the local Swift deck.
 - Positive swipes are intent signals. Matches are high-crave liked items, not social matches.
 - Vendors can submit hotdog listings with menu/media metadata, optional coordinates, and pickup address text, refresh a bounded menu URL snapshot for their own listings, and revise change-requested listings back into review; configured admins can approve/reject/request edits and refresh stale vendor menu snapshots in bounded batches. Production can opt into the same stale-menu refresh as a bounded background worker without turning DogSwipe into a full crawler.
@@ -31,7 +31,7 @@ The first production slice must prove three things:
 - Recommendation ML
 - App Store release assets
 - Universal-link handoff polish
-- Server-side address geocoding and live travel-time ranking
+- Provider-backed address geocoding and live routing
 - Full menu indexing or crawler-based enrichment
 
 These are valuable later, but they would dilute the core loop before the app has a reliable discovery contract.

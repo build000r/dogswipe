@@ -33,6 +33,7 @@ flowchart LR
   client["DogSwipeAPIClient"]
   profiles["HotdogProfile contract"]
   maps["Apple Maps handoff"]
+  walk["Walking ETA"]
   preferences["CravingPreferences contract"]
   vendor["VendorSubmission contract"]
   menu["MenuSnapshot contract"]
@@ -58,6 +59,7 @@ flowchart LR
   vm --> client
   core --> profiles
   core --> maps
+  core --> walk
   core --> preferences
   core --> vendor
   core --> menu
@@ -120,7 +122,7 @@ sequenceDiagram
   SPAPS-->>API: AuthenticatedUser.user_id
   App->>API: Discovery request with optional current coordinates
   API->>DB: Read preferences and coordinate-backed hotdog profiles
-  API-->>App: Preference-filtered discovery with resolved distance
+  API-->>App: Preference-filtered discovery with resolved distance and walking ETA
   App->>Maps: Open directions from coordinates or address_text
   API->>DB: Read swipes, matches, or preferences
   API-->>App: Match or preference response

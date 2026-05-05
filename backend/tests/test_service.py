@@ -360,6 +360,7 @@ async def test_discovery_clamps_limit() -> None:
     assert repository.latitude_seen is None
     assert repository.longitude_seen is None
     assert response.profiles[0].id == "hotdog-test"
+    assert response.profiles[0].walking_time_minutes == 20
 
 
 @pytest.mark.asyncio

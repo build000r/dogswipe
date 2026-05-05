@@ -34,6 +34,9 @@ struct MatchesView: View {
                                 Text(profile.vendorName)
                                     .font(.subheadline)
                                     .foregroundStyle(Color.dsMuted)
+                                Text("\(String(format: "%.1f mi", profile.distanceMiles)) • \(profile.walkingTimeLabel) walk")
+                                    .font(.caption)
+                                    .foregroundStyle(Color.dsMuted)
                             }
                             Spacer()
                             Text(profile.priceLabel)

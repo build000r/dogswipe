@@ -31,10 +31,11 @@ Status key: `done`, `active`, `ready`, `blocked`.
 | WG-025 Native auth deep links | done | WG-017 | `apps/ios/DogSwipe/**`, `docs/**` | The iOS app registers `dogswipe://auth`, sends it as the SPAPS magic-link redirect URL, parses returned token links, and verifies them through `AuthSessionStore` |
 | WG-026 Admin stale menu refresh | done | WG-023, WG-025 | `backend/**`, `packages/DogSwipeCore/**`, `apps/ios/DogSwipe/**`, `docs/**` | Admins can refresh stale vendor menu snapshots in bounded batches, see refreshed/error counts, and update pending review rows from the iOS Admin tab |
 | WG-027 Autonomous menu refresh worker | done | WG-026 | `backend/**`, `deploy/**`, `docs/**` | Production can opt into a cancellable API-process worker that periodically runs the same bounded stale-menu refresh contract, with env controls and runtime tests |
+| WG-028 Walking-time estimates | done | WG-022, WG-024 | `backend/**`, `packages/DogSwipeCore/**`, `apps/ios/DogSwipe/**`, `docs/**` | Hotdog profile responses include deterministic walking-time estimates from resolved distance, and iOS discovery/matches display the estimate alongside distance |
 
 ## Ready Frontier
 
-The next ready work is to create a concrete skillbox deploy overlay or continue deeper product slices: server-side address geocoding/travel-time ranking, universal-link polish, release assets, and full menu indexing/enrichment if the snapshot model proves useful.
+The next ready work is to create a concrete skillbox deploy overlay or continue deeper product slices: provider-backed address geocoding/live routing, universal-link polish, release assets, and full menu indexing/enrichment if the snapshot model proves useful.
 
 ## Risks
 

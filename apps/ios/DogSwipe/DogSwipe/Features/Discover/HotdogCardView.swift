@@ -29,6 +29,7 @@ struct HotdogCardView: View {
                 HStack(spacing: .dsSpace4) {
                     metric(label: "Price", value: profile.priceLabel)
                     metric(label: "Distance", value: String(format: "%.1f mi", profile.distanceMiles))
+                    metric(label: "Walk", value: profile.walkingTimeLabel)
                     metric(label: "Crave", value: "\(Int(profile.craveScore * 100))%")
                 }
 

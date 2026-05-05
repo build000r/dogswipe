@@ -4,12 +4,20 @@ from datetime import datetime
 from enum import StrEnum
 from typing import Annotated, Self
 
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    StringConstraints,
+    computed_field,
+    model_validator,
+)
 
 ReviewNote = Annotated[
     str,
     StringConstraints(strip_whitespace=True, min_length=1, max_length=240),
 ]
+WALKING_SPEED_MILES_PER_HOUR = 3.0
 
 
 class SwipeDecision(StrEnum):
@@ -42,6 +50,12 @@ class HotdogProfile(BaseModel):
     review_note: str | None = None
     last_verified_at: datetime | None = None
     last_reviewed_at: datetime | None = None
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def walking_time_minutes(self) -> int:
+        minutes = round((self.distance_miles / WALKING_SPEED_MILES_PER_HOUR) * 60)
+        return max(1, minutes)
 
 
 class DiscoveryResponse(BaseModel):
