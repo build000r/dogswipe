@@ -152,6 +152,38 @@ async def test_matches_only_returns_high_crave_likes(async_client) -> None:
 
 
 @pytest.mark.asyncio
+async def test_matches_can_compute_distance_from_query_location(async_client) -> None:
+    await async_client.post(
+        "/v1/swipes",
+        headers={"X-DogSwipe-User-ID": "location-match-user"},
+        json={"profile_id": "hotdog-coney", "decision": "super_like"},
+    )
+
+    response = await async_client.get(
+        "/v1/matches",
+        headers={"X-DogSwipe-User-ID": "location-match-user"},
+        params={
+            "latitude": 43.6532,
+            "longitude": -79.3832,
+        },
+    )
+
+    assert response.status_code == 200
+    match = response.json()["matches"][0]
+    assert match["id"] == "hotdog-coney"
+    assert match["distance_miles"] < 0.1
+    assert match["walking_time_minutes"] == 1
+
+
+@pytest.mark.asyncio
+async def test_matches_rejects_partial_query_location(async_client) -> None:
+    response = await async_client.get("/v1/matches", params={"latitude": 43.6532})
+
+    assert response.status_code == 422
+    assert response.json()["detail"] == "latitude and longitude must be provided together"
+
+
+@pytest.mark.asyncio
 async def test_unknown_profile_swipe_is_not_match(async_client) -> None:
     response = await async_client.post(
         "/v1/swipes",

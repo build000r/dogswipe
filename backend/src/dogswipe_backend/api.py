@@ -81,10 +81,21 @@ def build_api_router() -> APIRouter:
 
     @v1.get("/matches", response_model=MatchResponse)
     async def matches(
+        latitude: float | None = Query(default=None, ge=-90, le=90),
+        longitude: float | None = Query(default=None, ge=-180, le=180),
         service: DogSwipeService = Depends(get_service),
         user_id: str = Depends(get_current_user_id),
     ) -> MatchResponse:
-        return await service.matches(user_id=user_id)
+        if (latitude is None) != (longitude is None):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail="latitude and longitude must be provided together",
+            )
+        return await service.matches(
+            user_id=user_id,
+            latitude=latitude,
+            longitude=longitude,
+        )
 
     @v1.get("/preferences", response_model=CravingPreferences)
     async def preferences(

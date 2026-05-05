@@ -28,7 +28,7 @@ final class DiscoverViewModel: ObservableObject {
     ) {
         self.apiClient = apiClient
         self.preferencesStore = preferencesStore
-        self.locationProvider = locationProvider ?? Self.defaultLocationProvider()
+        self.locationProvider = locationProvider ?? UserLocationProviderFactory.defaultProvider()
     }
 
     var currentProfile: HotdogProfile? {
@@ -103,9 +103,4 @@ final class DiscoverViewModel: ObservableObject {
         MatchScorer.ranked(profiles: profiles, preferences: preferencesStore.preferences)
     }
 
-    private static func defaultLocationProvider() -> UserLocationProviding {
-        AppEnvironment.isScreenshotMode
-            ? ScreenshotUserLocationProvider()
-            : CoreLocationUserLocationProvider()
-    }
 }

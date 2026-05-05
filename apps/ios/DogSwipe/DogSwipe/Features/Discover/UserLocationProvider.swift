@@ -70,6 +70,15 @@ struct ScreenshotUserLocationProvider: UserLocationProviding {
     }
 }
 
+enum UserLocationProviderFactory {
+    @MainActor
+    static func defaultProvider() -> UserLocationProviding {
+        AppEnvironment.isScreenshotMode
+            ? ScreenshotUserLocationProvider()
+            : CoreLocationUserLocationProvider()
+    }
+}
+
 extension CoreLocationUserLocationProvider: CLLocationManagerDelegate {
     nonisolated func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         Task { @MainActor in

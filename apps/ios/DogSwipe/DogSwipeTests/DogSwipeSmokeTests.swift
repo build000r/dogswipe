@@ -257,6 +257,39 @@ final class DogSwipeSmokeTests: XCTestCase {
     }
 
     @MainActor
+    func testMatchesViewModelSendsCurrentLocationToMatches() async throws {
+        let http = MockHTTPClient()
+        http.responses = [#"{"matches":[]}"#.data(using: .utf8)!]
+        let apiClient = DogSwipeAPIClient(
+            baseURL: URL(string: "http://localhost:8000")!,
+            httpClient: http
+        )
+        let viewModel = MatchesViewModel(
+            apiClient: apiClient,
+            locationProvider: StaticLocationProvider(
+                location: DiscoveryLocation(latitude: 43.6532, longitude: -79.3832)
+            )
+        )
+
+        await viewModel.load()
+
+        let components = try XCTUnwrap(
+            URLComponents(url: http.requests.first!.url!, resolvingAgainstBaseURL: false)
+        )
+        let locationQuery = Dictionary(uniqueKeysWithValues: (components.queryItems ?? []).map {
+            ($0.name, $0.value ?? "")
+        })
+        XCTAssertEqual(components.path, "/v1/matches")
+        XCTAssertEqual(locationQuery["latitude"], "43.6532")
+        XCTAssertEqual(locationQuery["longitude"], "-79.3832")
+        XCTAssertTrue(viewModel.isUsingCurrentLocation)
+        XCTAssertEqual(
+            viewModel.currentLocation,
+            DiscoveryLocation(latitude: 43.6532, longitude: -79.3832)
+        )
+    }
+
+    @MainActor
     func testRoutePreviewStoreLoadsWalkingEstimate() async {
         let estimate = RouteEstimate(walkingTimeMinutes: 14, distanceMiles: 0.7)
         let estimator = MockRouteEstimator(result: .success(estimate))

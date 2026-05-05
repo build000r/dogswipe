@@ -438,6 +438,32 @@ async def test_discovery_reranks_with_query_location_distance() -> None:
 
 
 @pytest.mark.asyncio
+async def test_matches_can_resolve_location_distance() -> None:
+    repository = FakeRepository()
+    repository.available_profiles = [
+        _profile(
+            "near-classic",
+            name="Near Classic",
+            distance_miles=9,
+            latitude=43.6539,
+            longitude=-79.3843,
+            crave_score=0.8,
+        )
+    ]
+    service = DogSwipeService(repository)
+
+    response = await service.matches(
+        user_id="u1",
+        latitude=43.6532,
+        longitude=-79.3832,
+    )
+
+    assert response.matches[0].id == "near-classic"
+    assert response.matches[0].distance_miles < 0.1
+    assert response.matches[0].walking_time_minutes == 1
+
+
+@pytest.mark.asyncio
 async def test_swipe_returns_repository_match_signal() -> None:
     repository = FakeRepository()
     service = DogSwipeService(repository)

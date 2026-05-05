@@ -123,6 +123,26 @@ final class DogSwipeAPIClientTests: XCTestCase {
         XCTAssertNil(http.requests.first?.url?.query)
     }
 
+    func testMatchesEncodesLocationQuery() async throws {
+        let http = MockHTTPClient()
+        http.nextData = #"{"matches":[]}"#.data(using: .utf8)!
+        let client = DogSwipeAPIClient(baseURL: URL(string: "http://localhost:8000")!, httpClient: http)
+
+        _ = try await client.matches(
+            location: DiscoveryLocation(latitude: 43.6532, longitude: -79.3832)
+        )
+
+        let components = try XCTUnwrap(
+            URLComponents(url: http.requests.first!.url!, resolvingAgainstBaseURL: false)
+        )
+        XCTAssertEqual(components.path, "/v1/matches")
+        let query = Dictionary(uniqueKeysWithValues: (components.queryItems ?? []).map {
+            ($0.name, $0.value ?? "")
+        })
+        XCTAssertEqual(query["latitude"], "43.6532")
+        XCTAssertEqual(query["longitude"], "-79.3832")
+    }
+
     func testPreferencesDecodeBackendContract() async throws {
         let http = MockHTTPClient()
         http.nextData = """

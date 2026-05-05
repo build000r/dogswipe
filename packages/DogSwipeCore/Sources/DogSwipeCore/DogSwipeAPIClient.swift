@@ -91,8 +91,14 @@ public struct DogSwipeAPIClient: Sendable {
         return try await send(path: "/v1/swipes", method: "POST", body: request)
     }
 
-    public func matches() async throws -> [HotdogProfile] {
-        let components = components(path: "/v1/matches")
+    public func matches(location: DiscoveryLocation? = nil) async throws -> [HotdogProfile] {
+        var components = components(path: "/v1/matches")
+        if let location {
+            components.queryItems = [
+                URLQueryItem(name: "latitude", value: String(location.latitude)),
+                URLQueryItem(name: "longitude", value: String(location.longitude))
+            ]
+        }
         let response: MatchResponse = try await send(components: components)
         return response.matches
     }

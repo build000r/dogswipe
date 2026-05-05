@@ -12,27 +12,41 @@ final class MatchesViewModel: ObservableObject {
 
     @Published private(set) var state: LoadState = .idle
     @Published private(set) var matches: [HotdogProfile] = []
+    @Published private(set) var isUsingCurrentLocation = false
+    @Published private(set) var currentLocation: DiscoveryLocation?
 
-    private let apiClient: DogSwipeAPIClient
-    private let preferencesStore: CravingPreferencesStore
+    private struct Dependencies {
+        let apiClient: DogSwipeAPIClient
+        let preferencesStore: CravingPreferencesStore
+        let locationProvider: UserLocationProviding
+    }
+
+    private let dependencies: Dependencies
 
     init(
         apiClient: DogSwipeAPIClient = AppEnvironment.apiClient(),
-        preferencesStore: CravingPreferencesStore = CravingPreferencesStore()
+        preferencesStore: CravingPreferencesStore = CravingPreferencesStore(),
+        locationProvider: UserLocationProviding? = nil
     ) {
-        self.apiClient = apiClient
-        self.preferencesStore = preferencesStore
+        dependencies = Dependencies(
+            apiClient: apiClient,
+            preferencesStore: preferencesStore,
+            locationProvider: locationProvider ?? UserLocationProviderFactory.defaultProvider()
+        )
     }
 
     func load() async {
         state = .loading
+        let location = await dependencies.locationProvider.currentLocation()
+        currentLocation = location
+        isUsingCurrentLocation = location != nil
         do {
-            matches = try await apiClient.matches()
+            matches = try await dependencies.apiClient.matches(location: location)
             state = .ready
         } catch {
             matches = MatchScorer.ranked(
                 profiles: HotdogProfile.samples,
-                preferences: preferencesStore.preferences
+                preferences: dependencies.preferencesStore.preferences
             )
             state = .failed("Could not refresh matches.")
         }

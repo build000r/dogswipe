@@ -60,7 +60,7 @@ final class DogSwipeScreenshotUITests: XCTestCase {
     private func tapTab(_ title: String) {
         let tab = app.tabBars.buttons[title]
         XCTAssertTrue(tab.waitForExistence(timeout: 3), "\(title) tab did not appear")
-        tab.tap()
+        tab.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
     }
 
     private func attachScreenshot(named name: String) {

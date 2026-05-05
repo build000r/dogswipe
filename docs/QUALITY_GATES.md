@@ -4,13 +4,13 @@ Last verified: 2026-05-05
 
 | Gate | Command | Result |
 | --- | --- | --- |
-| Swift package tests | `make swift-test` | 30 tests passed |
+| Swift package tests | `make swift-test` | 31 tests passed |
 | iOS smoke build | `xcodebuild -quiet -project apps/ios/DogSwipe/DogSwipe.xcodeproj -scheme DogSwipe -destination 'generic/platform=iOS' build` | passed |
 | iOS unit tests | `xcodebuild -quiet -project apps/ios/DogSwipe/DogSwipe.xcodeproj -scheme DogSwipe -destination 'platform=iOS Simulator,id=<available iPhone simulator UDID>' -only-testing:DogSwipeTests test` | passed |
 | iOS screenshot UI smoke | `make ios-ui-test` | 1 UI test passed across 5 hotdog app surfaces |
 | iOS screenshot export | `make ios-screenshots` | 5 PNG attachments exported under `.build/ios-screenshots/attachments` |
-| Backend API tests | `make backend-test` | 70 tests passed |
-| Backend coverage | `make coverage` | 89.63% total coverage |
+| Backend API tests | `make backend-test` | 73 tests passed |
+| Backend coverage | `make coverage` | 89.70% total coverage |
 | Clean backend install | `python3.12 -m venv /tmp/... && pip install -e 'backend[test]'` | passed |
 | Backend lint | `make lint` | passed |
 | Backend typecheck | `make typecheck` | passed |
@@ -36,7 +36,7 @@ Last verified: 2026-05-05
 - The iOS target includes `DogSwipe.entitlements` with `applinks:$(DOGSWIPE_ASSOCIATED_DOMAIN)`, and `make ios-release-assets` verifies the entitlement, build setting, Info.plist keys, and AASA template together.
 - Product profiles represent local hotdogs with style, price, vendor, crave score, and availability fields.
 - `DiscoverViewModel` loads profiles from the backend client and falls back to sample profiles when offline.
-- `MatchesViewModel` fetches matches from the backend client and exposes a visible empty/loading/failure state.
+- `MatchesViewModel` fetches matches from the backend client with optional current coordinates and exposes a visible empty/loading/failure state.
 - Local backend startup can create the starter schema and idempotently seed sample profiles when explicit local-only env flags are enabled.
 - Optional backend menu refresh startup stays disabled by default; when enabled, the worker runs the same bounded stale-menu refresh contract with env-controlled interval, batch size, and max age.
 - User-scoped backend routes prefer `AuthenticatedUser.user_id` from SPAPS middleware and reject forged `user_id` fields in swipe requests.
@@ -44,9 +44,10 @@ Last verified: 2026-05-05
 - Hotdog cards render a local SwiftUI product visual when `image_url` is absent, and the profile tab exposes interactive craving controls backed by shared ranking preferences.
 - `GET /v1/preferences` and `PUT /v1/preferences` persist user-scoped craving preferences; the Swift client and iOS store round-trip the same snake_case contract.
 - `GET /v1/discovery` resolves the current user, accepts optional `latitude`/`longitude`, applies saved max-distance/classic filters, and shares the same ranking semantics as the Swift local deck scorer.
+- `GET /v1/matches` resolves the current user, accepts optional `latitude`/`longitude`, rejects partial coordinate queries, and returns saved high-crave hotdogs with recomputed distance and walking-time fields.
 - Hotdog profile payloads include deterministic walking-time estimates derived from resolved distance; Swift decodes the field and falls back to local distance-based estimates for offline samples.
 - iOS discovery can pass a CoreLocation coordinate to the backend, and vendor submissions can include optional hotdog coordinates for dynamic response distances.
-- Hotdog profiles can include pickup address text, `DogSwipeCore` derives Apple Maps directions URLs from coordinates or address text, iOS discovery can preview live MapKit walking-route ETA/distance from the user's current location, and iOS discovery/matches expose directions actions.
+- Hotdog profiles can include pickup address text, `DogSwipeCore` derives Apple Maps directions URLs from coordinates or address text, and iOS discovery/matches can preview live MapKit walking-route ETA/distance from the user's current location while preserving Apple Maps handoff.
 - The iOS Vendor form can resolve pickup address text into latitude/longitude through an injected CoreLocation geocoder with covered success/failure states.
 - Hotdog profile payloads derive short `menu_highlights` from bounded menu snapshots; Swift decodes the array and iOS discovery/vendor summaries display those menu signals.
 - iOS native sign-in stores SPAPS access/refresh JWTs in Keychain, refreshes sessions, and injects only the access bearer into the shared API client.

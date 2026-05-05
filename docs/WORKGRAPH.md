@@ -40,6 +40,7 @@ Status key: `done`, `active`, `ready`, `blocked`.
 | WG-034 iOS screenshot smoke | done | WG-033 | `apps/ios/DogSwipe/**`, `scripts/**`, `.github/**`, `docs/**` | The iOS app has deterministic hotdog screenshot fixtures, a UI test target that covers Discover/Matches/Vendor/Review/Profile, local screenshot export, and CI smoke coverage |
 | WG-035 Universal-link auth plumbing | done | WG-017, WG-029, WG-033 | `apps/ios/DogSwipe/**`, `deploy/**`, `scripts/**`, `docs/**` | The app can request SPAPS magic links with a configurable HTTPS redirect, only accepts universal auth links from configured hosts, and the deploy contract includes an Apple app-site association template plus verification hooks |
 | WG-036 Live route preview | done | WG-024, WG-028 | `apps/ios/DogSwipe/**`, `docs/**` | Discovery cards can compute an on-device MapKit walking-route ETA/distance from the current user location to coordinate-backed hotdogs without replacing Apple Maps handoff |
+| WG-037 Location-aware matches | done | WG-036 | `backend/**`, `packages/DogSwipeCore/**`, `apps/ios/DogSwipe/**`, `docs/**` | Saved hotdog matches can accept current coordinates, return recomputed distance/walking time, and expose compact MapKit route preview plus Apple Maps handoff from the Matches tab |
 
 ## Ready Frontier
 

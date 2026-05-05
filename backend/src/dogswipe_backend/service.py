@@ -76,8 +76,18 @@ class DogSwipeService:
             matched=matched,
         )
 
-    async def matches(self, *, user_id: str) -> MatchResponse:
-        return MatchResponse(matches=await self.repository.list_matches(user_id=user_id))
+    async def matches(
+        self,
+        *,
+        user_id: str,
+        latitude: float | None = None,
+        longitude: float | None = None,
+    ) -> MatchResponse:
+        location = (latitude, longitude) if latitude is not None and longitude is not None else None
+        matches = await self.repository.list_matches(user_id=user_id)
+        return MatchResponse(
+            matches=[self._profile_with_location_distance(profile, location) for profile in matches]
+        )
 
     async def preferences(self, *, user_id: str) -> CravingPreferences:
         return await self.repository.get_preferences(user_id=user_id)

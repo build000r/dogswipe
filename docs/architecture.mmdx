@@ -144,8 +144,13 @@ sequenceDiagram
   API-->>App: Preference-filtered discovery with resolved distance and walking ETA
   App->>App: Preview MapKit walking route from current location to hotdog coordinates
   App->>Maps: Open directions from coordinates or address_text
-  API->>DB: Read swipes, matches, or preferences
-  API-->>App: Match or preference response
+  App->>API: Matches request with optional current coordinates
+  API->>DB: Read high-crave liked hotdogs
+  API-->>App: Saved matches with resolved distance and walking ETA
+  App->>App: Preview MapKit walking route from current location to matched hotdog coordinates
+  App->>Maps: Open matched-hotdog directions from coordinates or address_text
+  API->>DB: Read swipes or preferences
+  API-->>App: Swipe or preference response
   App->>App: Resolve vendor pickup address to coordinates
   App->>API: Submit vendor hotdog listing
   API->>DB: Store pending_review listing, coordinates, address_text, and owner user_id
