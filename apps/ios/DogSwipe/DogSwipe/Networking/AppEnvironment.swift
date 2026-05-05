@@ -10,7 +10,12 @@ enum AppEnvironment {
         return URL(string: "http://localhost:8000")!
     }
 
-    static func apiClient() -> DogSwipeAPIClient {
-        DogSwipeAPIClient(baseURL: apiBaseURL)
+    static func apiClient(
+        authorizationTokenProvider: DogSwipeAPIClient.AuthorizationTokenProvider? = nil
+    ) -> DogSwipeAPIClient {
+        DogSwipeAPIClient(
+            baseURL: apiBaseURL,
+            authorizationTokenProvider: authorizationTokenProvider
+        )
     }
 }

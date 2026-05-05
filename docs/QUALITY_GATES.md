@@ -4,7 +4,7 @@ Last verified: 2026-05-05
 
 | Gate | Command | Result |
 | --- | --- | --- |
-| Swift package tests | `make swift-test` | 12 tests passed |
+| Swift package tests | `make swift-test` | 14 tests passed |
 | iOS smoke build | `xcodebuild -quiet -project apps/ios/DogSwipe/DogSwipe.xcodeproj -scheme DogSwipe -destination 'generic/platform=iOS' build` | passed |
 | Backend API tests | `make backend-test` | 20 tests passed |
 | Backend coverage | `make coverage` | 93.28% total coverage |
@@ -20,6 +20,7 @@ Last verified: 2026-05-05
 
 - `DogSwipeAPIClient` decodes backend snake_case profile payloads.
 - `DogSwipeAPIClient` encodes swipe requests without client-controlled user identity.
+- `DogSwipeAPIClient` can attach a trimmed user bearer token from an injected provider and omits blank auth values.
 - `DiscoverViewModel` loads profiles from the backend client and falls back to sample profiles when offline.
 - `MatchesViewModel` fetches matches from the backend client and exposes a visible empty/loading/failure state.
 - Local backend startup can create the starter schema and idempotently seed sample profiles when explicit local-only env flags are enabled.

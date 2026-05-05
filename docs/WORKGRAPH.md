@@ -14,10 +14,11 @@ Status key: `done`, `active`, `ready`, `blocked`.
 | WG-008 Local backend runtime | done | WG-004 | `backend/**`, `.env.example`, `docker-compose.yml` | Fresh local PostgreSQL can be schema-created and seeded through explicit local-only settings |
 | WG-009 Backend-owned user identity | done | WG-004, WG-007 | `backend/**`, `packages/DogSwipeCore/**`, `apps/ios/DogSwipe/**` | User-scoped routes derive identity from SPAPS/local backend context instead of accepting app-supplied `user_id` payloads |
 | WG-010 Managed database migrations | done | WG-004, WG-008 | `backend/alembic.ini`, `backend/migrations/**`, `backend/Dockerfile`, `Makefile` | Alembic can upgrade/downgrade the initial schema and production deploys have a migration command |
+| WG-011 iOS bearer auth transport | done | WG-007, WG-009 | `packages/DogSwipeCore/**`, `apps/ios/DogSwipe/**` | Swift API calls can attach trimmed user bearer tokens through an injected provider without embedding SPAPS secrets |
 
 ## Ready Frontier
 
-The next ready work is to create a skillbox deploy overlay or continue deeper product slices: authenticated iOS session handling, richer profile media, and shelter workflows.
+The next ready work is to create a skillbox deploy overlay or continue deeper product slices: sign-in/session persistence, richer profile media, and shelter workflows.
 
 ## Risks
 

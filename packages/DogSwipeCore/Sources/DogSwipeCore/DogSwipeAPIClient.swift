@@ -38,21 +38,26 @@ public enum DogSwipeAPIError: Error, Equatable, LocalizedError, Sendable {
 }
 
 public struct DogSwipeAPIClient: Sendable {
+    public typealias AuthorizationTokenProvider = @Sendable () async throws -> String?
+
     private let baseURL: URL
     private let httpClient: DogSwipeHTTPClient
     private let decoder: JSONDecoder
     private let encoder: JSONEncoder
+    private let authorizationTokenProvider: AuthorizationTokenProvider?
 
     public init(
         baseURL: URL,
         httpClient: DogSwipeHTTPClient = URLSessionDogSwipeHTTPClient(),
         decoder: JSONDecoder = JSONDecoder(),
-        encoder: JSONEncoder = JSONEncoder()
+        encoder: JSONEncoder = JSONEncoder(),
+        authorizationTokenProvider: AuthorizationTokenProvider? = nil
     ) {
         self.baseURL = baseURL
         self.httpClient = httpClient
         self.decoder = decoder
         self.encoder = encoder
+        self.authorizationTokenProvider = authorizationTokenProvider
     }
 
     public func discovery(limit: Int = 20) async throws -> [DogProfile] {
@@ -96,6 +101,9 @@ public struct DogSwipeAPIClient: Sendable {
         var request = URLRequest(url: url)
         request.httpMethod = method
         request.setValue("application/json", forHTTPHeaderField: "Accept")
+        if let authorizationHeader = try await authorizationHeader() {
+            request.setValue(authorizationHeader, forHTTPHeaderField: "Authorization")
+        }
         if let body {
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
             request.httpBody = try encoder.encode(body)
@@ -105,6 +113,18 @@ public struct DogSwipeAPIClient: Sendable {
             throw DogSwipeAPIError.invalidResponseStatus(response.statusCode)
         }
         return try decoder.decode(Response.self, from: data)
+    }
+
+    private func authorizationHeader() async throws -> String? {
+        guard let authorizationTokenProvider else {
+            return nil
+        }
+        guard let token = try await authorizationTokenProvider()?.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        ), !token.isEmpty else {
+            return nil
+        }
+        return "Bearer \(token)"
     }
 
     private func components(path: String) -> URLComponents {

@@ -81,6 +81,37 @@ final class DogSwipeAPIClientTests: XCTestCase {
         XCTAssertNil(http.requests.first?.url?.query)
     }
 
+    func testAddsBearerTokenWhenProviderReturnsToken() async throws {
+        let http = MockHTTPClient()
+        http.nextData = #"{"profiles":[]}"#.data(using: .utf8)!
+        let client = DogSwipeAPIClient(
+            baseURL: URL(string: "http://localhost:8000")!,
+            httpClient: http,
+            authorizationTokenProvider: { " spaps-token " }
+        )
+
+        _ = try await client.discovery()
+
+        XCTAssertEqual(
+            http.requests.first?.value(forHTTPHeaderField: "Authorization"),
+            "Bearer spaps-token"
+        )
+    }
+
+    func testOmitsAuthorizationHeaderWhenProviderReturnsBlankToken() async throws {
+        let http = MockHTTPClient()
+        http.nextData = #"{"profiles":[]}"#.data(using: .utf8)!
+        let client = DogSwipeAPIClient(
+            baseURL: URL(string: "http://localhost:8000")!,
+            httpClient: http,
+            authorizationTokenProvider: { " " }
+        )
+
+        _ = try await client.discovery()
+
+        XCTAssertNil(http.requests.first?.value(forHTTPHeaderField: "Authorization"))
+    }
+
     func testNonSuccessStatusThrowsAPIError() async {
         let http = MockHTTPClient()
         http.nextStatusCode = 503

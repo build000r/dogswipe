@@ -39,7 +39,7 @@ DATABASE_URL=postgresql+asyncpg://... make migrate
 DATABASE_URL=postgresql+asyncpg://... make migration-current
 ```
 
-The iOS target reads `DOGSWIPE_API_BASE_URL` from its generated Info.plist and defaults to `http://localhost:8000`, which works for simulator-local backend development. User-scoped routes derive identity from SPAPS auth when enabled; local development can use `X-DogSwipe-User-ID` while auth is disabled.
+The iOS target reads `DOGSWIPE_API_BASE_URL` from its generated Info.plist and defaults to `http://localhost:8000`, which works for simulator-local backend development. User-scoped routes derive identity from SPAPS auth when enabled; local development can use `X-DogSwipe-User-ID` while auth is disabled. For auth-enabled environments, initialize `DogSwipeAPIClient` with an authorization-token provider that returns a user bearer token, not a SPAPS API key.
 
 ## Verification Gates
 
