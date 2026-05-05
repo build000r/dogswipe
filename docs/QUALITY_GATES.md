@@ -19,7 +19,8 @@ Last verified: 2026-05-05
 | Skillbox overlay template | `make deploy-overlay-template` | passed |
 | SwiftUI drift scan | `make drift` | 0 Swift findings |
 | CRAP score | `make crap` | `FINAL_SCORE: 7.00` |
-| MMDX preflight | `python3 ../opensource/skills/mmdx/scripts/mmd.py docs/architecture.mmdx --preflight-only` | 3 charts passed |
+| MMDX preflight | `make mmdx-preflight` | 3 charts passed |
+| CI quality enforcement | GitHub Actions `backend` and `swift-package` jobs | coverage XML feeds blocking CRAP; MMDX and SwiftUI drift gates fail on regressions |
 | SPAPS usage audit | `python3 ../sweet-potato/skills/sweet-potato-usage-audit/scripts/audit_sweet_potato_usage.py --sweet-potato-root ../sweet-potato .` | 0 high, 0 medium, 0 low |
 
 ## Current Product Evidence
@@ -48,6 +49,7 @@ Last verified: 2026-05-05
 - `POST /v1/admin/vendor/menus/refresh` is admin-scoped, refreshes stale vendor menu snapshots in bounded batches, reports checked/refreshed/failed counts, and the iOS Admin tab can trigger the refresh.
 - Configured admins can list pending vendor submissions, approve one into discovery, reject one, request edits with a review note, and production preflight requires `DOGSWIPE_ADMIN_USER_IDS` when SPAPS auth is enabled.
 - Production deploy artifacts define the Compose stack, env contract, preflight checks, post-deploy verification, reverse-proxy template, and CI workflow.
+- GitHub Actions enforces backend coverage XML generation, scoped CRAP threshold, MMDX architecture preflight, SwiftUI drift, deploy preflight, and iOS build/test gates.
 - A DogSwipe skillbox overlay template and validator exist so live deploy setup can be checked without committing host secrets.
 
 ## Known Blocks

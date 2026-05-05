@@ -92,12 +92,16 @@ flowchart LR
 ## chart quality Quality Gates
 ```mermaid
 stateDiagram-v2
-  [*] --> SwiftTests
-  SwiftTests --> BackendCoverage
-  BackendCoverage --> DeployPreflight
-  DeployPreflight --> DriftScan
-  DriftScan --> CrapScore
-  CrapScore --> [*]
+  [*] --> BackendTests
+  BackendTests --> BackendCoverage
+  BackendCoverage --> CrapScore
+  CrapScore --> MMDXPreflight
+  MMDXPreflight --> DeployPreflight
+  DeployPreflight --> SwiftTests
+  SwiftTests --> DriftScan
+  DriftScan --> IOSBuild
+  IOSBuild --> IOSTests
+  IOSTests --> [*]
 ```
 
 ## chart spaps SPAPS Boundary

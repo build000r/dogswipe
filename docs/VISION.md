@@ -42,4 +42,5 @@ These are valuable later, but they would dilute the core loop before the app has
 - Core matching logic lives in a Swift package with unit tests.
 - Backend routes are covered by API and service tests with coverage above 80%.
 - Auth integration follows Sweet Potato contracts: JWTs for user-scoped routes, app keys for service calls, no local fake auth contract in production.
+- CI blocks regressions in backend coverage, scoped CRAP score, SwiftUI drift, architecture-diagram preflight, deploy preflight, and iOS build/test gates.
 - Public docs distinguish implemented behavior from roadmap.

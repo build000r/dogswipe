@@ -108,6 +108,7 @@ make test
 make coverage
 make drift
 make crap
+make mmdx-preflight
 ```
 
 Target gates for this repo:
@@ -116,7 +117,10 @@ Target gates for this repo:
 - Swift package tests: green via `swift test`
 - UI drift: no unreviewed SwiftUI token drift outside design token files
 - CRAP: scoped `FINAL_SCORE < 20`
+- MMDX: architecture stack preflights cleanly
 - Deploy preflight: production Compose config and env contract resolve without secrets
+
+GitHub Actions enforces the same blocking gates for backend coverage, CRAP, MMDX architecture syntax, SwiftUI drift, deploy preflight, and iOS build/tests.
 
 Latest recorded gate results live in [docs/QUALITY_GATES.md](docs/QUALITY_GATES.md).
 
@@ -126,7 +130,7 @@ The placement decision is `NEW REPO`: this app owns a durable product boundary r
 
 ## Current Scope
 
-The current app can load local hotdog profiles, render cards with a local product visual when no image URL is available, request and verify SPAPS magic links including native `dogswipe://auth` returns, store access/refresh JWTs in Keychain, record swipes, persist shared craving controls that filter/rank discovery, use CoreLocation-backed coordinates for live distance ranking, show deterministic walking-time estimates, open Apple Maps directions from coordinates or pickup address text, submit and revise vendor-owned hotdog listings, refresh bounded menu URL snapshots as a vendor, refresh stale vendor menu snapshots as an admin or optional background worker, approve/reject/request edits as an admin, and fetch matches through the shared Swift API client. Backend migrations are managed through Alembic up to `0008`, local Docker development can auto-create and seed the starter data with explicit local-only flags, and production deploy artifacts are ready for a concrete skillbox target.
+The current app can load local hotdog profiles, render cards with a local product visual when no image URL is available, request and verify SPAPS magic links including native `dogswipe://auth` returns, store access/refresh JWTs in Keychain, record swipes, persist shared craving controls that filter/rank discovery, use CoreLocation-backed coordinates for live distance ranking, show deterministic walking-time estimates, open Apple Maps directions from coordinates or pickup address text, submit and revise vendor-owned hotdog listings, refresh bounded menu URL snapshots as a vendor, refresh stale vendor menu snapshots as an admin or optional background worker, approve/reject/request edits as an admin, and fetch matches through the shared Swift API client. Backend migrations are managed through Alembic up to `0008`, local Docker development can auto-create and seed the starter data with explicit local-only flags, CI enforces the core quality gates, and production deploy artifacts are ready for a concrete skillbox target.
 
 ## Known Limits
 

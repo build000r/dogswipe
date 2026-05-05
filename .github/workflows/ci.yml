@@ -11,8 +11,12 @@ permissions:
 jobs:
   backend:
     runs-on: ubuntu-latest
+    env:
+      SKILLS_ROOT: ${{ runner.temp }}/quality-skills
     steps:
       - uses: actions/checkout@v4
+      - name: Checkout quality skills
+        run: git clone --depth 1 https://github.com/build000r/skills.git "$SKILLS_ROOT"
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -23,7 +27,11 @@ jobs:
       - name: Test
         run: cd backend && pytest -q
       - name: Coverage
-        run: cd backend && pytest --cov=dogswipe_backend --cov-report=term-missing -q
+        run: cd backend && pytest --cov=dogswipe_backend --cov-report=term-missing --cov-report=xml -q
+      - name: CRAP quality gate
+        run: make crap
+      - name: MMDX preflight
+        run: make mmdx-preflight
       - name: Lint
         run: cd backend && ruff check src tests migrations
       - name: Typecheck
@@ -51,10 +59,20 @@ jobs:
 
   swift-package:
     runs-on: macos-latest
+    env:
+      SKILLS_ROOT: ${{ runner.temp }}/quality-skills
     steps:
       - uses: actions/checkout@v4
+      - name: Checkout quality skills
+        run: git clone --depth 1 https://github.com/build000r/skills.git "$SKILLS_ROOT"
+      - name: Install drift dependencies
+        run: |
+          brew list jq >/dev/null 2>&1 || brew install jq
+          brew list ripgrep >/dev/null 2>&1 || brew install ripgrep
       - name: Swift package tests
         run: swift test --package-path packages/DogSwipeCore
+      - name: SwiftUI drift gate
+        run: make drift
 
   ios:
     runs-on: macos-latest
