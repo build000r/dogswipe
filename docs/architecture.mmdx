@@ -24,6 +24,7 @@ flowchart LR
   user["iOS user"]
   ios["SwiftUI app"]
   authclient["SPAPSAuthClient"]
+  deeplink["dogswipe://auth"]
   pubkey["SPAPS publishable key"]
   keychain["Keychain access token"]
   refresh["Keychain refresh token"]
@@ -46,6 +47,7 @@ flowchart LR
 
   user --> ios
   ios --> authclient
+  ios --> deeplink
   pubkey --> authclient
   authclient --> spaps
   ios --> keychain
@@ -96,15 +98,17 @@ stateDiagram-v2
 ```mermaid
 sequenceDiagram
   participant App as iOS App
+  participant AuthLink as dogswipe auth link
   participant Maps as Apple Maps
   participant API as DogSwipe API
   participant Menu as Menu URL
   participant SPAPS as Sweet Potato/SPAPS
   participant DB as PostgreSQL
 
-  App->>SPAPS: X-API-Key spaps_pub... request magic link
+  App->>SPAPS: X-API-Key spaps_pub... request magic link with redirect_url
   SPAPS-->>App: Magic-link email token
-  App->>SPAPS: Verify magic-link token
+  AuthLink-->>App: URL open with token_hash/code
+  App->>SPAPS: Verify parsed magic-link token
   SPAPS-->>App: Access and refresh JWTs
   App->>API: Keychain-backed Authorization: Bearer access JWT
   API->>SPAPS: Validate user/session

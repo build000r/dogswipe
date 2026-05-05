@@ -28,10 +28,11 @@ Status key: `done`, `active`, `ready`, `blocked`.
 | WG-022 GPS-backed proximity | done | WG-021 | `backend/**`, `packages/DogSwipeCore/**`, `apps/ios/DogSwipe/**`, `docs/**` | Hotdog profiles and vendor submissions can carry coordinates, iOS discovery can pass current CoreLocation coordinates, and backend discovery recomputes response distance before filtering/ranking |
 | WG-023 Menu URL snapshots | done | WG-018, WG-022 | `backend/**`, `packages/DogSwipeCore/**`, `apps/ios/DogSwipe/**`, `docs/**` | Vendors can refresh a bounded menu URL snapshot for their own hotdog listings, with stored status/excerpt/timestamp and iOS Vendor tab coverage |
 | WG-024 Address directions handoff | done | WG-022, WG-023 | `backend/**`, `packages/DogSwipeCore/**`, `apps/ios/DogSwipe/**`, `docs/**` | Hotdog profiles and vendor submissions can carry pickup address text, Swift derives Apple Maps directions URLs from coordinates/address, and iOS discovery/matches expose directions actions |
+| WG-025 Native auth deep links | done | WG-017 | `apps/ios/DogSwipe/**`, `docs/**` | The iOS app registers `dogswipe://auth`, sends it as the SPAPS magic-link redirect URL, parses returned token links, and verifies them through `AuthSessionStore` |
 
 ## Ready Frontier
 
-The next ready work is to create a concrete skillbox deploy overlay or continue deeper product slices: server-side address geocoding/travel-time ranking, deep-link polish, release assets, and continuous menu crawling if the snapshot model proves useful.
+The next ready work is to create a concrete skillbox deploy overlay or continue deeper product slices: server-side address geocoding/travel-time ranking, universal-link polish, release assets, and continuous menu crawling if the snapshot model proves useful.
 
 ## Risks
 

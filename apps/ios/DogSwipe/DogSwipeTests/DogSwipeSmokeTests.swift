@@ -116,6 +116,16 @@ final class DogSwipeSmokeTests: XCTestCase {
         XCTAssertNil(accessStore.storedToken)
     }
 
+    func testAuthDeepLinkParsesMagicLinkURL() throws {
+        let deepLink = try XCTUnwrap(
+            AuthDeepLink(url: URL(string: "dogswipe://auth?token_hash=link-token&type=magiclink")!)
+        )
+
+        XCTAssertEqual(deepLink.token, "link-token")
+        XCTAssertEqual(deepLink.type, "magiclink")
+        XCTAssertNil(AuthDeepLink(url: URL(string: "dogswipe://vendor?token=link-token")!))
+    }
+
     func testAppEnvironmentUsesTokenStoreForAuthenticatedClient() async throws {
         let tokenStore = InMemoryBearerTokenStore()
         tokenStore.storedToken = " session-jwt "
@@ -466,44 +476,53 @@ final class DogSwipeSmokeTests: XCTestCase {
     }
 
     @MainActor
-    func testAuthSessionStoreVerifiesMagicLinkAndStoresSessionTokens() async throws {
-        let accessStore = InMemoryBearerTokenStore()
-        let refreshStore = InMemoryBearerTokenStore()
+    func testAuthSessionStoreRequestsMagicLinkWithNativeRedirect() async throws {
         let http = MockHTTPClient()
-        http.responses = [
-            #"""
-            {
-              "success": true,
-              "data": {
-                "tokens": {
-                  "access_token": "access-jwt",
-                  "refresh_token": "refresh-jwt"
-                },
-                "user": {
-                  "email": "fan@example.com"
-                }
-              }
-            }
-            """#.data(using: .utf8)!
-        ]
         let store = AuthSessionStore(
-            accessTokenStore: accessStore,
-            refreshTokenStore: refreshStore,
+            accessTokenStore: InMemoryBearerTokenStore(),
+            refreshTokenStore: InMemoryBearerTokenStore(),
             authClient: makeAuthClient(http: http)
         )
 
-        await store.verifyMagicLink(token: " token-from-email ")
+        await store.requestMagicLink(email: "fan@example.com")
 
-        XCTAssertEqual(store.bearerToken, "access-jwt")
-        XCTAssertEqual(store.sessionEmail, "fan@example.com")
-        XCTAssertTrue(store.hasRefreshToken)
-        XCTAssertEqual(accessStore.storedToken, "access-jwt")
-        XCTAssertEqual(refreshStore.storedToken, "refresh-jwt")
         let request = try XCTUnwrap(http.requests.first)
-        XCTAssertEqual(request.url?.path, "/api/auth/verify-magic-link")
         let body = try jsonBody(request)
-        XCTAssertEqual(body["token"] as? String, "token-from-email")
-        XCTAssertEqual(body["type"] as? String, "magiclink")
+        XCTAssertEqual(body["email"] as? String, "fan@example.com")
+        XCTAssertEqual(body["redirect_url"] as? String, "dogswipe://auth")
+    }
+
+    @MainActor
+    func testAuthSessionStoreVerifiesMagicLinkAndStoresSessionTokens() async throws {
+        let http = MockHTTPClient()
+        let context = try makeAuthVerificationContext(http: http)
+
+        await context.store.verifyMagicLink(token: " token-from-email ")
+
+        assertStoredSession(
+            context.store,
+            accessStore: context.accessStore,
+            refreshStore: context.refreshStore
+        )
+        try assertMagicLinkVerifyRequest(http, token: "token-from-email")
+    }
+
+    @MainActor
+    func testAuthSessionStoreHandlesMagicLinkDeepLink() async throws {
+        let http = MockHTTPClient()
+        let context = try makeAuthVerificationContext(http: http)
+
+        let handled = await context.store.handleDeepLink(
+            URL(string: "dogswipe://auth?token_hash=token-from-email&type=magiclink")!
+        )
+
+        XCTAssertTrue(handled)
+        assertStoredSession(
+            context.store,
+            accessStore: context.accessStore,
+            refreshStore: context.refreshStore
+        )
+        try assertMagicLinkVerifyRequest(http, token: "token-from-email")
     }
 
     @MainActor
@@ -568,6 +587,90 @@ final class DogSwipeSmokeTests: XCTestCase {
             publishableKey: "spaps_pub_test",
             origin: "https://dogswipe.test",
             httpClient: http
+        )
+    }
+
+    private func makeAuthSessionStore(
+        http: MockHTTPClient,
+        accessStore: InMemoryBearerTokenStore,
+        refreshStore: InMemoryBearerTokenStore
+    ) -> AuthSessionStore {
+        AuthSessionStore(
+            accessTokenStore: accessStore,
+            refreshTokenStore: refreshStore,
+            authClient: makeAuthClient(http: http)
+        )
+    }
+
+    private func makeAuthVerificationContext(
+        http: MockHTTPClient
+    ) throws -> (
+        store: AuthSessionStore,
+        accessStore: InMemoryBearerTokenStore,
+        refreshStore: InMemoryBearerTokenStore
+    ) {
+        let accessStore = InMemoryBearerTokenStore()
+        let refreshStore = InMemoryBearerTokenStore()
+        http.responses = [
+            try encodedAuthSessionResponse(
+                accessToken: "access-jwt",
+                refreshToken: "refresh-jwt",
+                email: "fan@example.com"
+            )
+        ]
+        let store = makeAuthSessionStore(
+            http: http,
+            accessStore: accessStore,
+            refreshStore: refreshStore
+        )
+        return (store, accessStore, refreshStore)
+    }
+
+    private func assertStoredSession(
+        _ store: AuthSessionStore,
+        accessStore: InMemoryBearerTokenStore,
+        refreshStore: InMemoryBearerTokenStore,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) {
+        XCTAssertEqual(store.bearerToken, "access-jwt", file: file, line: line)
+        XCTAssertEqual(store.sessionEmail, "fan@example.com", file: file, line: line)
+        XCTAssertTrue(store.hasRefreshToken, file: file, line: line)
+        XCTAssertEqual(accessStore.storedToken, "access-jwt", file: file, line: line)
+        XCTAssertEqual(refreshStore.storedToken, "refresh-jwt", file: file, line: line)
+    }
+
+    private func assertMagicLinkVerifyRequest(
+        _ http: MockHTTPClient,
+        token: String,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) throws {
+        let request = try XCTUnwrap(http.requests.first, file: file, line: line)
+        XCTAssertEqual(request.url?.path, "/api/auth/verify-magic-link", file: file, line: line)
+        let body = try jsonBody(request, file: file, line: line)
+        XCTAssertEqual(body["token"] as? String, token, file: file, line: line)
+        XCTAssertEqual(body["type"] as? String, "magiclink", file: file, line: line)
+    }
+
+    private func encodedAuthSessionResponse(
+        accessToken: String,
+        refreshToken: String,
+        email: String
+    ) throws -> Data {
+        try JSONSerialization.data(
+            withJSONObject: [
+                "success": true,
+                "data": [
+                    "tokens": [
+                        "access_token": accessToken,
+                        "refresh_token": refreshToken
+                    ],
+                    "user": [
+                        "email": email
+                    ]
+                ]
+            ]
         )
     }
 

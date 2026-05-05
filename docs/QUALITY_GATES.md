@@ -26,7 +26,7 @@ Last verified: 2026-05-05
 - `DogSwipeAPIClient` decodes backend snake_case profile payloads.
 - `DogSwipeAPIClient` encodes swipe requests without client-controlled user identity.
 - `DogSwipeAPIClient` can attach a trimmed user bearer token from an injected provider and omits blank auth values.
-- `SPAPSAuthClient` requests and verifies magic links with a publishable key and optional native origin, never a secret SPAPS API key.
+- `SPAPSAuthClient` requests and verifies magic links with a publishable key, optional native origin, and `dogswipe://auth` redirect URL, never a secret SPAPS API key.
 - Product profiles represent local hotdogs with style, price, vendor, crave score, and availability fields.
 - `DiscoverViewModel` loads profiles from the backend client and falls back to sample profiles when offline.
 - `MatchesViewModel` fetches matches from the backend client and exposes a visible empty/loading/failure state.
@@ -39,6 +39,7 @@ Last verified: 2026-05-05
 - iOS discovery can pass a CoreLocation coordinate to the backend, and vendor submissions can include optional hotdog coordinates for dynamic response distances.
 - Hotdog profiles can include pickup address text, `DogSwipeCore` derives Apple Maps directions URLs from coordinates or address text, and iOS discovery/matches expose directions actions.
 - iOS native sign-in stores SPAPS access/refresh JWTs in Keychain, refreshes sessions, and injects only the access bearer into the shared API client.
+- iOS registers `dogswipe://auth`, parses returned magic-link tokens, and verifies deep links through `AuthSessionStore`.
 - `POST /v1/vendor/submissions` stores authenticated vendor hotdog listings as `pending_review`; `GET`/`PUT /v1/vendor/submissions` are user-scoped and the iOS Vendor tab can revise change-requested listings.
 - `POST /v1/vendor/submissions/{id}/ingest-menu` is owner-scoped, stores bounded menu URL snapshot status/excerpt/timestamp fields, and the iOS Vendor tab can refresh and render the snapshot state.
 - Configured admins can list pending vendor submissions, approve one into discovery, reject one, request edits with a review note, and production preflight requires `DOGSWIPE_ADMIN_USER_IDS` when SPAPS auth is enabled.

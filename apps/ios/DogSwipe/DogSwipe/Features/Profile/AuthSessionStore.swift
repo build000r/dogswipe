@@ -10,17 +10,20 @@ final class AuthSessionStore: ObservableObject {
     private let accessTokenStore: BearerTokenStoring
     private let refreshTokenStore: BearerTokenStoring
     private let authClient: SPAPSAuthClient
+    private let magicLinkRedirectURL: URL?
 
     init(
         accessTokenStore: BearerTokenStoring = KeychainBearerTokenStore(),
         refreshTokenStore: BearerTokenStoring = KeychainBearerTokenStore(
             account: "spaps-refresh-token"
         ),
-        authClient: SPAPSAuthClient = AppEnvironment.spapsAuthClient()
+        authClient: SPAPSAuthClient = AppEnvironment.spapsAuthClient(),
+        magicLinkRedirectURL: URL? = URL(string: "dogswipe://auth")
     ) {
         self.accessTokenStore = accessTokenStore
         self.refreshTokenStore = refreshTokenStore
         self.authClient = authClient
+        self.magicLinkRedirectURL = magicLinkRedirectURL
     }
 
     var hasBearerToken: Bool {
@@ -69,7 +72,10 @@ final class AuthSessionStore: ObservableObject {
         isAuthenticating = true
         defer { isAuthenticating = false }
         do {
-            try await authClient.requestMagicLink(email: trimmedEmail)
+            try await authClient.requestMagicLink(
+                email: trimmedEmail,
+                redirectURL: magicLinkRedirectURL
+            )
             sessionMessage = "Magic link sent."
         } catch {
             sessionMessage = error.localizedDescription
@@ -77,7 +83,7 @@ final class AuthSessionStore: ObservableObject {
     }
 
     @MainActor
-    func verifyMagicLink(token: String) async {
+    func verifyMagicLink(token: String, type: String = "magiclink") async {
         let trimmedToken = token.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedToken.isEmpty else {
             sessionMessage = "Magic link token is required."
@@ -86,12 +92,22 @@ final class AuthSessionStore: ObservableObject {
         isAuthenticating = true
         defer { isAuthenticating = false }
         do {
-            let session = try await authClient.verifyMagicLink(token: trimmedToken)
+            let session = try await authClient.verifyMagicLink(token: trimmedToken, type: type)
             try save(session)
             sessionMessage = "Signed in."
         } catch {
             sessionMessage = error.localizedDescription
         }
+    }
+
+    @MainActor
+    @discardableResult
+    func handleDeepLink(_ url: URL) async -> Bool {
+        guard let deepLink = AuthDeepLink(url: url) else {
+            return false
+        }
+        await verifyMagicLink(token: deepLink.token, type: deepLink.type)
+        return true
     }
 
     @MainActor

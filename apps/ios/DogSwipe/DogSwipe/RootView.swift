@@ -82,6 +82,11 @@ struct RootView: View {
             authSessionStore.load()
             await preferencesStore.load()
         }
+        .onOpenURL { url in
+            Task {
+                await authSessionStore.handleDeepLink(url)
+            }
+        }
     }
 }
 

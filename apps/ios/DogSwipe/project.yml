@@ -14,23 +14,30 @@ targets:
       - path: DogSwipe
     dependencies:
       - package: DogSwipeCore
+    info:
+      path: DogSwipe/Info.plist
+      properties:
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        UILaunchScreen: {}
+        UIApplicationSupportsIndirectInputEvents: true
+        UIRequiresFullScreen: true
+        NSLocationWhenInUseUsageDescription: DogSwipe uses your location to sort nearby hotdogs by distance.
+        DOGSWIPE_API_BASE_URL: http://localhost:8000
+        DOGSWIPE_SPAPS_API_BASE_URL: https://api.sweetpotato.dev
+        DOGSWIPE_SPAPS_PUBLISHABLE_KEY: ""
+        DOGSWIPE_SPAPS_ORIGIN: ""
+        CFBundleURLTypes:
+          - CFBundleURLName: com.build000r.dogswipe
+            CFBundleURLSchemes:
+              - dogswipe
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.build000r.dogswipe
         CODE_SIGNING_ALLOWED: NO
         CODE_SIGNING_REQUIRED: NO
-        GENERATE_INFOPLIST_FILE: YES
         CURRENT_PROJECT_VERSION: 1
         MARKETING_VERSION: 0.1.0
-        INFOPLIST_KEY_UILaunchScreen_Generation: YES
-        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
-        INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: YES
-        INFOPLIST_KEY_UIRequiresFullScreen: YES
-        INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: DogSwipe uses your location to sort nearby hotdogs by distance.
-        INFOPLIST_KEY_DOGSWIPE_API_BASE_URL: http://localhost:8000
-        INFOPLIST_KEY_DOGSWIPE_SPAPS_API_BASE_URL: https://api.sweetpotato.dev
-        INFOPLIST_KEY_DOGSWIPE_SPAPS_PUBLISHABLE_KEY: ""
-        INFOPLIST_KEY_DOGSWIPE_SPAPS_ORIGIN: ""
   DogSwipeTests:
     type: bundle.unit-test
     platform: iOS
