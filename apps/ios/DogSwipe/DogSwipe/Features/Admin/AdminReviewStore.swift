@@ -45,6 +45,20 @@ final class AdminReviewStore: ObservableObject {
         }
     }
 
+    func refreshMenus() async {
+        isReviewing = true
+        defer { isReviewing = false }
+        do {
+            let response = try await apiClient.refreshAdminMenus()
+            for profile in response.profiles {
+                replacePendingSubmission(profile)
+            }
+            reviewMessage = menuRefreshMessage(response)
+        } catch {
+            reviewMessage = "Menus could not be refreshed."
+        }
+    }
+
     func requestChanges(_ profile: HotdogProfile) async {
         await moderate(
             profile,
@@ -95,5 +109,23 @@ final class AdminReviewStore: ObservableObject {
         } catch {
             reviewMessage = "Submission could not be moderated."
         }
+    }
+
+    private func replacePendingSubmission(_ profile: HotdogProfile) {
+        guard let index = pendingSubmissions.firstIndex(where: { $0.id == profile.id }) else {
+            return
+        }
+        pendingSubmissions[index] = profile
+    }
+
+    private func menuRefreshMessage(_ response: AdminMenuRefreshResponse) -> String {
+        if response.checkedCount == 0 {
+            return "No stale menus to refresh."
+        }
+        let refreshedLabel = response.refreshedCount == 1 ? "menu" : "menus"
+        if response.failedCount == 0 {
+            return "\(response.refreshedCount) \(refreshedLabel) refreshed."
+        }
+        return "\(response.refreshedCount) refreshed, \(response.failedCount) need attention."
     }
 }

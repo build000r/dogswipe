@@ -85,6 +85,24 @@ class HotdogRepository:
     ) -> HotdogProfile | None:
         raise NotImplementedError
 
+    async def list_menu_refresh_candidates(
+        self,
+        *,
+        limit: int,
+        stale_before: datetime,
+    ) -> list[HotdogProfile]:
+        raise NotImplementedError
+
+    async def record_admin_menu_ingestion(
+        self,
+        *,
+        profile_id: str,
+        status: str,
+        excerpt: str | None,
+        checked_at: datetime,
+    ) -> HotdogProfile | None:
+        raise NotImplementedError
+
     async def list_pending_vendor_submissions(self) -> list[HotdogProfile]:
         raise NotImplementedError
 
@@ -272,6 +290,49 @@ class SqlAlchemyHotdogRepository(HotdogRepository):
     ) -> HotdogProfile | None:
         record = await self.session.get(HotdogProfileRecord, profile_id)
         if record is None or record.vendor_owner_user_id != user_id:
+            return None
+        record.menu_status = status
+        record.menu_excerpt = excerpt
+        record.menu_checked_at = checked_at
+        await self.session.flush()
+        return HotdogProfile.model_validate(record)
+
+    async def list_menu_refresh_candidates(
+        self,
+        *,
+        limit: int,
+        stale_before: datetime,
+    ) -> list[HotdogProfile]:
+        statement = (
+            select(HotdogProfileRecord)
+            .where(HotdogProfileRecord.vendor_owner_user_id.is_not(None))
+            .where(HotdogProfileRecord.menu_url.is_not(None))
+            .where(HotdogProfileRecord.availability_status != "rejected")
+            .where(
+                or_(
+                    HotdogProfileRecord.menu_checked_at.is_(None),
+                    HotdogProfileRecord.menu_checked_at <= stale_before,
+                )
+            )
+            .order_by(
+                HotdogProfileRecord.menu_checked_at.is_not(None).asc(),
+                HotdogProfileRecord.menu_checked_at.asc(),
+                HotdogProfileRecord.name.asc(),
+            )
+            .limit(limit)
+        )
+        return self._profiles(await self.session.scalars(statement))
+
+    async def record_admin_menu_ingestion(
+        self,
+        *,
+        profile_id: str,
+        status: str,
+        excerpt: str | None,
+        checked_at: datetime,
+    ) -> HotdogProfile | None:
+        record = await self.session.get(HotdogProfileRecord, profile_id)
+        if record is None or record.menu_url is None or record.availability_status == "rejected":
             return None
         record.menu_status = status
         record.menu_excerpt = excerpt

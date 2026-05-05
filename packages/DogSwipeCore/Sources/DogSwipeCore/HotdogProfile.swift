@@ -276,6 +276,47 @@ public struct AdminModerationResponse: Codable, Equatable, Sendable {
     }
 }
 
+public struct AdminMenuRefreshRequest: Codable, Equatable, Sendable {
+    public let limit: Int
+    public let maxAgeHours: Double
+
+    public init(limit: Int = 20, maxAgeHours: Double = 24) {
+        self.limit = limit
+        self.maxAgeHours = maxAgeHours
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case limit
+        case maxAgeHours = "max_age_hours"
+    }
+}
+
+public struct AdminMenuRefreshResponse: Codable, Equatable, Sendable {
+    public let checkedCount: Int
+    public let refreshedCount: Int
+    public let failedCount: Int
+    public let profiles: [HotdogProfile]
+
+    public init(
+        checkedCount: Int,
+        refreshedCount: Int,
+        failedCount: Int,
+        profiles: [HotdogProfile]
+    ) {
+        self.checkedCount = checkedCount
+        self.refreshedCount = refreshedCount
+        self.failedCount = failedCount
+        self.profiles = profiles
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case checkedCount = "checked_count"
+        case refreshedCount = "refreshed_count"
+        case failedCount = "failed_count"
+        case profiles
+    }
+}
+
 public extension HotdogProfile {
     static let samples: [HotdogProfile] = [
         HotdogProfile(

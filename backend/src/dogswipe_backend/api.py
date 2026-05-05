@@ -10,6 +10,8 @@ from .repository import HotdogRepository, SqlAlchemyHotdogRepository
 from .schemas import (
     AdminApprovalRequest,
     AdminApprovalResponse,
+    AdminMenuRefreshRequest,
+    AdminMenuRefreshResponse,
     AdminModerationRequest,
     AdminModerationResponse,
     AdminReviewQueueResponse,
@@ -152,6 +154,15 @@ def build_api_router() -> APIRouter:
     ) -> AdminReviewQueueResponse:
         del admin_user_id
         return await service.admin_review_queue()
+
+    @v1.post("/admin/vendor/menus/refresh", response_model=AdminMenuRefreshResponse)
+    async def refresh_vendor_menus(
+        request: AdminMenuRefreshRequest,
+        service: DogSwipeService = Depends(get_service),
+        admin_user_id: str = Depends(get_current_admin_user_id),
+    ) -> AdminMenuRefreshResponse:
+        del admin_user_id
+        return await service.refresh_stale_menus(request=request)
 
     @v1.post(
         "/admin/vendor/submissions/{profile_id}/approve",

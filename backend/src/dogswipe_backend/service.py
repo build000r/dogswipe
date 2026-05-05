@@ -1,15 +1,17 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from math import asin, cos, radians, sin, sqrt
 
 from fastapi import HTTPException, status
 
-from .menu import HTTPMenuIngestor, MenuIngestor
+from .menu import HTTPMenuIngestor, MenuIngestionResult, MenuIngestor
 from .repository import HotdogRepository
 from .schemas import (
     AdminApprovalRequest,
     AdminApprovalResponse,
+    AdminMenuRefreshRequest,
+    AdminMenuRefreshResponse,
     AdminModerationRequest,
     AdminModerationResponse,
     AdminReviewQueueResponse,
@@ -160,6 +162,41 @@ class DogSwipeService:
                 detail="Vendor submission not found",
             )
         return MenuIngestionResponse(profile=updated)
+
+    async def refresh_stale_menus(
+        self,
+        *,
+        request: AdminMenuRefreshRequest,
+    ) -> AdminMenuRefreshResponse:
+        checked_at = datetime.now(UTC)
+        stale_before = checked_at - timedelta(hours=request.max_age_hours)
+        candidates = await self.repository.list_menu_refresh_candidates(
+            limit=request.limit,
+            stale_before=stale_before,
+        )
+        updated_profiles: list[HotdogProfile] = []
+        for profile in candidates:
+            if profile.menu_url is None:
+                result = MenuIngestionResult(status="missing_url")
+            else:
+                result = await self.menu_ingestor.ingest(profile.menu_url)
+            updated = await self.repository.record_admin_menu_ingestion(
+                profile_id=profile.id,
+                status=result.status,
+                excerpt=result.excerpt,
+                checked_at=checked_at,
+            )
+            if updated is not None:
+                updated_profiles.append(updated)
+        refreshed_count = sum(
+            1 for profile in updated_profiles if profile.menu_status == "ok"
+        )
+        return AdminMenuRefreshResponse(
+            checked_count=len(updated_profiles),
+            refreshed_count=refreshed_count,
+            failed_count=len(updated_profiles) - refreshed_count,
+            profiles=updated_profiles,
+        )
 
     async def admin_review_queue(self) -> AdminReviewQueueResponse:
         return AdminReviewQueueResponse(

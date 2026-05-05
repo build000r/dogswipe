@@ -8,6 +8,7 @@ from dogswipe_backend.menu import MenuIngestionResult
 from dogswipe_backend.repository import HotdogRepository
 from dogswipe_backend.schemas import (
     AdminApprovalRequest,
+    AdminMenuRefreshRequest,
     AdminModerationRequest,
     CravingPreferences,
     HotdogProfile,
@@ -28,6 +29,7 @@ def _profile(
     latitude: float | None = None,
     longitude: float | None = None,
     address_text: str | None = None,
+    menu_url: str | None = None,
     crave_score: float = 0.8,
 ) -> HotdogProfile:
     return HotdogProfile(
@@ -41,19 +43,22 @@ def _profile(
         longitude=longitude,
         vendor_name="Test Cart",
         address_text=address_text,
+        menu_url=menu_url,
         crave_score=crave_score,
         availability_status="available",
     )
 
 
 class FakeMenuIngestor:
-    def __init__(self, result: MenuIngestionResult) -> None:
-        self.result = result
+    def __init__(self, result: MenuIngestionResult | list[MenuIngestionResult]) -> None:
+        self.results = result if isinstance(result, list) else [result]
         self.urls: list[str] = []
 
     async def ingest(self, url: str) -> MenuIngestionResult:
         self.urls.append(url)
-        return self.result
+        if len(self.results) == 1:
+            return self.results[0]
+        return self.results.pop(0)
 
 
 class FakeRepository(HotdogRepository):
@@ -66,6 +71,8 @@ class FakeRepository(HotdogRepository):
         self.swipes: list[tuple[str, str, SwipeDecision]] = []
         self.preferences_by_user: dict[str, CravingPreferences] = {}
         self.submissions_by_user: dict[str, list[HotdogProfile]] = {}
+        self.menu_refresh_candidates: list[HotdogProfile] = []
+        self.menu_refreshes: list[tuple[str, str, str | None]] = []
 
     async def list_available_profiles(
         self,
@@ -210,6 +217,38 @@ class FakeRepository(HotdogRepository):
                 }
             )
             self.submissions_by_user[user_id][index] = updated
+            return updated
+        return None
+
+    async def list_menu_refresh_candidates(
+        self,
+        *,
+        limit: int,
+        stale_before: datetime,
+    ) -> list[HotdogProfile]:
+        del stale_before
+        return self.menu_refresh_candidates[:limit]
+
+    async def record_admin_menu_ingestion(
+        self,
+        *,
+        profile_id: str,
+        status: str,
+        excerpt: str | None,
+        checked_at: datetime,
+    ) -> HotdogProfile | None:
+        self.menu_refreshes.append((profile_id, status, excerpt))
+        for index, profile in enumerate(self.menu_refresh_candidates):
+            if profile.id != profile_id:
+                continue
+            updated = profile.model_copy(
+                update={
+                    "menu_status": status,
+                    "menu_excerpt": excerpt,
+                    "menu_checked_at": checked_at,
+                }
+            )
+            self.menu_refresh_candidates[index] = updated
             return updated
         return None
 
@@ -511,6 +550,47 @@ async def test_menu_ingestion_records_missing_menu_url_without_fetch() -> None:
     assert response.profile.menu_status == "missing_url"
     assert response.profile.menu_excerpt is None
     assert response.profile.menu_checked_at is not None
+
+
+@pytest.mark.asyncio
+async def test_admin_refreshes_stale_menu_snapshots() -> None:
+    repository = FakeRepository()
+    repository.menu_refresh_candidates = [
+        _profile(
+            "stale-menu",
+            name="Stale Menu",
+            menu_url="https://stale.example.com/menu",
+        ),
+        _profile(
+            "broken-menu",
+            name="Broken Menu",
+            menu_url="https://broken.example.com/menu",
+        ),
+    ]
+    ingestor = FakeMenuIngestor(
+        [
+            MenuIngestionResult(status="ok", excerpt="Fresh menu text."),
+            MenuIngestionResult(status="fetch_failed"),
+        ]
+    )
+    service = DogSwipeService(repository, menu_ingestor=ingestor)
+
+    response = await service.refresh_stale_menus(
+        request=AdminMenuRefreshRequest(limit=2, max_age_hours=12)
+    )
+
+    assert ingestor.urls == [
+        "https://stale.example.com/menu",
+        "https://broken.example.com/menu",
+    ]
+    assert repository.menu_refreshes == [
+        ("stale-menu", "ok", "Fresh menu text."),
+        ("broken-menu", "fetch_failed", None),
+    ]
+    assert response.checked_count == 2
+    assert response.refreshed_count == 1
+    assert response.failed_count == 1
+    assert [profile.menu_status for profile in response.profiles] == ["ok", "fetch_failed"]
 
 
 @pytest.mark.asyncio

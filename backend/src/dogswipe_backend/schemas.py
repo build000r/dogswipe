@@ -130,3 +130,17 @@ class AdminModerationRequest(BaseModel):
 
 class AdminModerationResponse(BaseModel):
     profile: HotdogProfile
+
+
+class AdminMenuRefreshRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    limit: int = Field(default=20, ge=1, le=50)
+    max_age_hours: float = Field(default=24, ge=0, le=168)
+
+
+class AdminMenuRefreshResponse(BaseModel):
+    checked_count: int
+    refreshed_count: int
+    failed_count: int
+    profiles: list[HotdogProfile]

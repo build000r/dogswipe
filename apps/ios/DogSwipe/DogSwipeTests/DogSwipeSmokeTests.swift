@@ -272,32 +272,11 @@ final class DogSwipeSmokeTests: XCTestCase {
     @MainActor
     func testVendorSubmissionStoreRefreshesMenuSnapshot() async throws {
         let http = MockHTTPClient()
-        let pending = HotdogProfile(
-            id: "pending-hotdog",
-            name: "Boardwalk Snap",
-            style: "Classic cart dog",
-            priceDollars: 6.25,
-            signatureNotes: "Mustard, relish, and onion.",
-            distanceMiles: 1.8,
-            vendorName: "Boardwalk Dogs",
-            menuURL: URL(string: "https://boardwalk.example.com/menu"),
-            craveScore: 0.5,
-            availabilityStatus: .pendingReview
-        )
-        let refreshed = HotdogProfile(
-            id: pending.id,
-            name: pending.name,
-            style: pending.style,
-            priceDollars: pending.priceDollars,
-            signatureNotes: pending.signatureNotes,
-            distanceMiles: pending.distanceMiles,
-            vendorName: pending.vendorName,
-            menuURL: pending.menuURL,
+        let pending = makeMenuSnapshotProfile()
+        let refreshed = makeMenuSnapshotProfile(
             menuStatus: "ok",
             menuExcerpt: "Boardwalk Snap - mustard, relish, and onion.",
-            menuCheckedAt: "2026-05-05T15:45:00Z",
-            craveScore: pending.craveScore,
-            availabilityStatus: pending.availabilityStatus
+            menuCheckedAt: "2026-05-05T15:45:00Z"
         )
         http.responses = [
             try JSONEncoder().encode(VendorSubmissionListResponse(submissions: [pending])),
@@ -372,6 +351,51 @@ final class DogSwipeSmokeTests: XCTestCase {
         ])
         let body = try jsonBody(http.requests.last!)
         XCTAssertEqual(body["crave_score"] as? Double, 0.72)
+    }
+
+    @MainActor
+    func testAdminReviewStoreRefreshesStaleMenus() async throws {
+        let http = MockHTTPClient()
+        let pending = makeMenuSnapshotProfile()
+        let refreshed = makeMenuSnapshotProfile(
+            menuStatus: "ok",
+            menuExcerpt: "Boardwalk Snap - mustard, relish, and onion.",
+            menuCheckedAt: "2026-05-05T16:10:00Z"
+        )
+        http.responses = [
+            try JSONEncoder().encode(AdminReviewQueueResponse(submissions: [pending])),
+            try JSONEncoder().encode(
+                AdminMenuRefreshResponse(
+                    checkedCount: 1,
+                    refreshedCount: 1,
+                    failedCount: 0,
+                    profiles: [refreshed]
+                )
+            )
+        ]
+        let apiClient = DogSwipeAPIClient(
+            baseURL: URL(string: "http://localhost:8000")!,
+            httpClient: http
+        )
+        let store = AdminReviewStore(apiClient: apiClient)
+
+        await store.load()
+        await store.refreshMenus()
+
+        XCTAssertEqual(store.pendingSubmissions.first?.menuStatus, "ok")
+        XCTAssertEqual(
+            store.pendingSubmissions.first?.menuExcerpt,
+            "Boardwalk Snap - mustard, relish, and onion."
+        )
+        XCTAssertEqual(store.reviewMessage, "1 menu refreshed.")
+        XCTAssertEqual(http.requests.map { $0.url?.path }, [
+            "/v1/admin/vendor/submissions",
+            "/v1/admin/vendor/menus/refresh"
+        ])
+        XCTAssertEqual(http.requests.last?.httpMethod, "POST")
+        let body = try jsonBody(http.requests.last!)
+        XCTAssertEqual(body["limit"] as? Int, 20)
+        XCTAssertEqual(body["max_age_hours"] as? Double, 24)
     }
 
     @MainActor
@@ -579,6 +603,28 @@ final class DogSwipeSmokeTests: XCTestCase {
         } catch {
             XCTFail("Expected missing publishable key error, got \(error).")
         }
+    }
+
+    private func makeMenuSnapshotProfile(
+        menuStatus: String? = nil,
+        menuExcerpt: String? = nil,
+        menuCheckedAt: String? = nil
+    ) -> HotdogProfile {
+        HotdogProfile(
+            id: "pending-hotdog",
+            name: "Boardwalk Snap",
+            style: "Classic cart dog",
+            priceDollars: 6.25,
+            signatureNotes: "Mustard, relish, and onion.",
+            distanceMiles: 1.8,
+            vendorName: "Boardwalk Dogs",
+            menuURL: URL(string: "https://boardwalk.example.com/menu"),
+            menuStatus: menuStatus,
+            menuExcerpt: menuExcerpt,
+            menuCheckedAt: menuCheckedAt,
+            craveScore: 0.5,
+            availabilityStatus: .pendingReview
+        )
     }
 
     private func makeAuthClient(http: MockHTTPClient) -> SPAPSAuthClient {

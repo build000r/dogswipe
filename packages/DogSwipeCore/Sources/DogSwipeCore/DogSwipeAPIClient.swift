@@ -155,6 +155,18 @@ public struct DogSwipeAPIClient: Sendable {
     }
 
     @discardableResult
+    public func refreshAdminMenus(
+        limit: Int = 20,
+        maxAgeHours: Double = 24
+    ) async throws -> AdminMenuRefreshResponse {
+        try await send(
+            path: "/v1/admin/vendor/menus/refresh",
+            method: "POST",
+            body: AdminMenuRefreshRequest(limit: limit, maxAgeHours: maxAgeHours)
+        )
+    }
+
+    @discardableResult
     public func approveVendorSubmission(
         profileID: String,
         craveScore: Double

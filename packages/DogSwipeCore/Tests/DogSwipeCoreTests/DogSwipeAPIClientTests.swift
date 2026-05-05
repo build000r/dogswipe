@@ -385,6 +385,47 @@ final class DogSwipeAPIClientTests: XCTestCase {
         XCTAssertEqual(http.requests.first?.httpMethod, "GET")
     }
 
+    func testRefreshAdminMenusUsesBackendContract() async throws {
+        let http = MockHTTPClient()
+        http.nextData = try JSONEncoder().encode(
+            AdminMenuRefreshResponse(
+                checkedCount: 1,
+                refreshedCount: 1,
+                failedCount: 0,
+                profiles: [
+                    HotdogProfile(
+                        id: "pending-hotdog",
+                        name: "Pending Snap",
+                        style: "Classic cart dog",
+                        priceDollars: 6.25,
+                        signatureNotes: "Mustard, relish, and onion.",
+                        distanceMiles: 1.8,
+                        vendorName: "Boardwalk Dogs",
+                        menuURL: URL(string: "https://boardwalk.example.com/menu"),
+                        menuStatus: "ok",
+                        menuExcerpt: "Boardwalk Snap - mustard, relish, and onion.",
+                        menuCheckedAt: "2026-05-05T16:10:00Z",
+                        craveScore: 0.5,
+                        availabilityStatus: .pendingReview
+                    )
+                ]
+            )
+        )
+        let client = DogSwipeAPIClient(baseURL: URL(string: "http://localhost:8000")!, httpClient: http)
+
+        let response = try await client.refreshAdminMenus(limit: 5, maxAgeHours: 6)
+
+        XCTAssertEqual(response.checkedCount, 1)
+        XCTAssertEqual(response.refreshedCount, 1)
+        XCTAssertEqual(response.failedCount, 0)
+        XCTAssertEqual(response.profiles.first?.menuStatus, "ok")
+        XCTAssertEqual(http.requests.first?.url?.path, "/v1/admin/vendor/menus/refresh")
+        XCTAssertEqual(http.requests.first?.httpMethod, "POST")
+        let body = String(data: http.requests.first!.httpBody!, encoding: .utf8)!
+        XCTAssertTrue(body.contains("\"limit\":5"))
+        XCTAssertTrue(body.contains("\"max_age_hours\":6"))
+    }
+
     func testApproveVendorSubmissionEncodesBackendContract() async throws {
         let http = MockHTTPClient()
         http.nextData = try encodedReviewResponse(

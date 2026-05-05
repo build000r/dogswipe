@@ -40,14 +40,41 @@ struct AdminReviewView: View {
     }
 
     private var header: some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(alignment: .firstTextBaseline, spacing: .dsSpace3) {
+                headerText
+                Spacer(minLength: .dsSpace3)
+                refreshMenusButton
+            }
+
+            VStack(alignment: .leading, spacing: .dsSpace3) {
+                headerText
+                refreshMenusButton
+            }
+        }
+    }
+
+    private var headerText: some View {
         VStack(alignment: .leading, spacing: .dsSpace2) {
             Text("Pending vendor hotdogs")
                 .font(.title2.weight(.semibold))
                 .foregroundStyle(Color.dsInk)
-            Text("Approve, reject, or send submissions back with review notes.")
+            Text("Approve, reject, refresh stale menus, or send submissions back with review notes.")
                 .font(.subheadline)
                 .foregroundStyle(Color.dsMuted)
         }
+    }
+
+    private var refreshMenusButton: some View {
+        Button {
+            Task {
+                await store.refreshMenus()
+            }
+        } label: {
+            Label("Refresh menus", systemImage: "arrow.triangle.2.circlepath")
+        }
+        .buttonStyle(.bordered)
+        .disabled(store.isReviewing)
     }
 
     private var queue: some View {

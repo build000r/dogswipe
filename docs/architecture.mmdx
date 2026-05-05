@@ -128,6 +128,12 @@ sequenceDiagram
   Menu-->>API: Menu text or fetch error
   API->>DB: Store menu_status, menu_excerpt, and menu_checked_at
   API-->>App: Menu ingestion response
+  App->>API: Admin refresh stale vendor menus
+  API->>DB: Load stale vendor-owned menu candidates
+  API->>Menu: Fetch bounded HTML/text snapshots
+  Menu-->>API: Menu text or fetch errors
+  API->>DB: Store refreshed menu statuses and timestamps
+  API-->>App: Checked/refreshed/failed counts and updated profiles
   App->>API: Admin approve / reject / request edits
   API->>DB: Store review status, note, and timestamps
   API-->>App: Moderated hotdog profile

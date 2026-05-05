@@ -2,7 +2,18 @@ from __future__ import annotations
 
 import pytest
 
+from dogswipe_backend import service as service_module
+from dogswipe_backend.menu import MenuIngestionResult
 from dogswipe_backend.settings import get_settings
+
+
+class FakeHTTPMenuIngestor:
+    def __init__(self) -> None:
+        self.urls: list[str] = []
+
+    async def ingest(self, url: str) -> MenuIngestionResult:
+        self.urls.append(url)
+        return MenuIngestionResult(status="ok", excerpt="Admin refreshed menu.")
 
 
 @pytest.mark.asyncio
@@ -422,6 +433,49 @@ async def test_admin_can_approve_vendor_submission(
         json={"crave_score": 0.9},
     )
     assert repeat_approval.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_admin_can_refresh_stale_vendor_menus(
+    async_client,
+    clear_settings,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    del clear_settings
+    ingestor = FakeHTTPMenuIngestor()
+    monkeypatch.setenv("DOGSWIPE_ADMIN_USER_IDS", "admin-user")
+    monkeypatch.setattr(service_module, "HTTPMenuIngestor", lambda: ingestor)
+    get_settings.cache_clear()
+    submitted = await async_client.post(
+        "/v1/vendor/submissions",
+        headers={"X-DogSwipe-User-ID": "vendor-menu-refresh"},
+        json={
+            "name": "Refresh Snap",
+            "style": "Classic cart dog",
+            "price_dollars": 6.25,
+            "signature_notes": "Mustard, relish, and onion.",
+            "distance_miles": 1.8,
+            "vendor_name": "Refresh Cart",
+            "menu_url": "https://refresh.example.com/menu",
+        },
+    )
+    profile_id = submitted.json()["profile"]["id"]
+
+    response = await async_client.post(
+        "/v1/admin/vendor/menus/refresh",
+        headers={"X-DogSwipe-User-ID": "admin-user"},
+        json={"limit": 5, "max_age_hours": 0},
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert ingestor.urls == ["https://refresh.example.com/menu"]
+    assert payload["checked_count"] == 1
+    assert payload["refreshed_count"] == 1
+    assert payload["failed_count"] == 0
+    assert [profile["id"] for profile in payload["profiles"]] == [profile_id]
+    assert payload["profiles"][0]["menu_status"] == "ok"
+    assert payload["profiles"][0]["menu_excerpt"] == "Admin refreshed menu."
 
 
 @pytest.mark.asyncio

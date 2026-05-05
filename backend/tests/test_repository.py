@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 import pytest
 
@@ -198,6 +198,111 @@ async def test_repository_records_menu_ingestion_for_owner(database) -> None:
         assert await repository.record_menu_ingestion(
             user_id="other-vendor",
             profile_id=pending.id,
+            status="ok",
+            excerpt=None,
+            checked_at=checked_at,
+        ) is None
+
+
+@pytest.mark.asyncio
+async def test_repository_lists_stale_menu_refresh_candidates(database) -> None:
+    async with database.session_factory() as session:
+        repository = SqlAlchemyHotdogRepository(session)
+        stale = await repository.submit_vendor_profile(
+            user_id="vendor-stale-menu",
+            submission=VendorSubmissionRequest(
+                name="Stale Menu",
+                style="Classic cart dog",
+                price_dollars=6.25,
+                signature_notes="Mustard, relish, and onion.",
+                distance_miles=1.8,
+                vendor_name="Stale Cart",
+                menu_url="https://stale.example.com/menu",
+            ),
+        )
+        fresh = await repository.submit_vendor_profile(
+            user_id="vendor-fresh-menu",
+            submission=VendorSubmissionRequest(
+                name="Fresh Menu",
+                style="Classic cart dog",
+                price_dollars=6.25,
+                signature_notes="Mustard, relish, and onion.",
+                distance_miles=1.8,
+                vendor_name="Fresh Cart",
+                menu_url="https://fresh.example.com/menu",
+            ),
+        )
+        rejected = await repository.submit_vendor_profile(
+            user_id="vendor-rejected-menu",
+            submission=VendorSubmissionRequest(
+                name="Rejected Menu",
+                style="Classic cart dog",
+                price_dollars=6.25,
+                signature_notes="Mustard, relish, and onion.",
+                distance_miles=1.8,
+                vendor_name="Rejected Cart",
+                menu_url="https://rejected.example.com/menu",
+            ),
+        )
+        now = datetime.now(UTC)
+        await repository.record_menu_ingestion(
+            user_id="vendor-fresh-menu",
+            profile_id=fresh.id,
+            status="ok",
+            excerpt="Fresh.",
+            checked_at=now,
+        )
+        await repository.record_menu_ingestion(
+            user_id="vendor-stale-menu",
+            profile_id=stale.id,
+            status="ok",
+            excerpt="Old.",
+            checked_at=now - timedelta(hours=48),
+        )
+        await repository.reject_vendor_submission(
+            profile_id=rejected.id,
+            review_note="Not a current hotdog listing.",
+        )
+
+        candidates = await repository.list_menu_refresh_candidates(
+            limit=20,
+            stale_before=now - timedelta(hours=24),
+        )
+
+        assert [candidate.id for candidate in candidates] == [stale.id]
+
+
+@pytest.mark.asyncio
+async def test_repository_records_admin_menu_ingestion(database) -> None:
+    async with database.session_factory() as session:
+        repository = SqlAlchemyHotdogRepository(session)
+        pending = await repository.submit_vendor_profile(
+            user_id="vendor-admin-menu",
+            submission=VendorSubmissionRequest(
+                name="Admin Menu",
+                style="Classic cart dog",
+                price_dollars=6.25,
+                signature_notes="Mustard, relish, and onion.",
+                distance_miles=1.8,
+                vendor_name="Admin Cart",
+                menu_url="https://admin.example.com/menu",
+            ),
+        )
+        checked_at = datetime.now(UTC)
+
+        updated = await repository.record_admin_menu_ingestion(
+            profile_id=pending.id,
+            status="ok",
+            excerpt="Admin refreshed menu.",
+            checked_at=checked_at,
+        )
+
+        assert updated is not None
+        assert updated.menu_status == "ok"
+        assert updated.menu_excerpt == "Admin refreshed menu."
+        assert updated.menu_checked_at == checked_at
+        assert await repository.record_admin_menu_ingestion(
+            profile_id="missing",
             status="ok",
             excerpt=None,
             checked_at=checked_at,
