@@ -34,8 +34,11 @@ final class DogSwipeAPIClientTests: XCTestCase {
               "distance_miles": 1.2,
               "vendor_name": "Franklin Cart",
               "image_url": null,
+              "menu_url": "https://franklin.example.com/menu",
+              "media_alt_text": "Coney hotdog with chili and onion",
               "crave_score": 0.91,
-              "availability_status": "available"
+              "availability_status": "available",
+              "last_verified_at": "2026-05-05T13:30:00Z"
             }
           ]
         }
@@ -47,6 +50,8 @@ final class DogSwipeAPIClientTests: XCTestCase {
         XCTAssertEqual(profiles.map(\.id), ["hotdog-coney"])
         XCTAssertEqual(profiles.first?.priceLabel, "$6.50")
         XCTAssertEqual(profiles.first?.vendorName, "Franklin Cart")
+        XCTAssertEqual(profiles.first?.menuURL?.absoluteString, "https://franklin.example.com/menu")
+        XCTAssertEqual(profiles.first?.mediaAltText, "Coney hotdog with chili and onion")
         XCTAssertEqual(http.requests.first?.url?.path, "/v1/discovery")
         XCTAssertEqual(http.requests.first?.url?.query, "limit=10")
     }
@@ -122,6 +127,86 @@ final class DogSwipeAPIClientTests: XCTestCase {
         XCTAssertTrue(body.contains("\"max_distance_miles\":12"))
         XCTAssertTrue(body.contains("\"spicy_friendly\":true"))
         XCTAssertTrue(body.contains("\"classic_only\":false"))
+    }
+
+    func testVendorSubmissionsDecodeBackendContract() async throws {
+        let http = MockHTTPClient()
+        http.nextData = """
+        {
+          "submissions": [
+            {
+              "id": "submitted-hotdog",
+              "name": "Boardwalk Snap",
+              "style": "Classic cart dog",
+              "price_dollars": 6.25,
+              "signature_notes": "Mustard, relish, and onion.",
+              "distance_miles": 1.8,
+              "vendor_name": "Boardwalk Dogs",
+              "image_url": null,
+              "menu_url": "https://boardwalk.example.com/menu",
+              "media_alt_text": null,
+              "crave_score": 0.5,
+              "availability_status": "pending_review",
+              "last_verified_at": null
+            }
+          ]
+        }
+        """.data(using: .utf8)!
+        let client = DogSwipeAPIClient(baseURL: URL(string: "http://localhost:8000")!, httpClient: http)
+
+        let submissions = try await client.vendorSubmissions()
+
+        XCTAssertEqual(submissions.map(\.name), ["Boardwalk Snap"])
+        XCTAssertEqual(submissions.first?.availabilityStatus, .pendingReview)
+        XCTAssertEqual(http.requests.first?.url?.path, "/v1/vendor/submissions")
+        XCTAssertEqual(http.requests.first?.httpMethod, "GET")
+    }
+
+    func testSubmitVendorProfileEncodesBackendContract() async throws {
+        let http = MockHTTPClient()
+        http.nextData = """
+        {
+          "profile": {
+            "id": "submitted-hotdog",
+            "name": "Boardwalk Snap",
+            "style": "Classic cart dog",
+            "price_dollars": 6.25,
+            "signature_notes": "Mustard, relish, and onion.",
+            "distance_miles": 1.8,
+            "vendor_name": "Boardwalk Dogs",
+            "image_url": "https://cdn.example.com/boardwalk.jpg",
+            "menu_url": "https://boardwalk.example.com/menu",
+            "media_alt_text": "Classic hotdog on a paper tray",
+            "crave_score": 0.5,
+            "availability_status": "pending_review",
+            "last_verified_at": null
+          }
+        }
+        """.data(using: .utf8)!
+        let client = DogSwipeAPIClient(baseURL: URL(string: "http://localhost:8000")!, httpClient: http)
+
+        let profile = try await client.submitVendorProfile(
+            VendorSubmissionRequest(
+                name: "Boardwalk Snap",
+                style: "Classic cart dog",
+                priceDollars: 6.25,
+                signatureNotes: "Mustard, relish, and onion.",
+                distanceMiles: 1.8,
+                vendorName: "Boardwalk Dogs",
+                imageURL: URL(string: "https://cdn.example.com/boardwalk.jpg"),
+                menuURL: URL(string: "https://boardwalk.example.com/menu"),
+                mediaAltText: "Classic hotdog on a paper tray"
+            )
+        )
+
+        XCTAssertEqual(profile.availabilityStatus, .pendingReview)
+        XCTAssertEqual(http.requests.first?.url?.path, "/v1/vendor/submissions")
+        XCTAssertEqual(http.requests.first?.httpMethod, "POST")
+        let body = String(data: http.requests.first!.httpBody!, encoding: .utf8)!
+        XCTAssertFalse(body.contains("user_id"))
+        XCTAssertTrue(body.contains("\"name\":\"Boardwalk Snap\""))
+        XCTAssertTrue(body.contains("\"price_dollars\":6.25"))
+        XCTAssertTrue(body.contains("\"menu_url\":\"https:\\/\\/boardwalk.example.com\\/menu\""))
     }
 
     func testAddsBearerTokenWhenProviderReturnsToken() async throws {

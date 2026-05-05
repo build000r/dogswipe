@@ -21,10 +21,11 @@ Status key: `done`, `active`, `ready`, `blocked`.
 | WG-015 iOS auth session bootstrap | done | WG-011, WG-014 | `apps/ios/DogSwipe/**`, `docs/**` | The app stores user bearer JWTs in Keychain and injects them into discovery, swipe, match, and preference API clients without exposing SPAPS API keys |
 | WG-016 Deploy contract | done | WG-006, WG-010 | `deploy/**`, `.github/**`, `Makefile`, `docs/**` | Production Compose, env template, pre/post verification scripts, reverse-proxy template, and CI preflight exist; live rollout remains overlay-gated |
 | WG-017 Native SPAPS magic-link sign-in | done | WG-015 | `apps/ios/DogSwipe/**`, `docs/**` | The Profile tab can request and verify SPAPS magic links with a publishable key, store access/refresh JWTs in Keychain, refresh sessions, and keep manual bearer entry as an advanced fallback |
+| WG-018 Vendor listing submissions | done | WG-014, WG-017 | `backend/**`, `packages/DogSwipeCore/**`, `apps/ios/DogSwipe/**`, `docs/**` | Authenticated vendors can submit hotdog listings with menu/media metadata, list only their own submissions, and keep drafts out of discovery as `pending_review` |
 
 ## Ready Frontier
 
-The next ready work is to create a concrete skillbox deploy overlay or continue deeper product slices: live menu media, vendor workflows, location ranking, and release assets.
+The next ready work is to create a concrete skillbox deploy overlay or continue deeper product slices: admin approval tools, live menu ingestion, location ranking, and release assets.
 
 ## Risks
 

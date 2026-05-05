@@ -7,6 +7,9 @@ from .schemas import (
     MatchResponse,
     SwipeRequest,
     SwipeResponse,
+    VendorSubmissionListResponse,
+    VendorSubmissionRequest,
+    VendorSubmissionResponse,
 )
 
 
@@ -43,3 +46,20 @@ class DogSwipeService:
         preferences: CravingPreferences,
     ) -> CravingPreferences:
         return await self.repository.upsert_preferences(user_id=user_id, preferences=preferences)
+
+    async def submit_vendor_profile(
+        self,
+        *,
+        user_id: str,
+        submission: VendorSubmissionRequest,
+    ) -> VendorSubmissionResponse:
+        profile = await self.repository.submit_vendor_profile(
+            user_id=user_id,
+            submission=submission,
+        )
+        return VendorSubmissionResponse(profile=profile)
+
+    async def vendor_submissions(self, *, user_id: str) -> VendorSubmissionListResponse:
+        return VendorSubmissionListResponse(
+            submissions=await self.repository.list_vendor_submissions(user_id=user_id)
+        )

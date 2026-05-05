@@ -6,7 +6,7 @@ from sqlalchemy import Select, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .models import HotdogProfileRecord, SwipeEventRecord, UserPreferenceRecord
-from .schemas import CravingPreferences, HotdogProfile, SwipeDecision
+from .schemas import CravingPreferences, HotdogProfile, SwipeDecision, VendorSubmissionRequest
 
 
 class HotdogRepository:
@@ -34,6 +34,17 @@ class HotdogRepository:
         user_id: str,
         preferences: CravingPreferences,
     ) -> CravingPreferences:
+        raise NotImplementedError
+
+    async def submit_vendor_profile(
+        self,
+        *,
+        user_id: str,
+        submission: VendorSubmissionRequest,
+    ) -> HotdogProfile:
+        raise NotImplementedError
+
+    async def list_vendor_submissions(self, *, user_id: str) -> list[HotdogProfile]:
         raise NotImplementedError
 
 
@@ -108,6 +119,45 @@ class SqlAlchemyHotdogRepository(HotdogRepository):
         await self.session.flush()
         return CravingPreferences.model_validate(record)
 
+    async def submit_vendor_profile(
+        self,
+        *,
+        user_id: str,
+        submission: VendorSubmissionRequest,
+    ) -> HotdogProfile:
+        record = HotdogProfileRecord(
+            name=submission.name,
+            style=submission.style,
+            price_dollars=submission.price_dollars,
+            signature_notes=submission.signature_notes,
+            distance_miles=submission.distance_miles,
+            vendor_name=submission.vendor_name,
+            image_url=self._blank_to_none(submission.image_url),
+            menu_url=self._blank_to_none(submission.menu_url),
+            media_alt_text=self._blank_to_none(submission.media_alt_text),
+            vendor_owner_user_id=user_id,
+            crave_score=0.5,
+            availability_status="pending_review",
+        )
+        self.session.add(record)
+        await self.session.flush()
+        return HotdogProfile.model_validate(record)
+
+    async def list_vendor_submissions(self, *, user_id: str) -> list[HotdogProfile]:
+        statement = (
+            select(HotdogProfileRecord)
+            .where(HotdogProfileRecord.vendor_owner_user_id == user_id)
+            .order_by(HotdogProfileRecord.created_at.desc(), HotdogProfileRecord.name.asc())
+        )
+        return self._profiles(await self.session.scalars(statement))
+
     @staticmethod
     def _profiles(records: Iterable[HotdogProfileRecord]) -> list[HotdogProfile]:
         return [HotdogProfile.model_validate(record) for record in records]
+
+    @staticmethod
+    def _blank_to_none(value: str | None) -> str | None:
+        if value is None:
+            return None
+        stripped = value.strip()
+        return stripped or None

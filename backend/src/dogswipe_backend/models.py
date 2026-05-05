@@ -11,6 +11,7 @@ from .db import Base
 
 class HotdogProfileRecord(Base):
     __tablename__ = "hotdog_profiles"
+    __table_args__ = (Index("ix_hotdog_profiles_vendor_owner", "vendor_owner_user_id"),)
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
     name: Mapped[str] = mapped_column(String(80), nullable=False)
@@ -20,12 +21,16 @@ class HotdogProfileRecord(Base):
     distance_miles: Mapped[float] = mapped_column(Float, nullable=False)
     vendor_name: Mapped[str] = mapped_column(String(160), nullable=False)
     image_url: Mapped[str | None] = mapped_column(Text)
+    menu_url: Mapped[str | None] = mapped_column(Text)
+    media_alt_text: Mapped[str | None] = mapped_column(String(160))
+    vendor_owner_user_id: Mapped[str | None] = mapped_column(String(128))
     crave_score: Mapped[float] = mapped_column(Float, nullable=False, default=0.5)
     availability_status: Mapped[str] = mapped_column(
         String(32),
         nullable=False,
         default="available",
     )
+    last_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 

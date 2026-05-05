@@ -93,6 +93,23 @@ public struct DogSwipeAPIClient: Sendable {
         try await send(path: "/v1/preferences", method: "PUT", body: preferences)
     }
 
+    public func vendorSubmissions() async throws -> [HotdogProfile] {
+        let response: VendorSubmissionListResponse = try await send(path: "/v1/vendor/submissions")
+        return response.submissions
+    }
+
+    @discardableResult
+    public func submitVendorProfile(
+        _ submission: VendorSubmissionRequest
+    ) async throws -> HotdogProfile {
+        let response: VendorSubmissionResponse = try await send(
+            path: "/v1/vendor/submissions",
+            method: "POST",
+            body: submission
+        )
+        return response.profile
+    }
+
     private func send<Response: Decodable>(
         path: String,
         method: String = "GET",

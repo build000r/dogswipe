@@ -19,6 +19,8 @@ make backend-test
 | `GET` | `/v1/matches` | Return high-crave liked hotdogs for the authenticated/local user |
 | `GET` | `/v1/preferences` | Return user-scoped craving preferences |
 | `PUT` | `/v1/preferences` | Save user-scoped craving preferences |
+| `GET` | `/v1/vendor/submissions` | Return the authenticated/local user's submitted hotdog listings |
+| `POST` | `/v1/vendor/submissions` | Submit a vendor-owned hotdog listing for review |
 
 ## Hotdog Profile Contract
 
@@ -34,8 +36,11 @@ make backend-test
   "distance_miles": 1.2,
   "vendor_name": "Franklin Cart",
   "image_url": null,
+  "menu_url": null,
+  "media_alt_text": null,
   "crave_score": 0.91,
-  "availability_status": "available"
+  "availability_status": "available",
+  "last_verified_at": null
 }
 ```
 
@@ -55,6 +60,26 @@ make backend-test
 
 Client-supplied `user_id` fields are rejected here too.
 
+## Vendor Submission Contract
+
+`POST /v1/vendor/submissions` accepts a hotdog listing draft, derives ownership from the backend auth context, and stores it as `pending_review` so it does not enter discovery until an admin approval slice exists:
+
+```json
+{
+  "name": "Boardwalk Snap",
+  "style": "Classic cart dog",
+  "price_dollars": 6.25,
+  "signature_notes": "Griddled bun, beef frank, mustard, relish, and onion.",
+  "distance_miles": 1.8,
+  "vendor_name": "Boardwalk Dogs",
+  "image_url": "https://cdn.example.com/boardwalk.jpg",
+  "menu_url": "https://boardwalk.example.com/menu",
+  "media_alt_text": "Classic hotdog on a paper tray"
+}
+```
+
+`GET /v1/vendor/submissions` returns only submissions owned by the authenticated/local user. Client-supplied `user_id` fields are rejected.
+
 ## Migrations
 
 Production schema changes are managed by Alembic:
@@ -64,4 +89,4 @@ DATABASE_URL=postgresql+asyncpg://... make migrate
 DATABASE_URL=postgresql+asyncpg://... make migration-current
 ```
 
-Current head is `0003`, which adds user-scoped craving preferences after the hotdog profile pivot.
+Current head is `0004`, which adds vendor-owned hotdog submissions and menu/media metadata after user-scoped craving preferences.

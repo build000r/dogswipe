@@ -178,3 +178,83 @@ async def test_preferences_reject_client_supplied_user_id(async_client) -> None:
     )
 
     assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_vendor_submission_is_pending_and_user_scoped(async_client) -> None:
+    response = await async_client.post(
+        "/v1/vendor/submissions",
+        headers={"X-DogSwipe-User-ID": "vendor-1"},
+        json={
+            "name": "Boardwalk Snap",
+            "style": "Classic cart dog",
+            "price_dollars": 6.25,
+            "signature_notes": "Griddled bun, beef frank, mustard, relish, and onion.",
+            "distance_miles": 1.8,
+            "vendor_name": "Boardwalk Dogs",
+            "image_url": "https://cdn.example.com/boardwalk.jpg",
+            "menu_url": "https://boardwalk.example.com/menu",
+            "media_alt_text": "Classic hotdog on a paper tray",
+        },
+    )
+
+    assert response.status_code == 201
+    profile = response.json()["profile"]
+    assert profile["id"]
+    assert profile["name"] == "Boardwalk Snap"
+    assert profile["availability_status"] == "pending_review"
+    assert profile["crave_score"] == 0.5
+    assert profile["menu_url"] == "https://boardwalk.example.com/menu"
+    assert profile["media_alt_text"] == "Classic hotdog on a paper tray"
+
+    own_submissions = await async_client.get(
+        "/v1/vendor/submissions",
+        headers={"X-DogSwipe-User-ID": "vendor-1"},
+    )
+    assert [item["id"] for item in own_submissions.json()["submissions"]] == [profile["id"]]
+
+    other_submissions = await async_client.get(
+        "/v1/vendor/submissions",
+        headers={"X-DogSwipe-User-ID": "vendor-2"},
+    )
+    assert other_submissions.json()["submissions"] == []
+
+
+@pytest.mark.asyncio
+async def test_vendor_submission_does_not_enter_discovery_until_available(async_client) -> None:
+    await async_client.post(
+        "/v1/vendor/submissions",
+        headers={"X-DogSwipe-User-ID": "vendor-3"},
+        json={
+            "name": "Hidden Review Dog",
+            "style": "Test dog",
+            "price_dollars": 5,
+            "signature_notes": "Pending item",
+            "distance_miles": 1,
+            "vendor_name": "Review Cart",
+        },
+    )
+
+    response = await async_client.get("/v1/discovery", params={"limit": 50})
+
+    assert response.status_code == 200
+    assert "Hidden Review Dog" not in [profile["name"] for profile in response.json()["profiles"]]
+
+
+@pytest.mark.asyncio
+async def test_vendor_submission_rejects_client_supplied_user_id(async_client) -> None:
+    response = await async_client.post(
+        "/v1/vendor/submissions",
+        headers={"X-DogSwipe-User-ID": "honest-vendor"},
+        json={
+            "user_id": "forged",
+            "name": "Forged Dog",
+            "style": "Classic",
+            "price_dollars": 5,
+            "signature_notes": "Should fail",
+            "distance_miles": 1,
+            "vendor_name": "Forgery Cart",
+        },
+    )
+
+    assert response.status_code == 422

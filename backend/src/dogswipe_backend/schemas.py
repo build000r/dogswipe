@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from enum import StrEnum
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -22,8 +23,11 @@ class HotdogProfile(BaseModel):
     distance_miles: float = Field(ge=0)
     vendor_name: str
     image_url: str | None = None
+    menu_url: str | None = None
+    media_alt_text: str | None = None
     crave_score: float = Field(ge=0, le=1)
     availability_status: str
+    last_verified_at: datetime | None = None
 
 
 class DiscoveryResponse(BaseModel):
@@ -53,3 +57,25 @@ class CravingPreferences(BaseModel):
     max_distance_miles: float = Field(default=10, ge=1, le=25)
     spicy_friendly: bool = True
     classic_only: bool = False
+
+
+class VendorSubmissionRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: str = Field(min_length=1, max_length=80)
+    style: str = Field(min_length=1, max_length=120)
+    price_dollars: float = Field(ge=0, le=50)
+    signature_notes: str = Field(min_length=1, max_length=120)
+    distance_miles: float = Field(ge=0, le=25)
+    vendor_name: str = Field(min_length=1, max_length=160)
+    image_url: str | None = Field(default=None, max_length=2048)
+    menu_url: str | None = Field(default=None, max_length=2048)
+    media_alt_text: str | None = Field(default=None, max_length=160)
+
+
+class VendorSubmissionResponse(BaseModel):
+    profile: HotdogProfile
+
+
+class VendorSubmissionListResponse(BaseModel):
+    submissions: list[HotdogProfile]

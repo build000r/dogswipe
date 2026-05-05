@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, status
 from spaps_server_quickstart.api.health import HealthRouterFactory
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -13,6 +13,9 @@ from .schemas import (
     MatchResponse,
     SwipeRequest,
     SwipeResponse,
+    VendorSubmissionListResponse,
+    VendorSubmissionRequest,
+    VendorSubmissionResponse,
 )
 from .service import DogSwipeService
 from .settings import get_settings
@@ -76,6 +79,25 @@ def build_api_router() -> APIRouter:
         user_id: str = Depends(get_current_user_id),
     ) -> CravingPreferences:
         return await service.update_preferences(user_id=user_id, preferences=request)
+
+    @v1.get("/vendor/submissions", response_model=VendorSubmissionListResponse)
+    async def vendor_submissions(
+        service: DogSwipeService = Depends(get_service),
+        user_id: str = Depends(get_current_user_id),
+    ) -> VendorSubmissionListResponse:
+        return await service.vendor_submissions(user_id=user_id)
+
+    @v1.post(
+        "/vendor/submissions",
+        response_model=VendorSubmissionResponse,
+        status_code=status.HTTP_201_CREATED,
+    )
+    async def submit_vendor_profile(
+        request: VendorSubmissionRequest,
+        service: DogSwipeService = Depends(get_service),
+        user_id: str = Depends(get_current_user_id),
+    ) -> VendorSubmissionResponse:
+        return await service.submit_vendor_profile(user_id=user_id, submission=request)
 
     router.include_router(v1)
     return router

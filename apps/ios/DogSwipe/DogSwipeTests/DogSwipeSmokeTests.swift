@@ -123,6 +123,42 @@ final class DogSwipeSmokeTests: XCTestCase {
         )
     }
 
+    @MainActor
+    func testVendorSubmissionStoreSubmitsDraftViaAPI() async throws {
+        let http = MockHTTPClient()
+        http.responses = [
+            try encodedVendorSubmissionResponse()
+        ]
+        let apiClient = DogSwipeAPIClient(
+            baseURL: URL(string: "http://localhost:8000")!,
+            httpClient: http
+        )
+        let store = VendorSubmissionStore(apiClient: apiClient)
+        store.name = " Boardwalk Snap "
+        store.style = "Classic cart dog"
+        store.price = "6.25"
+        store.signatureNotes = "Mustard, relish, and onion."
+        store.distance = "1.8"
+        store.vendorName = "Boardwalk Dogs"
+        store.imageURL = "https://cdn.example.com/boardwalk.jpg"
+        store.menuURL = "https://boardwalk.example.com/menu"
+        store.mediaAltText = "Classic hotdog on a paper tray"
+
+        await store.submit()
+
+        XCTAssertEqual(store.submissions.map(\.name), ["Boardwalk Snap"])
+        XCTAssertEqual(store.submissions.first?.availabilityStatus, .pendingReview)
+        XCTAssertEqual(store.message, "Submitted for review.")
+        let request = try XCTUnwrap(http.requests.first)
+        XCTAssertEqual(request.url?.path, "/v1/vendor/submissions")
+        XCTAssertEqual(request.httpMethod, "POST")
+        let body = try jsonBody(request)
+        XCTAssertEqual(body["name"] as? String, "Boardwalk Snap")
+        XCTAssertEqual(body["price_dollars"] as? Double, 6.25)
+        XCTAssertEqual(body["menu_url"] as? String, "https://boardwalk.example.com/menu")
+        XCTAssertNil(body["user_id"])
+    }
+
     func testSPAPSAuthClientRequestsMagicLinkWithPublishableKey() async throws {
         let http = MockHTTPClient()
         let client = makeAuthClient(http: http)
@@ -246,6 +282,27 @@ final class DogSwipeSmokeTests: XCTestCase {
             publishableKey: "spaps_pub_test",
             origin: "https://dogswipe.test",
             httpClient: http
+        )
+    }
+
+    private func encodedVendorSubmissionResponse() throws -> Data {
+        try JSONEncoder().encode(
+            VendorSubmissionResponse(
+                profile: HotdogProfile(
+                    id: "submitted-hotdog",
+                    name: "Boardwalk Snap",
+                    style: "Classic cart dog",
+                    priceDollars: 6.25,
+                    signatureNotes: "Mustard, relish, and onion.",
+                    distanceMiles: 1.8,
+                    vendorName: "Boardwalk Dogs",
+                    imageURL: URL(string: "https://cdn.example.com/boardwalk.jpg"),
+                    menuURL: URL(string: "https://boardwalk.example.com/menu"),
+                    mediaAltText: "Classic hotdog on a paper tray",
+                    craveScore: 0.5,
+                    availabilityStatus: .pendingReview
+                )
+            )
         )
     }
 

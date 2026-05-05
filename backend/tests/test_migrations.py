@@ -39,8 +39,12 @@ def test_migrations_upgrade_and_downgrade(clear_settings, tmp_path, monkeypatch)
             "distance_miles",
             "vendor_name",
             "image_url",
+            "menu_url",
+            "media_alt_text",
+            "vendor_owner_user_id",
             "crave_score",
             "availability_status",
+            "last_verified_at",
             "created_at",
         }
         assert {column["name"] for column in inspector.get_columns("user_preferences")} == {

@@ -9,8 +9,11 @@ public struct HotdogProfile: Identifiable, Codable, Equatable, Sendable {
     public let distanceMiles: Double
     public let vendorName: String
     public let imageURL: URL?
+    public let menuURL: URL?
+    public let mediaAltText: String?
     public let craveScore: Double
     public let availabilityStatus: AvailabilityStatus
+    public let lastVerifiedAt: String?
 
     public init(
         id: String,
@@ -21,8 +24,11 @@ public struct HotdogProfile: Identifiable, Codable, Equatable, Sendable {
         distanceMiles: Double,
         vendorName: String,
         imageURL: URL? = nil,
+        menuURL: URL? = nil,
+        mediaAltText: String? = nil,
         craveScore: Double,
-        availabilityStatus: AvailabilityStatus = .available
+        availabilityStatus: AvailabilityStatus = .available,
+        lastVerifiedAt: String? = nil
     ) {
         self.id = id
         self.name = name
@@ -32,8 +38,11 @@ public struct HotdogProfile: Identifiable, Codable, Equatable, Sendable {
         self.distanceMiles = distanceMiles
         self.vendorName = vendorName
         self.imageURL = imageURL
+        self.menuURL = menuURL
+        self.mediaAltText = mediaAltText
         self.craveScore = craveScore
         self.availabilityStatus = availabilityStatus
+        self.lastVerifiedAt = lastVerifiedAt
     }
 
     public var priceLabel: String {
@@ -52,8 +61,11 @@ public struct HotdogProfile: Identifiable, Codable, Equatable, Sendable {
         case distanceMiles = "distance_miles"
         case vendorName = "vendor_name"
         case imageURL = "image_url"
+        case menuURL = "menu_url"
+        case mediaAltText = "media_alt_text"
         case craveScore = "crave_score"
         case availabilityStatus = "availability_status"
+        case lastVerifiedAt = "last_verified_at"
     }
 }
 
@@ -61,6 +73,7 @@ public enum AvailabilityStatus: String, Codable, Equatable, Sendable {
     case available
     case limited
     case soldOut = "sold_out"
+    case pendingReview = "pending_review"
 }
 
 public struct DiscoveryResponse: Codable, Equatable, Sendable {
@@ -76,6 +89,68 @@ public struct MatchResponse: Codable, Equatable, Sendable {
 
     public init(matches: [HotdogProfile]) {
         self.matches = matches
+    }
+}
+
+public struct VendorSubmissionRequest: Codable, Equatable, Sendable {
+    public let name: String
+    public let style: String
+    public let priceDollars: Double
+    public let signatureNotes: String
+    public let distanceMiles: Double
+    public let vendorName: String
+    public let imageURL: URL?
+    public let menuURL: URL?
+    public let mediaAltText: String?
+
+    public init(
+        name: String,
+        style: String,
+        priceDollars: Double,
+        signatureNotes: String,
+        distanceMiles: Double,
+        vendorName: String,
+        imageURL: URL? = nil,
+        menuURL: URL? = nil,
+        mediaAltText: String? = nil
+    ) {
+        self.name = name
+        self.style = style
+        self.priceDollars = priceDollars
+        self.signatureNotes = signatureNotes
+        self.distanceMiles = distanceMiles
+        self.vendorName = vendorName
+        self.imageURL = imageURL
+        self.menuURL = menuURL
+        self.mediaAltText = mediaAltText
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case name
+        case style
+        case priceDollars = "price_dollars"
+        case signatureNotes = "signature_notes"
+        case distanceMiles = "distance_miles"
+        case vendorName = "vendor_name"
+        case imageURL = "image_url"
+        case menuURL = "menu_url"
+        case mediaAltText = "media_alt_text"
+    }
+}
+
+public struct VendorSubmissionResponse: Codable, Equatable, Sendable {
+    public let profile: HotdogProfile
+
+    public init(profile: HotdogProfile) {
+        self.profile = profile
+    }
+}
+
+public struct VendorSubmissionListResponse: Codable, Equatable, Sendable {
+    public let submissions: [HotdogProfile]
+
+    public init(submissions: [HotdogProfile]) {
+        self.submissions = submissions
     }
 }
 

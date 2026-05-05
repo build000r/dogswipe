@@ -8,6 +8,7 @@ from dogswipe_backend.schemas import (
     HotdogProfile,
     SwipeDecision,
     SwipeRequest,
+    VendorSubmissionRequest,
 )
 from dogswipe_backend.service import DogSwipeService
 
@@ -17,6 +18,7 @@ class FakeRepository(HotdogRepository):
         self.limit_seen = 0
         self.swipes: list[tuple[str, str, SwipeDecision]] = []
         self.preferences_by_user: dict[str, CravingPreferences] = {}
+        self.submissions_by_user: dict[str, list[HotdogProfile]] = {}
 
     async def list_available_profiles(self, *, limit: int = 20) -> list[HotdogProfile]:
         self.limit_seen = limit
@@ -60,6 +62,32 @@ class FakeRepository(HotdogRepository):
         self.preferences_by_user[user_id] = preferences
         return preferences
 
+    async def submit_vendor_profile(
+        self,
+        *,
+        user_id: str,
+        submission: VendorSubmissionRequest,
+    ) -> HotdogProfile:
+        profile = HotdogProfile(
+            id="submitted-hotdog",
+            name=submission.name,
+            style=submission.style,
+            price_dollars=submission.price_dollars,
+            signature_notes=submission.signature_notes,
+            distance_miles=submission.distance_miles,
+            vendor_name=submission.vendor_name,
+            image_url=submission.image_url,
+            menu_url=submission.menu_url,
+            media_alt_text=submission.media_alt_text,
+            crave_score=0.5,
+            availability_status="pending_review",
+        )
+        self.submissions_by_user.setdefault(user_id, []).append(profile)
+        return profile
+
+    async def list_vendor_submissions(self, *, user_id: str) -> list[HotdogProfile]:
+        return self.submissions_by_user.get(user_id, [])
+
 
 @pytest.mark.asyncio
 async def test_discovery_clamps_limit() -> None:
@@ -96,3 +124,25 @@ async def test_preferences_round_trip_through_repository() -> None:
 
     assert updated == preferences
     assert await service.preferences(user_id="u1") == preferences
+
+
+@pytest.mark.asyncio
+async def test_vendor_submission_round_trips_through_repository() -> None:
+    repository = FakeRepository()
+    service = DogSwipeService(repository)
+    request = VendorSubmissionRequest(
+        name="Submitted Snap",
+        style="Classic cart dog",
+        price_dollars=6,
+        signature_notes="Mustard and onion",
+        distance_miles=2,
+        vendor_name="Submit Cart",
+        menu_url="https://submit.example.com/menu",
+    )
+
+    response = await service.submit_vendor_profile(user_id="vendor-1", submission=request)
+    submissions = await service.vendor_submissions(user_id="vendor-1")
+
+    assert response.profile.name == "Submitted Snap"
+    assert response.profile.availability_status == "pending_review"
+    assert submissions.submissions == [response.profile]

@@ -4,6 +4,7 @@ import SwiftUI
 struct RootView: View {
     @StateObject private var authSessionStore: AuthSessionStore
     @StateObject private var preferencesStore: CravingPreferencesStore
+    @StateObject private var vendorSubmissionStore: VendorSubmissionStore
     private let apiClient: DogSwipeAPIClient
 
     init(
@@ -24,6 +25,9 @@ struct RootView: View {
         )
         _preferencesStore = StateObject(
             wrappedValue: CravingPreferencesStore(apiClient: apiClient)
+        )
+        _vendorSubmissionStore = StateObject(
+            wrappedValue: VendorSubmissionStore(apiClient: apiClient)
         )
     }
 
@@ -49,6 +53,11 @@ struct RootView: View {
             )
                 .tabItem {
                     Label("Matches", systemImage: "heart.fill")
+                }
+
+            VendorView(store: vendorSubmissionStore)
+                .tabItem {
+                    Label("Vendor", systemImage: "storefront")
                 }
 
             ProfileView(
