@@ -109,6 +109,7 @@ async def test_repository_requests_changes_and_accepts_owner_resubmission(databa
                 signature_notes="Mustard, relish, and onion.",
                 distance_miles=1.8,
                 vendor_name="Revision Cart",
+                address_text="100 Queen St W, Toronto, ON",
                 menu_url="https://revision.example.com/menu",
             ),
         )
@@ -121,6 +122,7 @@ async def test_repository_requests_changes_and_accepts_owner_resubmission(databa
         assert updated.availability_status == "pending_review"
         assert updated.review_note is None
         assert updated.last_reviewed_at is None
+        assert updated.address_text == "100 Queen St W, Toronto, ON"
         assert updated.menu_url == "https://revision.example.com/menu"
 
 

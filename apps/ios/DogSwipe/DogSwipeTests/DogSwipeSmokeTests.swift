@@ -178,6 +178,7 @@ final class DogSwipeSmokeTests: XCTestCase {
         store.latitude = "43.6532"
         store.longitude = "-79.3832"
         store.vendorName = "Boardwalk Dogs"
+        store.addressText = "100 Queen St W, Toronto, ON"
         store.imageURL = "https://cdn.example.com/boardwalk.jpg"
         store.menuURL = "https://boardwalk.example.com/menu"
         store.mediaAltText = "Classic hotdog on a paper tray"
@@ -195,6 +196,7 @@ final class DogSwipeSmokeTests: XCTestCase {
         XCTAssertEqual(body["price_dollars"] as? Double, 6.25)
         XCTAssertEqual(body["latitude"] as? Double, 43.6532)
         XCTAssertEqual(body["longitude"] as? Double, -79.3832)
+        XCTAssertEqual(body["address_text"] as? String, "100 Queen St W, Toronto, ON")
         XCTAssertEqual(body["menu_url"] as? String, "https://boardwalk.example.com/menu")
         XCTAssertNil(body["user_id"])
     }
@@ -210,6 +212,7 @@ final class DogSwipeSmokeTests: XCTestCase {
             signatureNotes: "Mustard, relish, and onion.",
             distanceMiles: 1.8,
             vendorName: "Boardwalk Dogs",
+            addressText: "100 Queen St W, Toronto, ON",
             craveScore: 0.5,
             availabilityStatus: .changesRequested,
             reviewNote: "Add a current menu URL."
@@ -222,6 +225,7 @@ final class DogSwipeSmokeTests: XCTestCase {
             signatureNotes: "Mustard, relish, and onion.",
             distanceMiles: 1.8,
             vendorName: "Boardwalk Dogs",
+            addressText: "100 Queen St W, Toronto, ON",
             menuURL: URL(string: "https://boardwalk.example.com/menu"),
             craveScore: 0.5,
             availabilityStatus: .pendingReview
@@ -238,6 +242,7 @@ final class DogSwipeSmokeTests: XCTestCase {
 
         await store.load()
         store.edit(changeRequest)
+        XCTAssertEqual(store.addressText, "100 Queen St W, Toronto, ON")
         store.menuURL = "https://boardwalk.example.com/menu"
         await store.submit()
 
@@ -250,6 +255,7 @@ final class DogSwipeSmokeTests: XCTestCase {
         ])
         XCTAssertEqual(http.requests.last?.httpMethod, "PUT")
         let body = try jsonBody(http.requests.last!)
+        XCTAssertEqual(body["address_text"] as? String, "100 Queen St W, Toronto, ON")
         XCTAssertEqual(body["menu_url"] as? String, "https://boardwalk.example.com/menu")
     }
 
@@ -576,6 +582,7 @@ final class DogSwipeSmokeTests: XCTestCase {
                     signatureNotes: "Mustard, relish, and onion.",
                     distanceMiles: 1.8,
                     vendorName: "Boardwalk Dogs",
+                    addressText: "100 Queen St W, Toronto, ON",
                     imageURL: URL(string: "https://cdn.example.com/boardwalk.jpg"),
                     menuURL: URL(string: "https://boardwalk.example.com/menu"),
                     mediaAltText: "Classic hotdog on a paper tray",

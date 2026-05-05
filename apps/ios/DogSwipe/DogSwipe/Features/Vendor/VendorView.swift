@@ -75,6 +75,7 @@ struct VendorView: View {
             }
 
             field("Vendor name", text: $store.vendorName, icon: "storefront")
+            field("Pickup address", text: $store.addressText, icon: "map")
             field("Signature notes", text: $store.signatureNotes, icon: "text.quote")
             field("Image URL", text: $store.imageURL, icon: "photo")
                 .textInputAutocapitalization(.never)

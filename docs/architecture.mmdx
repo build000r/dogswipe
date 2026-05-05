@@ -31,6 +31,7 @@ flowchart LR
   core["DogSwipeCore package"]
   client["DogSwipeAPIClient"]
   profiles["HotdogProfile contract"]
+  maps["Apple Maps handoff"]
   preferences["CravingPreferences contract"]
   vendor["VendorSubmission contract"]
   menu["MenuSnapshot contract"]
@@ -53,6 +54,7 @@ flowchart LR
   vm --> core
   vm --> client
   core --> profiles
+  core --> maps
   core --> preferences
   core --> vendor
   core --> menu
@@ -94,6 +96,7 @@ stateDiagram-v2
 ```mermaid
 sequenceDiagram
   participant App as iOS App
+  participant Maps as Apple Maps
   participant API as DogSwipe API
   participant Menu as Menu URL
   participant SPAPS as Sweet Potato/SPAPS
@@ -109,10 +112,11 @@ sequenceDiagram
   App->>API: Discovery request with optional current coordinates
   API->>DB: Read preferences and coordinate-backed hotdog profiles
   API-->>App: Preference-filtered discovery with resolved distance
+  App->>Maps: Open directions from coordinates or address_text
   API->>DB: Read swipes, matches, or preferences
   API-->>App: Match or preference response
   App->>API: Submit vendor hotdog listing
-  API->>DB: Store pending_review listing, coordinates, and owner user_id
+  API->>DB: Store pending_review listing, coordinates, address_text, and owner user_id
   API-->>App: Vendor submission response
   App->>API: Refresh owned submission menu
   API->>DB: Load owner-scoped listing and menu_url

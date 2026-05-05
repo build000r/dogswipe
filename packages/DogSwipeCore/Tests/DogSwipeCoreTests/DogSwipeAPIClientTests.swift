@@ -35,6 +35,7 @@ final class DogSwipeAPIClientTests: XCTestCase {
               "latitude": 43.6539,
               "longitude": -79.3843,
               "vendor_name": "Franklin Cart",
+              "address_text": "100 Queen St W, Toronto, ON",
               "image_url": null,
               "menu_url": "https://franklin.example.com/menu",
               "media_alt_text": "Coney hotdog with chili and onion",
@@ -54,6 +55,11 @@ final class DogSwipeAPIClientTests: XCTestCase {
         XCTAssertEqual(profiles.first?.vendorName, "Franklin Cart")
         XCTAssertEqual(profiles.first?.latitude, 43.6539)
         XCTAssertEqual(profiles.first?.longitude, -79.3843)
+        XCTAssertEqual(profiles.first?.addressText, "100 Queen St W, Toronto, ON")
+        XCTAssertTrue(
+            profiles.first?.directionsURL?.absoluteString.contains("daddr=43.6539,-79.3843")
+                == true
+        )
         XCTAssertEqual(profiles.first?.menuURL?.absoluteString, "https://franklin.example.com/menu")
         XCTAssertEqual(profiles.first?.mediaAltText, "Coney hotdog with chili and onion")
         XCTAssertEqual(http.requests.first?.url?.path, "/v1/discovery")
@@ -218,6 +224,7 @@ final class DogSwipeAPIClientTests: XCTestCase {
                 signatureNotes: "Mustard, relish, and onion.",
                 style: "Classic cart dog",
                 menuURL: URL(string: "https://boardwalk.example.com/menu"),
+                addressText: "100 Queen St W, Toronto, ON",
                 priceDollars: 6.25,
                 distanceMiles: 1.8,
                 imageURL: URL(string: "https://cdn.example.com/boardwalk.jpg"),
@@ -236,6 +243,7 @@ final class DogSwipeAPIClientTests: XCTestCase {
         XCTAssertTrue(body.contains("\"price_dollars\":6.25"))
         XCTAssertTrue(body.contains("\"latitude\":43.6532"))
         XCTAssertTrue(body.contains("\"longitude\":-79.3832"))
+        XCTAssertTrue(body.contains("\"address_text\":\"100 Queen St W, Toronto, ON\""))
         XCTAssertTrue(body.contains("\"menu_url\":\"https:\\/\\/boardwalk.example.com\\/menu\""))
     }
 
@@ -272,6 +280,7 @@ final class DogSwipeAPIClientTests: XCTestCase {
                 signatureNotes: "Mustard, relish, onion, and celery salt.",
                 style: "Classic cart dog",
                 menuURL: URL(string: "https://boardwalk.example.com/menu"),
+                addressText: "100 Queen St W, Toronto, ON",
                 priceDollars: 6.5,
                 distanceMiles: 1.9,
                 longitude: nil
@@ -284,6 +293,31 @@ final class DogSwipeAPIClientTests: XCTestCase {
         XCTAssertEqual(http.requests.first?.httpMethod, "PUT")
         let body = String(data: http.requests.first!.httpBody!, encoding: .utf8)!
         XCTAssertTrue(body.contains("\"price_dollars\":6.5"))
+        XCTAssertTrue(body.contains("\"address_text\":\"100 Queen St W, Toronto, ON\""))
+    }
+
+    func testDirectionsURLFallsBackToAddressText() throws {
+        let profile = HotdogProfile(
+            id: "address-only",
+            name: "Address Snap",
+            style: "Classic cart dog",
+            priceDollars: 6.25,
+            signatureNotes: "Mustard, relish, and onion.",
+            distanceMiles: 1.8,
+            vendorName: "Boardwalk Dogs",
+            addressText: "100 Queen St W, Toronto, ON",
+            craveScore: 0.5
+        )
+
+        let components = try XCTUnwrap(
+            URLComponents(url: try XCTUnwrap(profile.directionsURL), resolvingAgainstBaseURL: false)
+        )
+        let query = Dictionary(uniqueKeysWithValues: (components.queryItems ?? []).map {
+            ($0.name, $0.value ?? "")
+        })
+        XCTAssertEqual(components.host, "maps.apple.com")
+        XCTAssertEqual(query["daddr"], "100 Queen St W, Toronto, ON")
+        XCTAssertEqual(query["dirflg"], "w")
     }
 
     func testIngestVendorSubmissionMenuUsesBackendContract() async throws {

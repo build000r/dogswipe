@@ -4,6 +4,7 @@ import SwiftUI
 
 struct HotdogCardView: View {
     let profile: HotdogProfile
+    @Environment(\.openURL) private var openURL
 
     var body: some View {
         VStack(alignment: .leading, spacing: .dsSpace4) {
@@ -16,12 +17,29 @@ struct HotdogCardView: View {
                     .foregroundStyle(Color.dsMuted)
                     .lineLimit(2)
 
+                if let addressText = profile.addressText, !addressText.isEmpty {
+                    Label(addressText, systemImage: "map")
+                        .font(.caption)
+                        .foregroundStyle(Color.dsMuted)
+                        .lineLimit(1)
+                }
+
                 Divider()
 
                 HStack(spacing: .dsSpace4) {
                     metric(label: "Price", value: profile.priceLabel)
                     metric(label: "Distance", value: String(format: "%.1f mi", profile.distanceMiles))
                     metric(label: "Crave", value: "\(Int(profile.craveScore * 100))%")
+                }
+
+                if let directionsURL = profile.directionsURL {
+                    Button {
+                        openURL(directionsURL)
+                    } label: {
+                        Label("Directions", systemImage: "map")
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(.dsPrimary)
                 }
             }
             .padding(.horizontal, .dsSpace5)

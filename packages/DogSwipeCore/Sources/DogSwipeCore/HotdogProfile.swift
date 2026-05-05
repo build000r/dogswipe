@@ -10,6 +10,7 @@ public struct HotdogProfile: Identifiable, Codable, Equatable, Sendable {
     public let latitude: Double?
     public let longitude: Double?
     public let vendorName: String
+    public let addressText: String?
     public let imageURL: URL?
     public let menuURL: URL?
     public let menuStatus: String?
@@ -32,6 +33,7 @@ public struct HotdogProfile: Identifiable, Codable, Equatable, Sendable {
         latitude: Double? = nil,
         longitude: Double? = nil,
         vendorName: String,
+        addressText: String? = nil,
         imageURL: URL? = nil,
         menuURL: URL? = nil,
         menuStatus: String? = nil,
@@ -53,6 +55,7 @@ public struct HotdogProfile: Identifiable, Codable, Equatable, Sendable {
         self.latitude = latitude
         self.longitude = longitude
         self.vendorName = vendorName
+        self.addressText = addressText
         self.imageURL = imageURL
         self.menuURL = menuURL
         self.menuStatus = menuStatus
@@ -73,6 +76,26 @@ public struct HotdogProfile: Identifiable, Codable, Equatable, Sendable {
         return String(format: "$%.2f", priceDollars)
     }
 
+    public var directionsURL: URL? {
+        var components = URLComponents(string: "https://maps.apple.com/")
+        if let latitude, let longitude {
+            components?.queryItems = [
+                URLQueryItem(name: "daddr", value: "\(latitude),\(longitude)"),
+                URLQueryItem(name: "dirflg", value: "w")
+            ]
+            return components?.url
+        }
+        guard let address = addressText?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !address.isEmpty else {
+            return nil
+        }
+        components?.queryItems = [
+            URLQueryItem(name: "daddr", value: address),
+            URLQueryItem(name: "dirflg", value: "w")
+        ]
+        return components?.url
+    }
+
     enum CodingKeys: String, CodingKey {
         case id
         case name
@@ -83,6 +106,7 @@ public struct HotdogProfile: Identifiable, Codable, Equatable, Sendable {
         case latitude
         case longitude
         case vendorName = "vendor_name"
+        case addressText = "address_text"
         case imageURL = "image_url"
         case menuURL = "menu_url"
         case menuStatus = "menu_status"
@@ -128,6 +152,7 @@ public struct VendorSubmissionRequest: Codable, Equatable, Sendable {
     public let signatureNotes: String
     public let style: String
     public let menuURL: URL?
+    public let addressText: String?
     public let priceDollars: Double
     public let distanceMiles: Double
     public let imageURL: URL?
@@ -141,6 +166,7 @@ public struct VendorSubmissionRequest: Codable, Equatable, Sendable {
         signatureNotes: String,
         style: String,
         menuURL: URL? = nil,
+        addressText: String? = nil,
         priceDollars: Double,
         distanceMiles: Double,
         imageURL: URL? = nil,
@@ -153,6 +179,7 @@ public struct VendorSubmissionRequest: Codable, Equatable, Sendable {
         self.signatureNotes = signatureNotes
         self.style = style
         self.menuURL = menuURL
+        self.addressText = addressText
         self.priceDollars = priceDollars
         self.distanceMiles = distanceMiles
         self.imageURL = imageURL
@@ -167,6 +194,7 @@ public struct VendorSubmissionRequest: Codable, Equatable, Sendable {
         case signatureNotes = "signature_notes"
         case style
         case menuURL = "menu_url"
+        case addressText = "address_text"
         case priceDollars = "price_dollars"
         case distanceMiles = "distance_miles"
         case imageURL = "image_url"
@@ -260,6 +288,7 @@ public extension HotdogProfile {
             latitude: 43.6539,
             longitude: -79.3843,
             vendorName: "Franklin Cart",
+            addressText: "100 Queen St W, Toronto, ON",
             craveScore: 0.91
         ),
         HotdogProfile(
@@ -272,6 +301,7 @@ public extension HotdogProfile {
             latitude: 43.6555,
             longitude: -79.38,
             vendorName: "Bun Signal",
+            addressText: "200 King St W, Toronto, ON",
             craveScore: 0.88
         ),
         HotdogProfile(
@@ -284,6 +314,7 @@ public extension HotdogProfile {
             latitude: 43.665,
             longitude: -79.407,
             vendorName: "Northside Stand",
+            addressText: "860 Bloor St W, Toronto, ON",
             craveScore: 0.82
         ),
         HotdogProfile(
@@ -296,6 +327,7 @@ public extension HotdogProfile {
             latitude: 43.647,
             longitude: -79.395,
             vendorName: "Depot Dogs",
+            addressText: "65 Front St W, Toronto, ON",
             craveScore: 0.69
         )
     ]

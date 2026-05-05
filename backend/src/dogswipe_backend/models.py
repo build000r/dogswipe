@@ -22,6 +22,7 @@ class HotdogProfileRecord(Base):
     latitude: Mapped[float | None] = mapped_column(Float)
     longitude: Mapped[float | None] = mapped_column(Float)
     vendor_name: Mapped[str] = mapped_column(String(160), nullable=False)
+    address_text: Mapped[str | None] = mapped_column(String(240))
     image_url: Mapped[str | None] = mapped_column(Text)
     menu_url: Mapped[str | None] = mapped_column(Text)
     menu_status: Mapped[str | None] = mapped_column(String(32))

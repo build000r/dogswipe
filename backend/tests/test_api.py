@@ -264,6 +264,7 @@ async def test_vendor_submission_is_pending_and_user_scoped(async_client) -> Non
             "latitude": 43.6532,
             "longitude": -79.3832,
             "vendor_name": "Boardwalk Dogs",
+            "address_text": "100 Queen St W, Toronto, ON",
             "image_url": "https://cdn.example.com/boardwalk.jpg",
             "menu_url": "https://boardwalk.example.com/menu",
             "media_alt_text": "Classic hotdog on a paper tray",
@@ -278,6 +279,7 @@ async def test_vendor_submission_is_pending_and_user_scoped(async_client) -> Non
     assert profile["crave_score"] == 0.5
     assert profile["latitude"] == 43.6532
     assert profile["longitude"] == -79.3832
+    assert profile["address_text"] == "100 Queen St W, Toronto, ON"
     assert profile["menu_url"] == "https://boardwalk.example.com/menu"
     assert profile["media_alt_text"] == "Classic hotdog on a paper tray"
 

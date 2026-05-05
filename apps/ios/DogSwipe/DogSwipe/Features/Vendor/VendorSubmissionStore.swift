@@ -11,6 +11,7 @@ final class VendorSubmissionStore: ObservableObject {
     @Published var latitude = ""
     @Published var longitude = ""
     @Published var vendorName = ""
+    @Published var addressText = ""
     @Published var imageURL = ""
     @Published var menuURL = ""
     @Published var mediaAltText = ""
@@ -83,6 +84,7 @@ final class VendorSubmissionStore: ObservableObject {
         latitude = coordinateString(profile.latitude)
         longitude = coordinateString(profile.longitude)
         vendorName = profile.vendorName
+        addressText = profile.addressText ?? ""
         imageURL = profile.imageURL?.absoluteString ?? ""
         menuURL = profile.menuURL?.absoluteString ?? ""
         mediaAltText = profile.mediaAltText ?? ""
@@ -136,6 +138,7 @@ final class VendorSubmissionStore: ObservableObject {
             signatureNotes: trimmed(signatureNotes),
             style: trimmed(style),
             menuURL: try optionalURL(menuURL, error: .invalidMenuURL),
+            addressText: optionalString(addressText),
             priceDollars: priceDollars,
             distanceMiles: distanceMiles,
             imageURL: try optionalURL(imageURL, error: .invalidImageURL),
@@ -154,6 +157,7 @@ final class VendorSubmissionStore: ObservableObject {
         latitude = ""
         longitude = ""
         vendorName = ""
+        addressText = ""
         imageURL = ""
         menuURL = ""
         mediaAltText = ""

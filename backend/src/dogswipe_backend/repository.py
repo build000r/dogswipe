@@ -386,6 +386,7 @@ class SqlAlchemyHotdogRepository(HotdogRepository):
         record.latitude = submission.latitude
         record.longitude = submission.longitude
         record.vendor_name = submission.vendor_name
+        record.address_text = self._blank_to_none(submission.address_text)
         record.image_url = self._blank_to_none(submission.image_url)
         record.menu_url = self._blank_to_none(submission.menu_url)
         record.media_alt_text = self._blank_to_none(submission.media_alt_text)

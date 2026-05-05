@@ -3,6 +3,7 @@ import SwiftUI
 
 struct MatchesView: View {
     @StateObject private var viewModel: MatchesViewModel
+    @Environment(\.openURL) private var openURL
 
     @MainActor
     init(
@@ -38,6 +39,16 @@ struct MatchesView: View {
                             Text(profile.priceLabel)
                                 .font(.headline.monospacedDigit())
                                 .foregroundStyle(Color.dsPrimary)
+                            if let directionsURL = profile.directionsURL {
+                                Button {
+                                    openURL(directionsURL)
+                                } label: {
+                                    Image(systemName: "map")
+                                }
+                                .buttonStyle(.borderless)
+                                .tint(.dsPrimary)
+                                .accessibilityLabel("Directions")
+                            }
                         }
                         .padding(.vertical, .dsSpace2)
                     }

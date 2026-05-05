@@ -30,6 +30,12 @@ struct SubmissionSummaryView: View {
                     .foregroundStyle(Color.dsMuted)
             }
 
+            if let addressText = profile.addressText, !addressText.isEmpty {
+                Label(addressText, systemImage: "map")
+                    .font(.caption)
+                    .foregroundStyle(Color.dsMuted)
+            }
+
             if let menuURL = profile.menuURL {
                 Label(menuURL.host ?? menuURL.absoluteString, systemImage: "menucard")
                     .font(.caption)

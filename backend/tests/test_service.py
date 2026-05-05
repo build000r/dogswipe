@@ -27,6 +27,7 @@ def _profile(
     distance_miles: float = 1,
     latitude: float | None = None,
     longitude: float | None = None,
+    address_text: str | None = None,
     crave_score: float = 0.8,
 ) -> HotdogProfile:
     return HotdogProfile(
@@ -39,6 +40,7 @@ def _profile(
         latitude=latitude,
         longitude=longitude,
         vendor_name="Test Cart",
+        address_text=address_text,
         crave_score=crave_score,
         availability_status="available",
     )
@@ -128,6 +130,7 @@ class FakeRepository(HotdogRepository):
             latitude=submission.latitude,
             longitude=submission.longitude,
             vendor_name=submission.vendor_name,
+            address_text=submission.address_text,
             image_url=submission.image_url,
             menu_url=submission.menu_url,
             media_alt_text=submission.media_alt_text,
@@ -164,6 +167,7 @@ class FakeRepository(HotdogRepository):
                 latitude=submission.latitude,
                 longitude=submission.longitude,
                 vendor_name=submission.vendor_name,
+                address_text=submission.address_text,
                 image_url=submission.image_url,
                 menu_url=submission.menu_url,
                 media_alt_text=submission.media_alt_text,
@@ -237,6 +241,7 @@ class FakeRepository(HotdogRepository):
                     latitude=profile.latitude,
                     longitude=profile.longitude,
                     vendor_name=profile.vendor_name,
+                    address_text=profile.address_text,
                     image_url=profile.image_url,
                     menu_url=profile.menu_url,
                     media_alt_text=profile.media_alt_text,
@@ -293,6 +298,7 @@ class FakeRepository(HotdogRepository):
                     latitude=profile.latitude,
                     longitude=profile.longitude,
                     vendor_name=profile.vendor_name,
+                    address_text=profile.address_text,
                     image_url=profile.image_url,
                     menu_url=profile.menu_url,
                     media_alt_text=profile.media_alt_text,
@@ -430,6 +436,7 @@ async def test_vendor_submission_round_trips_through_repository() -> None:
         signature_notes="Mustard and onion",
         distance_miles=2,
         vendor_name="Submit Cart",
+        address_text="100 Queen St W, Toronto, ON",
         menu_url="https://submit.example.com/menu",
     )
 
@@ -438,6 +445,7 @@ async def test_vendor_submission_round_trips_through_repository() -> None:
 
     assert response.profile.name == "Submitted Snap"
     assert response.profile.availability_status == "pending_review"
+    assert response.profile.address_text == "100 Queen St W, Toronto, ON"
     assert submissions.submissions == [response.profile]
 
 

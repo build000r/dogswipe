@@ -43,6 +43,7 @@ make backend-test
   "latitude": 43.6539,
   "longitude": -79.3843,
   "vendor_name": "Franklin Cart",
+  "address_text": "100 Queen St W, Toronto, ON",
   "image_url": null,
   "menu_url": null,
   "menu_status": null,
@@ -89,11 +90,14 @@ Client-supplied `user_id` fields are rejected here too.
   "latitude": 43.6532,
   "longitude": -79.3832,
   "vendor_name": "Boardwalk Dogs",
+  "address_text": "100 Queen St W, Toronto, ON",
   "image_url": "https://cdn.example.com/boardwalk.jpg",
   "menu_url": "https://boardwalk.example.com/menu",
   "media_alt_text": "Classic hotdog on a paper tray"
 }
 ```
+
+`address_text` is optional display text for the pickup location. If coordinates are present, iOS prefers those for Apple Maps directions; otherwise it falls back to the address text.
 
 `GET /v1/vendor/submissions` returns only submissions owned by the authenticated/local user. `PUT /v1/vendor/submissions/{id}` lets that owner revise `pending_review` or `changes_requested` listings and returns the listing to `pending_review`. Client-supplied `user_id` fields are rejected.
 
@@ -130,4 +134,4 @@ DATABASE_URL=postgresql+asyncpg://... make migrate
 DATABASE_URL=postgresql+asyncpg://... make migration-current
 ```
 
-Current head is `0007`, which adds owner-scoped menu snapshot status, excerpt, and checked timestamp fields on hotdog profiles.
+Current head is `0008`, which adds optional pickup address text for profile display and iOS Maps directions fallback.

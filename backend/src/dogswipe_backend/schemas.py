@@ -30,6 +30,7 @@ class HotdogProfile(BaseModel):
     latitude: float | None = Field(default=None, ge=-90, le=90)
     longitude: float | None = Field(default=None, ge=-180, le=180)
     vendor_name: str
+    address_text: str | None = None
     image_url: str | None = None
     menu_url: str | None = None
     menu_status: str | None = None
@@ -83,6 +84,7 @@ class VendorSubmissionRequest(BaseModel):
     latitude: float | None = Field(default=None, ge=-90, le=90)
     longitude: float | None = Field(default=None, ge=-180, le=180)
     vendor_name: str = Field(min_length=1, max_length=160)
+    address_text: str | None = Field(default=None, max_length=240)
     image_url: str | None = Field(default=None, max_length=2048)
     menu_url: str | None = Field(default=None, max_length=2048)
     media_alt_text: str | None = Field(default=None, max_length=160)
