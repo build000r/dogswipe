@@ -35,6 +35,12 @@ struct SubmissionSummaryView: View {
                     .font(.caption)
                     .foregroundStyle(Color.dsMuted)
             }
+
+            if let reviewNote = profile.reviewNote, !reviewNote.isEmpty {
+                Label(reviewNote, systemImage: "text.bubble")
+                    .font(.caption)
+                    .foregroundStyle(Color.dsMuted)
+            }
         }
     }
 }
@@ -50,6 +56,10 @@ private extension AvailabilityStatus {
             "Sold out"
         case .pendingReview:
             "Pending"
+        case .changesRequested:
+            "Edits needed"
+        case .rejected:
+            "Rejected"
         }
     }
 }

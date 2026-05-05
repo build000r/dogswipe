@@ -110,6 +110,19 @@ public struct DogSwipeAPIClient: Sendable {
         return response.profile
     }
 
+    @discardableResult
+    public func updateVendorSubmission(
+        profileID: String,
+        submission: VendorSubmissionRequest
+    ) async throws -> HotdogProfile {
+        let response: VendorSubmissionResponse = try await send(
+            path: "/v1/vendor/submissions/\(profileID)",
+            method: "PUT",
+            body: submission
+        )
+        return response.profile
+    }
+
     public func adminReviewQueue() async throws -> [HotdogProfile] {
         let response: AdminReviewQueueResponse = try await send(
             path: "/v1/admin/vendor/submissions"
@@ -126,6 +139,32 @@ public struct DogSwipeAPIClient: Sendable {
             path: "/v1/admin/vendor/submissions/\(profileID)/approve",
             method: "POST",
             body: AdminApprovalRequest(craveScore: craveScore)
+        )
+        return response.profile
+    }
+
+    @discardableResult
+    public func requestVendorSubmissionChanges(
+        profileID: String,
+        reviewNote: String
+    ) async throws -> HotdogProfile {
+        let response: AdminModerationResponse = try await send(
+            path: "/v1/admin/vendor/submissions/\(profileID)/request-changes",
+            method: "POST",
+            body: AdminModerationRequest(reviewNote: reviewNote)
+        )
+        return response.profile
+    }
+
+    @discardableResult
+    public func rejectVendorSubmission(
+        profileID: String,
+        reviewNote: String
+    ) async throws -> HotdogProfile {
+        let response: AdminModerationResponse = try await send(
+            path: "/v1/admin/vendor/submissions/\(profileID)/reject",
+            method: "POST",
+            body: AdminModerationRequest(reviewNote: reviewNote)
         )
         return response.profile
     }

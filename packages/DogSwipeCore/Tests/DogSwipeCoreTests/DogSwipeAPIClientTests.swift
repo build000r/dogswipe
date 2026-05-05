@@ -209,6 +209,52 @@ final class DogSwipeAPIClientTests: XCTestCase {
         XCTAssertTrue(body.contains("\"menu_url\":\"https:\\/\\/boardwalk.example.com\\/menu\""))
     }
 
+    func testUpdateVendorSubmissionEncodesBackendContract() async throws {
+        let http = MockHTTPClient()
+        http.nextData = """
+        {
+          "profile": {
+            "id": "submitted-hotdog",
+            "name": "Edited Snap",
+            "style": "Classic cart dog",
+            "price_dollars": 6.5,
+            "signature_notes": "Mustard, relish, onion, and celery salt.",
+            "distance_miles": 1.9,
+            "vendor_name": "Boardwalk Dogs",
+            "image_url": null,
+            "menu_url": "https://boardwalk.example.com/menu",
+            "media_alt_text": null,
+            "crave_score": 0.5,
+            "availability_status": "pending_review",
+            "review_note": null,
+            "last_verified_at": null,
+            "last_reviewed_at": null
+          }
+        }
+        """.data(using: .utf8)!
+        let client = DogSwipeAPIClient(baseURL: URL(string: "http://localhost:8000")!, httpClient: http)
+
+        let profile = try await client.updateVendorSubmission(
+            profileID: "submitted-hotdog",
+            submission: VendorSubmissionRequest(
+                name: "Edited Snap",
+                style: "Classic cart dog",
+                priceDollars: 6.5,
+                signatureNotes: "Mustard, relish, onion, and celery salt.",
+                distanceMiles: 1.9,
+                vendorName: "Boardwalk Dogs",
+                menuURL: URL(string: "https://boardwalk.example.com/menu")
+            )
+        )
+
+        XCTAssertEqual(profile.name, "Edited Snap")
+        XCTAssertEqual(profile.reviewNote, nil)
+        XCTAssertEqual(http.requests.first?.url?.path, "/v1/vendor/submissions/submitted-hotdog")
+        XCTAssertEqual(http.requests.first?.httpMethod, "PUT")
+        let body = String(data: http.requests.first!.httpBody!, encoding: .utf8)!
+        XCTAssertTrue(body.contains("\"price_dollars\":6.5"))
+    }
+
     func testAdminReviewQueueDecodesBackendContract() async throws {
         let http = MockHTTPClient()
         http.nextData = try JSONEncoder().encode(
@@ -240,25 +286,11 @@ final class DogSwipeAPIClientTests: XCTestCase {
 
     func testApproveVendorSubmissionEncodesBackendContract() async throws {
         let http = MockHTTPClient()
-        http.nextData = """
-        {
-          "profile": {
-            "id": "pending-hotdog",
-            "name": "Pending Snap",
-            "style": "Classic cart dog",
-            "price_dollars": 6.25,
-            "signature_notes": "Mustard, relish, and onion.",
-            "distance_miles": 1.8,
-            "vendor_name": "Boardwalk Dogs",
-            "image_url": null,
-            "menu_url": null,
-            "media_alt_text": null,
-            "crave_score": 0.86,
-            "availability_status": "available",
-            "last_verified_at": "2026-05-05T14:00:00Z"
-          }
-        }
-        """.data(using: .utf8)!
+        http.nextData = try encodedReviewResponse(
+            status: .available,
+            craveScore: 0.86,
+            lastVerifiedAt: "2026-05-05T14:00:00Z"
+        )
         let client = DogSwipeAPIClient(baseURL: URL(string: "http://localhost:8000")!, httpClient: http)
 
         let profile = try await client.approveVendorSubmission(
@@ -275,6 +307,51 @@ final class DogSwipeAPIClientTests: XCTestCase {
         XCTAssertEqual(http.requests.first?.httpMethod, "POST")
         let body = String(data: http.requests.first!.httpBody!, encoding: .utf8)!
         XCTAssertTrue(body.contains("\"crave_score\":0.86"))
+    }
+
+    func testRequestVendorSubmissionChangesEncodesBackendContract() async throws {
+        let http = MockHTTPClient()
+        http.nextData = try encodedReviewResponse(
+            status: .changesRequested,
+            reviewNote: "Add a current menu URL.",
+            lastReviewedAt: "2026-05-05T14:05:00Z"
+        )
+        let client = DogSwipeAPIClient(baseURL: URL(string: "http://localhost:8000")!, httpClient: http)
+
+        let profile = try await client.requestVendorSubmissionChanges(
+            profileID: "pending-hotdog",
+            reviewNote: "Add a current menu URL."
+        )
+
+        XCTAssertEqual(profile.availabilityStatus, .changesRequested)
+        XCTAssertEqual(profile.reviewNote, "Add a current menu URL.")
+        XCTAssertEqual(
+            http.requests.first?.url?.path,
+            "/v1/admin/vendor/submissions/pending-hotdog/request-changes"
+        )
+        XCTAssertEqual(http.requests.first?.httpMethod, "POST")
+        let body = String(data: http.requests.first!.httpBody!, encoding: .utf8)!
+        XCTAssertTrue(body.contains("\"review_note\":\"Add a current menu URL.\""))
+    }
+
+    func testRejectVendorSubmissionEncodesBackendContract() async throws {
+        let http = MockHTTPClient()
+        http.nextData = try encodedReviewResponse(
+            status: .rejected,
+            reviewNote: "Listing does not show a hotdog item.",
+            lastReviewedAt: "2026-05-05T14:10:00Z"
+        )
+        let client = DogSwipeAPIClient(baseURL: URL(string: "http://localhost:8000")!, httpClient: http)
+
+        let profile = try await client.rejectVendorSubmission(
+            profileID: "pending-hotdog",
+            reviewNote: "Listing does not show a hotdog item."
+        )
+
+        XCTAssertEqual(profile.availabilityStatus, .rejected)
+        XCTAssertEqual(profile.reviewNote, "Listing does not show a hotdog item.")
+        XCTAssertEqual(http.requests.first?.url?.path, "/v1/admin/vendor/submissions/pending-hotdog/reject")
+        XCTAssertEqual(http.requests.first?.httpMethod, "POST")
     }
 
     func testAddsBearerTokenWhenProviderReturnsToken() async throws {
@@ -322,5 +399,32 @@ final class DogSwipeAPIClientTests: XCTestCase {
         } catch {
             XCTFail("Unexpected error: \(error)")
         }
+    }
+
+    private func encodedReviewResponse(
+        status: AvailabilityStatus,
+        craveScore: Double = 0.5,
+        reviewNote: String? = nil,
+        lastVerifiedAt: String? = nil,
+        lastReviewedAt: String? = nil
+    ) throws -> Data {
+        try JSONEncoder().encode(
+            AdminModerationResponse(
+                profile: HotdogProfile(
+                    id: "pending-hotdog",
+                    name: "Pending Snap",
+                    style: "Classic cart dog",
+                    priceDollars: 6.25,
+                    signatureNotes: "Mustard, relish, and onion.",
+                    distanceMiles: 1.8,
+                    vendorName: "Boardwalk Dogs",
+                    craveScore: craveScore,
+                    availabilityStatus: status,
+                    reviewNote: reviewNote,
+                    lastVerifiedAt: lastVerifiedAt,
+                    lastReviewedAt: lastReviewedAt
+                )
+            )
+        )
     }
 }

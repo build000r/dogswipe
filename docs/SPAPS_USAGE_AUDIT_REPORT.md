@@ -22,5 +22,5 @@ DogSwipe follows the current quickstart contract:
 - production auth should use `Authorization: Bearer <jwt>` via `SpapsAuthMiddleware`
 - local dev may disable SPAPS auth explicitly
 - no browser/client code should send a secret SPAPS API key
-- user-scoped swipes, matches, craving preferences, vendor submissions, and admin review routes derive identity from backend auth context
+- user-scoped swipes, matches, craving preferences, vendor submissions/resubmissions, and admin review routes derive identity from backend auth context
 - iOS uses a SPAPS publishable key for magic-link auth, stores access/refresh JWTs in Keychain, and injects only the access bearer as `Authorization`

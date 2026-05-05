@@ -160,6 +160,60 @@ final class DogSwipeSmokeTests: XCTestCase {
     }
 
     @MainActor
+    func testVendorSubmissionStoreResubmitsChangeRequest() async throws {
+        let http = MockHTTPClient()
+        let changeRequest = HotdogProfile(
+            id: "submitted-hotdog",
+            name: "Boardwalk Snap",
+            style: "Classic cart dog",
+            priceDollars: 6.25,
+            signatureNotes: "Mustard, relish, and onion.",
+            distanceMiles: 1.8,
+            vendorName: "Boardwalk Dogs",
+            craveScore: 0.5,
+            availabilityStatus: .changesRequested,
+            reviewNote: "Add a current menu URL."
+        )
+        let resubmitted = HotdogProfile(
+            id: changeRequest.id,
+            name: "Boardwalk Snap",
+            style: "Classic cart dog",
+            priceDollars: 6.25,
+            signatureNotes: "Mustard, relish, and onion.",
+            distanceMiles: 1.8,
+            vendorName: "Boardwalk Dogs",
+            menuURL: URL(string: "https://boardwalk.example.com/menu"),
+            craveScore: 0.5,
+            availabilityStatus: .pendingReview
+        )
+        http.responses = [
+            try JSONEncoder().encode(VendorSubmissionListResponse(submissions: [changeRequest])),
+            try JSONEncoder().encode(VendorSubmissionResponse(profile: resubmitted))
+        ]
+        let apiClient = DogSwipeAPIClient(
+            baseURL: URL(string: "http://localhost:8000")!,
+            httpClient: http
+        )
+        let store = VendorSubmissionStore(apiClient: apiClient)
+
+        await store.load()
+        store.edit(changeRequest)
+        store.menuURL = "https://boardwalk.example.com/menu"
+        await store.submit()
+
+        XCTAssertEqual(store.submissions.first?.availabilityStatus, .pendingReview)
+        XCTAssertEqual(store.submissions.first?.reviewNote, nil)
+        XCTAssertEqual(store.message, "Resubmitted for review.")
+        XCTAssertEqual(http.requests.map { $0.url?.path }, [
+            "/v1/vendor/submissions",
+            "/v1/vendor/submissions/submitted-hotdog"
+        ])
+        XCTAssertEqual(http.requests.last?.httpMethod, "PUT")
+        let body = try jsonBody(http.requests.last!)
+        XCTAssertEqual(body["menu_url"] as? String, "https://boardwalk.example.com/menu")
+    }
+
+    @MainActor
     func testAdminReviewStoreApprovesPendingSubmission() async throws {
         let http = MockHTTPClient()
         let pending = HotdogProfile(
@@ -205,6 +259,87 @@ final class DogSwipeSmokeTests: XCTestCase {
         ])
         let body = try jsonBody(http.requests.last!)
         XCTAssertEqual(body["crave_score"] as? Double, 0.72)
+    }
+
+    @MainActor
+    func testAdminReviewStoreModeratesPendingSubmissions() async throws {
+        let http = MockHTTPClient()
+        let editCandidate = HotdogProfile(
+            id: "edit-hotdog",
+            name: "Edit Snap",
+            style: "Classic cart dog",
+            priceDollars: 6.25,
+            signatureNotes: "Mustard, relish, and onion.",
+            distanceMiles: 1.8,
+            vendorName: "Boardwalk Dogs",
+            craveScore: 0.5,
+            availabilityStatus: .pendingReview
+        )
+        let rejectCandidate = HotdogProfile(
+            id: "reject-hotdog",
+            name: "Reject Snap",
+            style: "Classic cart dog",
+            priceDollars: 6.25,
+            signatureNotes: "Mustard, relish, and onion.",
+            distanceMiles: 1.8,
+            vendorName: "Boardwalk Dogs",
+            craveScore: 0.5,
+            availabilityStatus: .pendingReview
+        )
+        let changesRequested = HotdogProfile(
+            id: editCandidate.id,
+            name: editCandidate.name,
+            style: editCandidate.style,
+            priceDollars: editCandidate.priceDollars,
+            signatureNotes: editCandidate.signatureNotes,
+            distanceMiles: editCandidate.distanceMiles,
+            vendorName: editCandidate.vendorName,
+            craveScore: editCandidate.craveScore,
+            availabilityStatus: .changesRequested,
+            reviewNote: "Add a current menu URL."
+        )
+        let rejected = HotdogProfile(
+            id: rejectCandidate.id,
+            name: rejectCandidate.name,
+            style: rejectCandidate.style,
+            priceDollars: rejectCandidate.priceDollars,
+            signatureNotes: rejectCandidate.signatureNotes,
+            distanceMiles: rejectCandidate.distanceMiles,
+            vendorName: rejectCandidate.vendorName,
+            craveScore: rejectCandidate.craveScore,
+            availabilityStatus: .rejected,
+            reviewNote: "Listing does not show a hotdog item."
+        )
+        http.responses = [
+            try JSONEncoder().encode(
+                AdminReviewQueueResponse(submissions: [editCandidate, rejectCandidate])
+            ),
+            try JSONEncoder().encode(AdminModerationResponse(profile: changesRequested)),
+            try JSONEncoder().encode(AdminModerationResponse(profile: rejected))
+        ]
+        let apiClient = DogSwipeAPIClient(
+            baseURL: URL(string: "http://localhost:8000")!,
+            httpClient: http
+        )
+        let store = AdminReviewStore(apiClient: apiClient)
+
+        await store.load()
+        store.reviewNotes[editCandidate.id] = "Add a current menu URL."
+        await store.requestChanges(editCandidate)
+        store.reviewNotes[rejectCandidate.id] = "Listing does not show a hotdog item."
+        await store.reject(rejectCandidate)
+
+        XCTAssertTrue(store.pendingSubmissions.isEmpty)
+        XCTAssertEqual(store.reviewMessage, "Reject Snap rejected.")
+        XCTAssertEqual(http.requests.map { $0.url?.path }, [
+            "/v1/admin/vendor/submissions",
+            "/v1/admin/vendor/submissions/edit-hotdog/request-changes",
+            "/v1/admin/vendor/submissions/reject-hotdog/reject"
+        ])
+        let changesBody = try jsonBody(http.requests[1])
+        XCTAssertEqual(changesBody["review_note"] as? String, "Add a current menu URL.")
+        let rejectBody = try jsonBody(http.requests[2])
+        XCTAssertEqual(rejectBody["review_note"] as? String, "Listing does not show a hotdog item.")
     }
 
     func testSPAPSAuthClientRequestsMagicLinkWithPublishableKey() async throws {

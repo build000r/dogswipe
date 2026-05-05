@@ -39,10 +39,10 @@ struct VendorView: View {
     private var submissionSection: some View {
         VStack(alignment: .leading, spacing: .dsSpace4) {
             VStack(alignment: .leading, spacing: .dsSpace2) {
-                Text("Submit a hotdog")
+                Text(store.isEditing ? "Revise hotdog" : "Submit a hotdog")
                     .font(.title2.weight(.semibold))
                     .foregroundStyle(Color.dsInk)
-                Text("Send a menu item for review before it enters discovery.")
+                Text(store.isEditing ? "Send the updated listing back to review." : "Send a menu item for review before it enters discovery.")
                     .font(.subheadline)
                     .foregroundStyle(Color.dsMuted)
             }
@@ -72,15 +72,30 @@ struct VendorView: View {
                 .autocorrectionDisabled()
             field("Image description", text: $store.mediaAltText, icon: "captions.bubble")
 
-            Button {
-                Task {
-                    await store.submit()
+            HStack(spacing: .dsSpace3) {
+                Button {
+                    Task {
+                        await store.submit()
+                    }
+                } label: {
+                    Label(
+                        store.isEditing ? "Resubmit" : "Submit",
+                        systemImage: "tray.and.arrow.up.fill"
+                    )
                 }
-            } label: {
-                Label("Submit for Review", systemImage: "tray.and.arrow.up.fill")
+                .buttonStyle(.borderedProminent)
+                .disabled(!store.canSubmit || store.isSyncing)
+
+                if store.isEditing {
+                    Button {
+                        store.cancelEditing()
+                    } label: {
+                        Label("Cancel", systemImage: "xmark")
+                    }
+                    .buttonStyle(.bordered)
+                    .disabled(store.isSyncing)
+                }
             }
-            .buttonStyle(.borderedProminent)
-            .disabled(!store.canSubmit || store.isSyncing)
 
             if let message = store.message {
                 Text(message)
@@ -115,7 +130,19 @@ struct VendorView: View {
     }
 
     private func submissionRow(_ profile: HotdogProfile) -> some View {
-        SubmissionSummaryView(profile: profile)
+        VStack(alignment: .leading, spacing: .dsSpace3) {
+            SubmissionSummaryView(profile: profile)
+
+            if profile.canBeEditedByVendor {
+                Button {
+                    store.edit(profile)
+                } label: {
+                    Label("Edit", systemImage: "pencil")
+                }
+                .buttonStyle(.bordered)
+                .disabled(store.isSyncing)
+            }
+        }
         .padding(.dsSpace4)
         .dsCardSurface()
     }
@@ -142,4 +169,10 @@ struct VendorView: View {
 
 #Preview {
     VendorView()
+}
+
+private extension HotdogProfile {
+    var canBeEditedByVendor: Bool {
+        availabilityStatus == .changesRequested || availabilityStatus == .pendingReview
+    }
 }

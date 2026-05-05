@@ -20,13 +20,12 @@ The first production slice must prove three things:
 - A card must show name, style, price, signature notes, distance, vendor, and a crave score.
 - Cards without remote media still need a product-specific hotdog visual, and craving controls should persist as user-scoped preferences that feed the same ranking logic across discovery and matches.
 - Positive swipes are intent signals. Matches are high-crave liked items, not social matches.
-- Vendors can submit hotdog listings with menu/media metadata, and configured admins can approve reviewed submissions into discovery.
+- Vendors can submit hotdog listings with menu/media metadata, configured admins can approve/reject/request edits, and vendors can revise change-requested listings back into review.
 - Production identity is backend-owned through SPAPS; the app may use a publishable key for native magic-link auth, store access/refresh JWTs in Keychain, and send only user bearer tokens to the DogSwipe API.
 - Local sample data is intentionally food-like and vendor-like so screenshots, demos, and API examples stay anchored to the hotdog product.
 
 ## Non-Goals For The First Slice
 
-- Rejection/edit moderation workflows
 - Payments or booking
 - Real-time chat
 - Recommendation ML

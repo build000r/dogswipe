@@ -15,6 +15,7 @@ final class VendorSubmissionStore: ObservableObject {
     @Published private(set) var submissions: [HotdogProfile] = []
     @Published private(set) var isSyncing = false
     @Published private(set) var message: String?
+    @Published private(set) var editingSubmissionID: String?
 
     private let apiClient: DogSwipeAPIClient
 
@@ -29,6 +30,10 @@ final class VendorSubmissionStore: ObservableObject {
             !trimmed(signatureNotes).isEmpty &&
             Double(trimmed(distance)) != nil &&
             !trimmed(vendorName).isEmpty
+    }
+
+    var isEditing: Bool {
+        editingSubmissionID != nil
     }
 
     func load() async {
@@ -47,13 +52,42 @@ final class VendorSubmissionStore: ObservableObject {
             let request = try submissionRequest()
             isSyncing = true
             defer { isSyncing = false }
-            let profile = try await apiClient.submitVendorProfile(request)
-            submissions.insert(profile, at: 0)
+            let profile: HotdogProfile
+            let wasEditing = editingSubmissionID != nil
+            if let editingSubmissionID {
+                profile = try await apiClient.updateVendorSubmission(
+                    profileID: editingSubmissionID,
+                    submission: request
+                )
+                replaceSubmission(profile)
+            } else {
+                profile = try await apiClient.submitVendorProfile(request)
+                submissions.insert(profile, at: 0)
+            }
             clearDraft()
-            message = "Submitted for review."
+            message = wasEditing ? "Resubmitted for review." : "Submitted for review."
         } catch {
             message = error.localizedDescription
         }
+    }
+
+    func edit(_ profile: HotdogProfile) {
+        editingSubmissionID = profile.id
+        name = profile.name
+        style = profile.style
+        price = String(format: "%.2f", profile.priceDollars)
+        signatureNotes = profile.signatureNotes
+        distance = String(profile.distanceMiles)
+        vendorName = profile.vendorName
+        imageURL = profile.imageURL?.absoluteString ?? ""
+        menuURL = profile.menuURL?.absoluteString ?? ""
+        mediaAltText = profile.mediaAltText ?? ""
+        message = nil
+    }
+
+    func cancelEditing() {
+        clearDraft()
+        message = nil
     }
 
     private func submissionRequest() throws -> VendorSubmissionRequest {
@@ -86,6 +120,15 @@ final class VendorSubmissionStore: ObservableObject {
         imageURL = ""
         menuURL = ""
         mediaAltText = ""
+        editingSubmissionID = nil
+    }
+
+    private func replaceSubmission(_ profile: HotdogProfile) {
+        guard let index = submissions.firstIndex(where: { $0.id == profile.id }) else {
+            submissions.insert(profile, at: 0)
+            return
+        }
+        submissions[index] = profile
     }
 
     private func optionalURL(_ value: String, error: VendorSubmissionDraftError) throws -> URL? {

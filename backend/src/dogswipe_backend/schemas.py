@@ -2,8 +2,14 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import StrEnum
+from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints
+
+ReviewNote = Annotated[
+    str,
+    StringConstraints(strip_whitespace=True, min_length=1, max_length=240),
+]
 
 
 class SwipeDecision(StrEnum):
@@ -27,7 +33,9 @@ class HotdogProfile(BaseModel):
     media_alt_text: str | None = None
     crave_score: float = Field(ge=0, le=1)
     availability_status: str
+    review_note: str | None = None
     last_verified_at: datetime | None = None
+    last_reviewed_at: datetime | None = None
 
 
 class DiscoveryResponse(BaseModel):
@@ -92,4 +100,14 @@ class AdminReviewQueueResponse(BaseModel):
 
 
 class AdminApprovalResponse(BaseModel):
+    profile: HotdogProfile
+
+
+class AdminModerationRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    review_note: ReviewNote
+
+
+class AdminModerationResponse(BaseModel):
     profile: HotdogProfile

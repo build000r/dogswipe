@@ -6,6 +6,8 @@ from .repository import HotdogRepository
 from .schemas import (
     AdminApprovalRequest,
     AdminApprovalResponse,
+    AdminModerationRequest,
+    AdminModerationResponse,
     AdminReviewQueueResponse,
     CravingPreferences,
     DiscoveryResponse,
@@ -69,6 +71,25 @@ class DogSwipeService:
             submissions=await self.repository.list_vendor_submissions(user_id=user_id)
         )
 
+    async def update_vendor_submission(
+        self,
+        *,
+        user_id: str,
+        profile_id: str,
+        submission: VendorSubmissionRequest,
+    ) -> VendorSubmissionResponse:
+        profile = await self.repository.update_vendor_submission(
+            user_id=user_id,
+            profile_id=profile_id,
+            submission=submission,
+        )
+        if profile is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Vendor submission not found",
+            )
+        return VendorSubmissionResponse(profile=profile)
+
     async def admin_review_queue(self) -> AdminReviewQueueResponse:
         return AdminReviewQueueResponse(
             submissions=await self.repository.list_pending_vendor_submissions()
@@ -90,3 +111,37 @@ class DogSwipeService:
                 detail="Vendor submission not found",
             )
         return AdminApprovalResponse(profile=profile)
+
+    async def request_vendor_submission_changes(
+        self,
+        *,
+        profile_id: str,
+        request: AdminModerationRequest,
+    ) -> AdminModerationResponse:
+        profile = await self.repository.request_vendor_submission_changes(
+            profile_id=profile_id,
+            review_note=request.review_note,
+        )
+        if profile is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Vendor submission not found",
+            )
+        return AdminModerationResponse(profile=profile)
+
+    async def reject_vendor_submission(
+        self,
+        *,
+        profile_id: str,
+        request: AdminModerationRequest,
+    ) -> AdminModerationResponse:
+        profile = await self.repository.reject_vendor_submission(
+            profile_id=profile_id,
+            review_note=request.review_note,
+        )
+        if profile is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Vendor submission not found",
+            )
+        return AdminModerationResponse(profile=profile)

@@ -317,6 +317,188 @@ async def test_admin_can_approve_vendor_submission(
 
 
 @pytest.mark.asyncio
+async def test_admin_can_request_changes_and_vendor_can_resubmit(
+    async_client,
+    clear_settings,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    del clear_settings
+    monkeypatch.setenv("DOGSWIPE_ADMIN_USER_IDS", "admin-user")
+    get_settings.cache_clear()
+    submitted = await async_client.post(
+        "/v1/vendor/submissions",
+        headers={"X-DogSwipe-User-ID": "vendor-edits"},
+        json={
+            "name": "Edit Snap",
+            "style": "Classic cart dog",
+            "price_dollars": 6.25,
+            "signature_notes": "Mustard, relish, and onion.",
+            "distance_miles": 1.8,
+            "vendor_name": "Edit Cart",
+        },
+    )
+    profile_id = submitted.json()["profile"]["id"]
+
+    changes = await async_client.post(
+        f"/v1/admin/vendor/submissions/{profile_id}/request-changes",
+        headers={"X-DogSwipe-User-ID": "admin-user"},
+        json={"review_note": "Add a current menu URL before review."},
+    )
+
+    assert changes.status_code == 200
+    profile = changes.json()["profile"]
+    assert profile["availability_status"] == "changes_requested"
+    assert profile["review_note"] == "Add a current menu URL before review."
+    assert profile["last_reviewed_at"] is not None
+
+    queue = await async_client.get(
+        "/v1/admin/vendor/submissions",
+        headers={"X-DogSwipe-User-ID": "admin-user"},
+    )
+    assert [item["id"] for item in queue.json()["submissions"]] == []
+
+    owned = await async_client.get(
+        "/v1/vendor/submissions",
+        headers={"X-DogSwipe-User-ID": "vendor-edits"},
+    )
+    assert owned.json()["submissions"][0]["review_note"] == (
+        "Add a current menu URL before review."
+    )
+
+    updated = await async_client.put(
+        f"/v1/vendor/submissions/{profile_id}",
+        headers={"X-DogSwipe-User-ID": "vendor-edits"},
+        json={
+            "name": "Edited Snap",
+            "style": "Classic cart dog",
+            "price_dollars": 6.5,
+            "signature_notes": "Mustard, relish, onion, and celery salt.",
+            "distance_miles": 1.9,
+            "vendor_name": "Edit Cart",
+            "menu_url": "https://edit.example.com/menu",
+        },
+    )
+
+    assert updated.status_code == 200
+    profile = updated.json()["profile"]
+    assert profile["name"] == "Edited Snap"
+    assert profile["availability_status"] == "pending_review"
+    assert profile["review_note"] is None
+    assert profile["last_reviewed_at"] is None
+    assert profile["menu_url"] == "https://edit.example.com/menu"
+
+    queue = await async_client.get(
+        "/v1/admin/vendor/submissions",
+        headers={"X-DogSwipe-User-ID": "admin-user"},
+    )
+    assert [item["id"] for item in queue.json()["submissions"]] == [profile_id]
+
+
+@pytest.mark.asyncio
+async def test_admin_can_reject_vendor_submission(
+    async_client,
+    clear_settings,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    del clear_settings
+    monkeypatch.setenv("DOGSWIPE_ADMIN_USER_IDS", "admin-user")
+    get_settings.cache_clear()
+    submitted = await async_client.post(
+        "/v1/vendor/submissions",
+        headers={"X-DogSwipe-User-ID": "vendor-rejected"},
+        json={
+            "name": "Rejected Snap",
+            "style": "Classic cart dog",
+            "price_dollars": 6.25,
+            "signature_notes": "Mustard, relish, and onion.",
+            "distance_miles": 1.8,
+            "vendor_name": "Reject Cart",
+        },
+    )
+    profile_id = submitted.json()["profile"]["id"]
+
+    rejected = await async_client.post(
+        f"/v1/admin/vendor/submissions/{profile_id}/reject",
+        headers={"X-DogSwipe-User-ID": "admin-user"},
+        json={"review_note": "Listing does not show a hotdog item."},
+    )
+
+    assert rejected.status_code == 200
+    profile = rejected.json()["profile"]
+    assert profile["availability_status"] == "rejected"
+    assert profile["review_note"] == "Listing does not show a hotdog item."
+    assert profile["last_reviewed_at"] is not None
+
+    discovery = await async_client.get("/v1/discovery", params={"limit": 50})
+    assert "Rejected Snap" not in [item["name"] for item in discovery.json()["profiles"]]
+
+    update = await async_client.put(
+        f"/v1/vendor/submissions/{profile_id}",
+        headers={"X-DogSwipe-User-ID": "vendor-rejected"},
+        json={
+            "name": "Rejected Snap",
+            "style": "Classic cart dog",
+            "price_dollars": 6.25,
+            "signature_notes": "Mustard, relish, and onion.",
+            "distance_miles": 1.8,
+            "vendor_name": "Reject Cart",
+        },
+    )
+    assert update.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_vendor_submission_update_is_owner_scoped(async_client) -> None:
+    submitted = await async_client.post(
+        "/v1/vendor/submissions",
+        headers={"X-DogSwipe-User-ID": "vendor-owner"},
+        json={
+            "name": "Owner Snap",
+            "style": "Classic cart dog",
+            "price_dollars": 6.25,
+            "signature_notes": "Mustard, relish, and onion.",
+            "distance_miles": 1.8,
+            "vendor_name": "Owner Cart",
+        },
+    )
+    profile_id = submitted.json()["profile"]["id"]
+
+    response = await async_client.put(
+        f"/v1/vendor/submissions/{profile_id}",
+        headers={"X-DogSwipe-User-ID": "other-vendor"},
+        json={
+            "name": "Forged Edit",
+            "style": "Classic cart dog",
+            "price_dollars": 6.25,
+            "signature_notes": "Mustard, relish, and onion.",
+            "distance_miles": 1.8,
+            "vendor_name": "Owner Cart",
+        },
+    )
+
+    assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_admin_moderation_requires_note(
+    async_client,
+    clear_settings,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    del clear_settings
+    monkeypatch.setenv("DOGSWIPE_ADMIN_USER_IDS", "admin-user")
+    get_settings.cache_clear()
+
+    response = await async_client.post(
+        "/v1/admin/vendor/submissions/missing/reject",
+        headers={"X-DogSwipe-User-ID": "admin-user"},
+        json={"review_note": "   "},
+    )
+
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
 async def test_admin_routes_reject_non_admin(async_client, clear_settings) -> None:
     del clear_settings
     response = await async_client.get(

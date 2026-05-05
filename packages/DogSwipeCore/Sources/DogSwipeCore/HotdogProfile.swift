@@ -13,7 +13,9 @@ public struct HotdogProfile: Identifiable, Codable, Equatable, Sendable {
     public let mediaAltText: String?
     public let craveScore: Double
     public let availabilityStatus: AvailabilityStatus
+    public let reviewNote: String?
     public let lastVerifiedAt: String?
+    public let lastReviewedAt: String?
 
     public init(
         id: String,
@@ -28,7 +30,9 @@ public struct HotdogProfile: Identifiable, Codable, Equatable, Sendable {
         mediaAltText: String? = nil,
         craveScore: Double,
         availabilityStatus: AvailabilityStatus = .available,
-        lastVerifiedAt: String? = nil
+        reviewNote: String? = nil,
+        lastVerifiedAt: String? = nil,
+        lastReviewedAt: String? = nil
     ) {
         self.id = id
         self.name = name
@@ -42,7 +46,9 @@ public struct HotdogProfile: Identifiable, Codable, Equatable, Sendable {
         self.mediaAltText = mediaAltText
         self.craveScore = craveScore
         self.availabilityStatus = availabilityStatus
+        self.reviewNote = reviewNote
         self.lastVerifiedAt = lastVerifiedAt
+        self.lastReviewedAt = lastReviewedAt
     }
 
     public var priceLabel: String {
@@ -65,7 +71,9 @@ public struct HotdogProfile: Identifiable, Codable, Equatable, Sendable {
         case mediaAltText = "media_alt_text"
         case craveScore = "crave_score"
         case availabilityStatus = "availability_status"
+        case reviewNote = "review_note"
         case lastVerifiedAt = "last_verified_at"
+        case lastReviewedAt = "last_reviewed_at"
     }
 }
 
@@ -74,6 +82,8 @@ public enum AvailabilityStatus: String, Codable, Equatable, Sendable {
     case limited
     case soldOut = "sold_out"
     case pendingReview = "pending_review"
+    case changesRequested = "changes_requested"
+    case rejected
 }
 
 public struct DiscoveryResponse: Codable, Equatable, Sendable {
@@ -175,6 +185,26 @@ public struct AdminReviewQueueResponse: Codable, Equatable, Sendable {
 }
 
 public struct AdminApprovalResponse: Codable, Equatable, Sendable {
+    public let profile: HotdogProfile
+
+    public init(profile: HotdogProfile) {
+        self.profile = profile
+    }
+}
+
+public struct AdminModerationRequest: Codable, Equatable, Sendable {
+    public let reviewNote: String
+
+    public init(reviewNote: String) {
+        self.reviewNote = reviewNote
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case reviewNote = "review_note"
+    }
+}
+
+public struct AdminModerationResponse: Codable, Equatable, Sendable {
     public let profile: HotdogProfile
 
     public init(profile: HotdogProfile) {

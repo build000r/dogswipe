@@ -44,7 +44,9 @@ def test_migrations_upgrade_and_downgrade(clear_settings, tmp_path, monkeypatch)
             "vendor_owner_user_id",
             "crave_score",
             "availability_status",
+            "review_note",
             "last_verified_at",
+            "last_reviewed_at",
             "created_at",
         }
         assert {column["name"] for column in inspector.get_columns("user_preferences")} == {

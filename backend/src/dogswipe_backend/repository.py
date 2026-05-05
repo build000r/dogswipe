@@ -48,6 +48,15 @@ class HotdogRepository:
     async def list_vendor_submissions(self, *, user_id: str) -> list[HotdogProfile]:
         raise NotImplementedError
 
+    async def update_vendor_submission(
+        self,
+        *,
+        user_id: str,
+        profile_id: str,
+        submission: VendorSubmissionRequest,
+    ) -> HotdogProfile | None:
+        raise NotImplementedError
+
     async def list_pending_vendor_submissions(self) -> list[HotdogProfile]:
         raise NotImplementedError
 
@@ -56,6 +65,22 @@ class HotdogRepository:
         *,
         profile_id: str,
         crave_score: float,
+    ) -> HotdogProfile | None:
+        raise NotImplementedError
+
+    async def request_vendor_submission_changes(
+        self,
+        *,
+        profile_id: str,
+        review_note: str,
+    ) -> HotdogProfile | None:
+        raise NotImplementedError
+
+    async def reject_vendor_submission(
+        self,
+        *,
+        profile_id: str,
+        review_note: str,
     ) -> HotdogProfile | None:
         raise NotImplementedError
 
@@ -137,16 +162,8 @@ class SqlAlchemyHotdogRepository(HotdogRepository):
         user_id: str,
         submission: VendorSubmissionRequest,
     ) -> HotdogProfile:
-        record = HotdogProfileRecord(
-            name=submission.name,
-            style=submission.style,
-            price_dollars=submission.price_dollars,
-            signature_notes=submission.signature_notes,
-            distance_miles=submission.distance_miles,
-            vendor_name=submission.vendor_name,
-            image_url=self._blank_to_none(submission.image_url),
-            menu_url=self._blank_to_none(submission.menu_url),
-            media_alt_text=self._blank_to_none(submission.media_alt_text),
+        record = self._record_from_submission(
+            submission,
             vendor_owner_user_id=user_id,
             crave_score=0.5,
             availability_status="pending_review",
@@ -162,6 +179,29 @@ class SqlAlchemyHotdogRepository(HotdogRepository):
             .order_by(HotdogProfileRecord.created_at.desc(), HotdogProfileRecord.name.asc())
         )
         return self._profiles(await self.session.scalars(statement))
+
+    async def update_vendor_submission(
+        self,
+        *,
+        user_id: str,
+        profile_id: str,
+        submission: VendorSubmissionRequest,
+    ) -> HotdogProfile | None:
+        record = await self.session.get(HotdogProfileRecord, profile_id)
+        if (
+            record is None
+            or record.vendor_owner_user_id != user_id
+            or record.availability_status not in {"pending_review", "changes_requested"}
+        ):
+            return None
+        self._apply_submission(record, submission)
+        record.availability_status = "pending_review"
+        record.crave_score = 0.5
+        record.review_note = None
+        record.last_reviewed_at = None
+        record.last_verified_at = None
+        await self.session.flush()
+        return HotdogProfile.model_validate(record)
 
     async def list_pending_vendor_submissions(self) -> list[HotdogProfile]:
         statement = (
@@ -187,13 +227,90 @@ class SqlAlchemyHotdogRepository(HotdogRepository):
             return None
         record.availability_status = "available"
         record.crave_score = crave_score
+        record.review_note = None
         record.last_verified_at = datetime.now(UTC)
+        record.last_reviewed_at = record.last_verified_at
+        await self.session.flush()
+        return HotdogProfile.model_validate(record)
+
+    async def request_vendor_submission_changes(
+        self,
+        *,
+        profile_id: str,
+        review_note: str,
+    ) -> HotdogProfile | None:
+        return await self._moderate_pending_vendor_submission(
+            profile_id=profile_id,
+            availability_status="changes_requested",
+            review_note=review_note,
+        )
+
+    async def reject_vendor_submission(
+        self,
+        *,
+        profile_id: str,
+        review_note: str,
+    ) -> HotdogProfile | None:
+        return await self._moderate_pending_vendor_submission(
+            profile_id=profile_id,
+            availability_status="rejected",
+            review_note=review_note,
+        )
+
+    async def _moderate_pending_vendor_submission(
+        self,
+        *,
+        profile_id: str,
+        availability_status: str,
+        review_note: str,
+    ) -> HotdogProfile | None:
+        record = await self.session.get(HotdogProfileRecord, profile_id)
+        if (
+            record is None
+            or record.vendor_owner_user_id is None
+            or record.availability_status != "pending_review"
+        ):
+            return None
+        record.availability_status = availability_status
+        record.review_note = review_note.strip()
+        record.last_reviewed_at = datetime.now(UTC)
         await self.session.flush()
         return HotdogProfile.model_validate(record)
 
     @staticmethod
     def _profiles(records: Iterable[HotdogProfileRecord]) -> list[HotdogProfile]:
         return [HotdogProfile.model_validate(record) for record in records]
+
+    def _record_from_submission(
+        self,
+        submission: VendorSubmissionRequest,
+        *,
+        vendor_owner_user_id: str,
+        crave_score: float,
+        availability_status: str,
+    ) -> HotdogProfileRecord:
+        record = HotdogProfileRecord(
+            vendor_owner_user_id=vendor_owner_user_id,
+            crave_score=crave_score,
+            availability_status=availability_status,
+        )
+        self._apply_submission(record, submission)
+        return record
+
+    def _apply_submission(
+        self,
+        record: HotdogProfileRecord,
+        submission: VendorSubmissionRequest,
+    ) -> None:
+        record.name = submission.name
+        record.style = submission.style
+        record.price_dollars = submission.price_dollars
+        record.signature_notes = submission.signature_notes
+        record.distance_miles = submission.distance_miles
+        record.vendor_name = submission.vendor_name
+        record.image_url = self._blank_to_none(submission.image_url)
+        record.menu_url = self._blank_to_none(submission.menu_url)
+        record.media_alt_text = self._blank_to_none(submission.media_alt_text)
 
     @staticmethod
     def _blank_to_none(value: str | None) -> str | None:

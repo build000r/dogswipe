@@ -10,6 +10,8 @@ from .repository import HotdogRepository, SqlAlchemyHotdogRepository
 from .schemas import (
     AdminApprovalRequest,
     AdminApprovalResponse,
+    AdminModerationRequest,
+    AdminModerationResponse,
     AdminReviewQueueResponse,
     CravingPreferences,
     DiscoveryResponse,
@@ -102,6 +104,19 @@ def build_api_router() -> APIRouter:
     ) -> VendorSubmissionResponse:
         return await service.submit_vendor_profile(user_id=user_id, submission=request)
 
+    @v1.put("/vendor/submissions/{profile_id}", response_model=VendorSubmissionResponse)
+    async def update_vendor_submission(
+        profile_id: str,
+        request: VendorSubmissionRequest,
+        service: DogSwipeService = Depends(get_service),
+        user_id: str = Depends(get_current_user_id),
+    ) -> VendorSubmissionResponse:
+        return await service.update_vendor_submission(
+            user_id=user_id,
+            profile_id=profile_id,
+            submission=request,
+        )
+
     @v1.get("/admin/vendor/submissions", response_model=AdminReviewQueueResponse)
     async def admin_vendor_submissions(
         service: DogSwipeService = Depends(get_service),
@@ -122,6 +137,35 @@ def build_api_router() -> APIRouter:
     ) -> AdminApprovalResponse:
         del admin_user_id
         return await service.approve_vendor_submission(profile_id=profile_id, request=request)
+
+    @v1.post(
+        "/admin/vendor/submissions/{profile_id}/request-changes",
+        response_model=AdminModerationResponse,
+    )
+    async def request_vendor_submission_changes(
+        profile_id: str,
+        request: AdminModerationRequest,
+        service: DogSwipeService = Depends(get_service),
+        admin_user_id: str = Depends(get_current_admin_user_id),
+    ) -> AdminModerationResponse:
+        del admin_user_id
+        return await service.request_vendor_submission_changes(
+            profile_id=profile_id,
+            request=request,
+        )
+
+    @v1.post(
+        "/admin/vendor/submissions/{profile_id}/reject",
+        response_model=AdminModerationResponse,
+    )
+    async def reject_vendor_submission(
+        profile_id: str,
+        request: AdminModerationRequest,
+        service: DogSwipeService = Depends(get_service),
+        admin_user_id: str = Depends(get_current_admin_user_id),
+    ) -> AdminModerationResponse:
+        del admin_user_id
+        return await service.reject_vendor_submission(profile_id=profile_id, request=request)
 
     router.include_router(v1)
     return router

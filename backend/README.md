@@ -21,8 +21,11 @@ make backend-test
 | `PUT` | `/v1/preferences` | Save user-scoped craving preferences |
 | `GET` | `/v1/vendor/submissions` | Return the authenticated/local user's submitted hotdog listings |
 | `POST` | `/v1/vendor/submissions` | Submit a vendor-owned hotdog listing for review |
+| `PUT` | `/v1/vendor/submissions/{id}` | Revise an owned pending or change-requested listing |
 | `GET` | `/v1/admin/vendor/submissions` | Return pending vendor submissions for configured admins |
 | `POST` | `/v1/admin/vendor/submissions/{id}/approve` | Approve a pending submission into discovery |
+| `POST` | `/v1/admin/vendor/submissions/{id}/request-changes` | Send a pending submission back to the vendor with a note |
+| `POST` | `/v1/admin/vendor/submissions/{id}/reject` | Reject a pending submission with a note |
 
 ## Hotdog Profile Contract
 
@@ -42,7 +45,9 @@ make backend-test
   "media_alt_text": null,
   "crave_score": 0.91,
   "availability_status": "available",
-  "last_verified_at": null
+  "review_note": null,
+  "last_verified_at": null,
+  "last_reviewed_at": null
 }
 ```
 
@@ -80,7 +85,7 @@ Client-supplied `user_id` fields are rejected here too.
 }
 ```
 
-`GET /v1/vendor/submissions` returns only submissions owned by the authenticated/local user. Client-supplied `user_id` fields are rejected.
+`GET /v1/vendor/submissions` returns only submissions owned by the authenticated/local user. `PUT /v1/vendor/submissions/{id}` lets that owner revise `pending_review` or `changes_requested` listings and returns the listing to `pending_review`. Client-supplied `user_id` fields are rejected.
 
 ## Admin Review Contract
 
@@ -94,6 +99,16 @@ Admin routes use the same backend-owned identity path and require the resolved u
 
 `POST /v1/admin/vendor/submissions/{id}/approve` sets the listing to `available`, records `last_verified_at`, and lets the approved hotdog appear in discovery.
 
+Rejection and edit requests use a required review note:
+
+```json
+{
+  "review_note": "Add a current menu URL before review."
+}
+```
+
+`POST /v1/admin/vendor/submissions/{id}/request-changes` sets `changes_requested`, stores the note for the vendor, and removes the listing from the pending admin queue until the owner resubmits it. `POST /v1/admin/vendor/submissions/{id}/reject` sets `rejected`; rejected listings stay out of discovery and are not editable through the owner resubmission endpoint.
+
 ## Migrations
 
 Production schema changes are managed by Alembic:
@@ -103,4 +118,4 @@ DATABASE_URL=postgresql+asyncpg://... make migrate
 DATABASE_URL=postgresql+asyncpg://... make migration-current
 ```
 
-Current head is `0004`, which adds vendor-owned hotdog submissions and menu/media metadata after user-scoped craving preferences.
+Current head is `0005`, which adds review notes and review timestamps after vendor-owned hotdog submissions and menu/media metadata.

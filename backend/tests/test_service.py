@@ -5,6 +5,7 @@ import pytest
 from dogswipe_backend.repository import HotdogRepository
 from dogswipe_backend.schemas import (
     AdminApprovalRequest,
+    AdminModerationRequest,
     CravingPreferences,
     HotdogProfile,
     SwipeDecision,
@@ -89,6 +90,38 @@ class FakeRepository(HotdogRepository):
     async def list_vendor_submissions(self, *, user_id: str) -> list[HotdogProfile]:
         return self.submissions_by_user.get(user_id, [])
 
+    async def update_vendor_submission(
+        self,
+        *,
+        user_id: str,
+        profile_id: str,
+        submission: VendorSubmissionRequest,
+    ) -> HotdogProfile | None:
+        submissions = self.submissions_by_user.get(user_id, [])
+        for index, profile in enumerate(submissions):
+            if profile.id != profile_id or profile.availability_status not in {
+                "pending_review",
+                "changes_requested",
+            }:
+                continue
+            updated = HotdogProfile(
+                id=profile.id,
+                name=submission.name,
+                style=submission.style,
+                price_dollars=submission.price_dollars,
+                signature_notes=submission.signature_notes,
+                distance_miles=submission.distance_miles,
+                vendor_name=submission.vendor_name,
+                image_url=submission.image_url,
+                menu_url=submission.menu_url,
+                media_alt_text=submission.media_alt_text,
+                crave_score=0.5,
+                availability_status="pending_review",
+            )
+            self.submissions_by_user[user_id][index] = updated
+            return updated
+        return None
+
     async def list_pending_vendor_submissions(self) -> list[HotdogProfile]:
         return [
             profile
@@ -120,9 +153,64 @@ class FakeRepository(HotdogRepository):
                     media_alt_text=profile.media_alt_text,
                     crave_score=crave_score,
                     availability_status="available",
+                    review_note=None,
                 )
                 self.submissions_by_user[user_id][index] = approved
                 return approved
+        return None
+
+    async def request_vendor_submission_changes(
+        self,
+        *,
+        profile_id: str,
+        review_note: str,
+    ) -> HotdogProfile | None:
+        return self._moderate_submission(
+            profile_id=profile_id,
+            availability_status="changes_requested",
+            review_note=review_note,
+        )
+
+    async def reject_vendor_submission(
+        self,
+        *,
+        profile_id: str,
+        review_note: str,
+    ) -> HotdogProfile | None:
+        return self._moderate_submission(
+            profile_id=profile_id,
+            availability_status="rejected",
+            review_note=review_note,
+        )
+
+    def _moderate_submission(
+        self,
+        *,
+        profile_id: str,
+        availability_status: str,
+        review_note: str,
+    ) -> HotdogProfile | None:
+        for user_id, submissions in self.submissions_by_user.items():
+            for index, profile in enumerate(submissions):
+                if profile.id != profile_id or profile.availability_status != "pending_review":
+                    continue
+                moderated = HotdogProfile(
+                    id=profile.id,
+                    name=profile.name,
+                    style=profile.style,
+                    price_dollars=profile.price_dollars,
+                    signature_notes=profile.signature_notes,
+                    distance_miles=profile.distance_miles,
+                    vendor_name=profile.vendor_name,
+                    image_url=profile.image_url,
+                    menu_url=profile.menu_url,
+                    media_alt_text=profile.media_alt_text,
+                    crave_score=profile.crave_score,
+                    availability_status=availability_status,
+                    review_note=review_note,
+                )
+                self.submissions_by_user[user_id][index] = moderated
+                return moderated
         return None
 
 
@@ -210,3 +298,69 @@ async def test_admin_approval_promotes_pending_submission() -> None:
     assert queue.submissions == [response.profile]
     assert approved.profile.availability_status == "available"
     assert approved.profile.crave_score == 0.88
+
+
+@pytest.mark.asyncio
+async def test_admin_can_request_changes_and_vendor_can_resubmit() -> None:
+    repository = FakeRepository()
+    service = DogSwipeService(repository)
+    response = await service.submit_vendor_profile(
+        user_id="vendor-1",
+        submission=VendorSubmissionRequest(
+            name="Needs Work",
+            style="Classic cart dog",
+            price_dollars=6,
+            signature_notes="Mustard and onion",
+            distance_miles=2,
+            vendor_name="Submit Cart",
+        ),
+    )
+
+    changes = await service.request_vendor_submission_changes(
+        profile_id=response.profile.id,
+        request=AdminModerationRequest(review_note="Add a current menu URL."),
+    )
+    updated = await service.update_vendor_submission(
+        user_id="vendor-1",
+        profile_id=response.profile.id,
+        submission=VendorSubmissionRequest(
+            name="Needs Work",
+            style="Classic cart dog",
+            price_dollars=6,
+            signature_notes="Mustard and onion",
+            distance_miles=2,
+            vendor_name="Submit Cart",
+            menu_url="https://submit.example.com/menu",
+        ),
+    )
+
+    assert changes.profile.availability_status == "changes_requested"
+    assert changes.profile.review_note == "Add a current menu URL."
+    assert updated.profile.availability_status == "pending_review"
+    assert updated.profile.review_note is None
+    assert updated.profile.menu_url == "https://submit.example.com/menu"
+
+
+@pytest.mark.asyncio
+async def test_admin_can_reject_pending_submission() -> None:
+    repository = FakeRepository()
+    service = DogSwipeService(repository)
+    response = await service.submit_vendor_profile(
+        user_id="vendor-1",
+        submission=VendorSubmissionRequest(
+            name="Bad Snap",
+            style="Classic cart dog",
+            price_dollars=6,
+            signature_notes="Mustard and onion",
+            distance_miles=2,
+            vendor_name="Submit Cart",
+        ),
+    )
+
+    rejected = await service.reject_vendor_submission(
+        profile_id=response.profile.id,
+        request=AdminModerationRequest(review_note="Photo is not a hotdog."),
+    )
+
+    assert rejected.profile.availability_status == "rejected"
+    assert rejected.profile.review_note == "Photo is not a hotdog."

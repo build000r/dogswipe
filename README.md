@@ -24,8 +24,8 @@ The repo is intentionally split into three testable surfaces:
 | Swipe state | Swift package owns deterministic deck advancement, undo, and positive-signal tracking. |
 | Matches | `POST /v1/swipes` records likes/passes/super-likes; `GET /v1/matches` returns high-crave liked hotdogs. |
 | Preferences | `GET /v1/preferences` and `PUT /v1/preferences` persist user-scoped craving controls under the same backend-owned identity boundary. |
-| Vendor submissions | `POST /v1/vendor/submissions` stores vendor-owned hotdog listings as `pending_review`; `GET /v1/vendor/submissions` returns only the current user's submissions. |
-| Admin review | Configured admins can list `GET /v1/admin/vendor/submissions` and approve `POST /v1/admin/vendor/submissions/{id}/approve`, promoting reviewed hotdogs into discovery. |
+| Vendor submissions | `POST /v1/vendor/submissions` stores vendor-owned hotdog listings as `pending_review`; `GET /v1/vendor/submissions` returns only the current user's submissions; `PUT /v1/vendor/submissions/{id}` lets owners resubmit change-requested drafts. |
+| Admin review | Configured admins can list `GET /v1/admin/vendor/submissions`, approve reviewed hotdogs into discovery, reject bad listings, or request vendor edits with review notes. |
 | Auth boundary | User-scoped backend routes derive identity from SPAPS auth when enabled, with a local-only header fallback while auth is disabled. |
 | iOS transport | The Profile tab can request and verify SPAPS magic links with a publishable key, stores access/refresh JWTs in Keychain, and sends only the access bearer to the DogSwipe API. |
 
@@ -45,7 +45,9 @@ Hotdog profile payloads use this snake_case backend contract:
   "media_alt_text": null,
   "crave_score": 0.91,
   "availability_status": "available",
-  "last_verified_at": null
+  "review_note": null,
+  "last_verified_at": null,
+  "last_reviewed_at": null
 }
 ```
 
@@ -115,13 +117,13 @@ The placement decision is `NEW REPO`: this app owns a durable product boundary r
 
 ## Current Scope
 
-The current app can load local hotdog profiles, render cards with a local product visual when no image URL is available, request and verify SPAPS magic links, store access/refresh JWTs in Keychain, record swipes, persist shared craving controls, submit vendor-owned hotdog listings for review, approve pending listings as an admin, and fetch matches through the shared Swift API client. Backend migrations are managed through Alembic up to `0004`, local Docker development can auto-create and seed the starter data with explicit local-only flags, and production deploy artifacts are ready for a concrete skillbox target.
+The current app can load local hotdog profiles, render cards with a local product visual when no image URL is available, request and verify SPAPS magic links, store access/refresh JWTs in Keychain, record swipes, persist shared craving controls, submit and revise vendor-owned hotdog listings, approve/reject/request edits as an admin, and fetch matches through the shared Swift API client. Backend migrations are managed through Alembic up to `0005`, local Docker development can auto-create and seed the starter data with explicit local-only flags, and production deploy artifacts are ready for a concrete skillbox target.
 
 ## Known Limits
 
 - Live deployment is blocked until a skillbox deploy overlay names a host, service, production origin, env source, deploy root, and health URL.
 - Final visual parity with the original reference image remains blocked because the image is not available in this context.
-- Rejection/edit moderation, live menu ingestion, deep-link handoff polish, location services, and App Store/TestFlight release assets are future slices.
+- Live menu ingestion, deep-link handoff polish, location services, and App Store/TestFlight release assets are future slices.
 
 ## About Contributions
 

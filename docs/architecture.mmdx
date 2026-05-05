@@ -107,7 +107,10 @@ sequenceDiagram
   App->>API: Submit vendor hotdog listing
   API->>DB: Store pending_review listing owned by user_id
   API-->>App: Vendor submission response
-  App->>API: Admin approve pending listing
-  API->>DB: Mark listing available and verified
-  API-->>App: Approved hotdog profile
+  App->>API: Admin approve / reject / request edits
+  API->>DB: Store review status, note, and timestamps
+  API-->>App: Moderated hotdog profile
+  App->>API: Vendor revises change-requested listing
+  API->>DB: Return listing to pending_review
+  API-->>App: Resubmitted vendor profile
 ```
