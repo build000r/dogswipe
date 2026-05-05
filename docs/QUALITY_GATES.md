@@ -20,7 +20,7 @@ Last verified: 2026-05-05
 | SwiftUI drift scan | `make drift` | 0 Swift findings |
 | CRAP score | `make crap` | `FINAL_SCORE: 7.00` |
 | MMDX preflight | `make mmdx-preflight` | 3 charts passed |
-| CI quality enforcement | GitHub Actions `backend`, `swift-package`, and `ios` jobs | coverage XML feeds blocking CRAP; MMDX, SwiftUI drift, deploy, Swift package, and iOS gates fail on regressions |
+| CI quality enforcement | GitHub Actions `backend`, `swift-package`, and `ios` jobs | coverage XML feeds blocking CRAP; MMDX, SwiftUI drift, deploy, Swift package, and iOS gates fail on regressions; iOS preboots the selected simulator with bounded destination/job timeouts |
 | SPAPS usage audit | `python3 ../sweet-potato/skills/sweet-potato-usage-audit/scripts/audit_sweet_potato_usage.py --sweet-potato-root ../sweet-potato .` | 0 high, 0 medium, 0 low |
 
 ## Current Product Evidence
