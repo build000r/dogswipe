@@ -2,7 +2,7 @@
 
 Date: 2026-05-06
 Implementation audited: hotdog swipe deck, visible Discover route controls, durable backend-backed order drafts with My Orders, signed release/TestFlight handoff scaffolding, bundle-aware AASA render path, release-readiness gate, public SPAPS app descriptor, SPAPS operator handoff, private deploy handoff renderers, GHCR image publishing, and private release-readiness probe in the current branch state.
-Recent complete executable-code CI evidence: GitHub Actions `25429847369` for `2fe4ff8ec55db21f40c46ad974f352720d539371` passed `backend`, `swift-package`, and `ios` jobs and published the backend image to GHCR.
+Recent complete executable-code CI evidence: GitHub Actions `25431174343` for `c00a5258ed08944691c0843e2830d773e663eb5d` passed `backend`, `swift-package`, and `ios` jobs and published the backend image to GHCR.
 
 ## Objective Restated
 
@@ -31,21 +31,21 @@ SwiftUI drift clean, CRAP below 20, and meaningful backend coverage above 80%.
 | CRAP below 20 | Fresh `make crap` reported `FINAL_SCORE: 9.00`; CI CRAP gate passed. | Done |
 | Meaningful backend test coverage above 80% | Fresh `make coverage` ran 84 backend tests and reported total coverage 89.83%. | Done |
 | Swift test coverage through behavior | Fresh `make swift-test` ran 35 tests across API client, order API contract, scorer, and deck state. | Done |
-| iOS build/test/screenshot smoke | CI run `25429847369` passed iOS release asset verification, generic iOS build, iOS unit tests, and screenshot UI smoke. Local `make ios-build`, iOS unit tests, and `make ios-ui-test` cover the reference Discover surface, visible route controls, draggable card advancement, Matches, match add-to-order, Orders, Vendor, Review, and Profile in isolated screenshot-mode launches. | Done |
+| iOS build/test/screenshot smoke | CI run `25431174343` passed iOS release asset verification, generic iOS build, iOS unit tests, and screenshot UI smoke. Local `make ios-build`, iOS unit tests, and `make ios-ui-test` cover the reference Discover surface, visible route controls, draggable card advancement, Matches, match add-to-order, Orders, Vendor, Review, and Profile in isolated screenshot-mode launches. | Done |
 | MMDX architecture tracking | `docs/architecture.mmdx`; fresh `make mmdx-preflight` passed 3 charts. | Done |
 | Workgraph/planning tracked | `docs/WORKGRAPH.md` lists WG-001 through WG-047 and current ready frontier/risks. | Done |
 | README and vision docs updated | `README.md`, `docs/VISION.md`, `docs/QUALITY_GATES.md`, and `docs/WORKGRAPH.md` describe the hotdog app and current limits. | Done |
 | Build-vs-clone decision captured | `README.md` records `NEW REPO` and `BORROW + BUILD` using Sweet Potato/SPAPS patterns. | Done |
 | Deploy artifacts exist | `deploy/docker-compose.prod.yml`, env template, host bootstrap script, pre/post deploy scripts, release-readiness script, reverse-proxy template, bundle-aware AASA template/render script, GHCR publish workflow, and `deploy/README.md`. | Done |
-| Production image publishing | CI run `25429847369` built and pushed `ghcr.io/build000r/dogswipe:2fe4ff8ec55db21f40c46ad974f352720d539371` plus `latest`; `docker manifest inspect` returned a readable manifest for the full-SHA tag. CI now skips GHCR login/push for docs-only main pushes. | Done |
-| Deploy preflight passes | CI run `25429847369` passed `make deploy-preflight` with 18 passed, 1 expected runner warning for the absent local `reverse-proxy` network, and 0 failed; local deploy handoff preflight passes when the shared network exists. | Done |
-| Host bootstrap template passes | `make deploy-host-bootstrap-template` installs non-secret deploy artifacts into a temporary host layout and verifies deploy/env/data paths without writing secrets. | Done locally |
+| Production image publishing | CI run `25431174343` built and pushed `ghcr.io/build000r/dogswipe:c00a5258ed08944691c0843e2830d773e663eb5d` plus `latest`; `docker manifest inspect` returned a readable manifest for the full-SHA tag. CI now skips GHCR login/push for docs-only main pushes. | Done |
+| Deploy preflight passes | CI run `25431174343` passed `make deploy-preflight` with 18 passed, 1 expected runner warning for the absent local `reverse-proxy` network, and 0 failed; local deploy handoff preflight passes when the shared network exists. | Done |
+| Host bootstrap template passes | CI run `25431174343` passed `make deploy-host-bootstrap-template`, which installs non-secret deploy artifacts into a temporary host layout and verifies deploy/env/data paths without writing secrets. | Done |
 | Skillbox overlay template exists | Fresh `make deploy-overlay-template` reported 15 passed, 0 failed for the placeholder template. | Done |
 | Private deploy handoff renderers | `deploy/render-prod-env.py` and `deploy/render-skillbox-overlay.py` write private output paths only, set owner-only permissions, validate required fields, and are covered by `make deploy-private-handoff-template`. | Done |
 | Private release-readiness probe | A non-repo overlay using `dogswipe.build000r.com`, the ignored SPAPS publishable key, `IOS_RELEASE_DEVELOPMENT_TEAM=84GGQ3RBDZ`, and HTTPS universal-link auth values passed `make deploy-release-readiness` with 21 passed, 1 skipped, 0 failed. | Done locally |
 | Production host readiness | Read-only SSH probe resolved `aiops@sweet-potato-prod` and showed SPAPS healthy, but `/opt/envs/dogswipe`, `/opt/envs/dogswipe/prod.env`, `/opt/dogswipe`, and `/mnt/volume_nyc3_cfo_v1/dogswipe` do not exist yet. | Blocked |
 | Production DNS readiness | `dogswipe.build000r.com` did not resolve and `https://dogswipe.build000r.com/health` returned HTTP `000` during the probe. | Blocked |
-| CI enforces gates | `.github/workflows/ci.yml` runs backend tests/coverage/CRAP/MMDX/SPAPS-contract/drift/lint/typecheck/migration/deploy/AASA-render/private-handoff/host-bootstrap/release-readiness/Docker build and conditional GHCR publish, Swift package tests, and iOS release/build/unit/screenshot gates. Recent audited run `25429847369` passed with the private deploy handoff renderer and GHCR publish gates included. | Done |
+| CI enforces gates | `.github/workflows/ci.yml` runs backend tests/coverage/CRAP/MMDX/SPAPS-contract/drift/lint/typecheck/migration/deploy/AASA-render/private-handoff/host-bootstrap/release-readiness/Docker build and conditional GHCR publish, Swift package tests, and iOS release/build/unit/screenshot gates. Recent audited run `25431174343` passed with the host bootstrap, private deploy handoff renderer, and GHCR publish gates included. | Done |
 | Original reference-image visual parity | The supplied DogSwipe reference image is now the visual source of truth for the iOS Discover/Matches/Orders surfaces: cream/red/mustard vendor-pack chrome, Chicago Classic cards, hotdog-first art, swipe controls, match/order CTA, and My Orders cards. | Done |
 | Live production deployment | Deploy contract and preflight are ready, but `deploy/README.md` states live rollout needs a concrete skillbox overlay: host, deploy root, env source, domain, Apple Team ID, health URL, and AASA URL. | Blocked |
 | Hosted universal-link activation | Bundle-aware AASA template, local render target, and entitlement plumbing exist, but hosted verification needs the production domain and Apple Team ID. | Blocked |
@@ -59,7 +59,7 @@ SwiftUI drift clean, CRAP below 20, and meaningful backend coverage above 80%.
 - `xcodebuild -quiet -project apps/ios/DogSwipe/DogSwipe.xcodeproj -scheme DogSwipe -destination 'platform=iOS Simulator,id=<iPhone 17 Pro simulator UDID>,arch=arm64' -only-testing:DogSwipeTests test`: iOS unit tests passed.
 - `make ios-ui-test`: 8 isolated screenshot UI tests passed, including visible Discover `Live walk`/`Directions` controls, draggable Discover card advancement, match add-to-order confirmation, and the My Orders screen.
 - `make ios-screenshots`: 6 PNG attachments exported and inspected.
-- CI `Coverage` gate in run `25429847369`: backend coverage passed the required 80.0% threshold.
+- CI `Coverage` gate in run `25431174343`: backend coverage passed the required 80.0% threshold.
 - `make drift`: 0 Swift findings.
 - `make crap`: `FINAL_SCORE: 9.00`.
 - `make mmdx-preflight`: 3 charts passed.
@@ -78,9 +78,9 @@ SwiftUI drift clean, CRAP below 20, and meaningful backend coverage above 80%.
 - `make -n ios-release-archive ...`: dry-run showed the signed archive command receives production API/SPAPS/universal-link settings without running Apple signing.
 - `make -n ios-testflight-upload ...`: dry-run showed the upload target requires archive and App Store Connect API key inputs before invoking `xcodebuild -exportArchive`.
 - Sweet Potato usage audit: 0 high, 0 medium, 0 low findings.
-- GitHub Actions `25429847369`: `backend` succeeded in 2m17s including coverage, CRAP, MMDX, SPAPS app contract, SwiftUI drift, deploy preflight, AASA render smoke, private deploy handoff template, release readiness, Docker image build, backend-image change detection, GHCR login, and GHCR publish; `swift-package` succeeded in 40s; and `ios` succeeded in 11m49s, including release asset verification, generic iOS build, unit tests, and screenshot UI smoke.
-- `docker manifest inspect ghcr.io/build000r/dogswipe:2fe4ff8ec55db21f40c46ad974f352720d539371`: returned a readable Docker manifest with config digest `sha256:e715f0112fa1735b770c8a97c75d48c6b11020acb2b01f0597d073e7523d27ef`.
-- Fresh live blocker probe on 2026-05-06 after the GHCR publish: `dogswipe.build000r.com` still does not resolve; `curl https://dogswipe.build000r.com/health` returns HTTP `000`; read-only SSH shows `/opt/envs/dogswipe`, `/opt/envs/dogswipe/prod.env`, `/opt/dogswipe`, and `/mnt/volume_nyc3_cfo_v1/dogswipe` are still absent while `spaps-python`, `spaps-python-redis`, and `spaps-python-db` are running.
+- GitHub Actions `25431174343`: `backend` succeeded in 3m10s including coverage, CRAP, MMDX, SPAPS app contract, SwiftUI drift, deploy preflight, AASA render smoke, private deploy handoff template, host bootstrap template, release readiness, Docker image build, backend-image change detection, GHCR login, and GHCR publish; `swift-package` succeeded in 34s; and `ios` succeeded in 13m0s, including release asset verification, generic iOS build, unit tests, and screenshot UI smoke.
+- `docker manifest inspect ghcr.io/build000r/dogswipe:c00a5258ed08944691c0843e2830d773e663eb5d`: returned a readable Docker manifest with config digest `sha256:79f714c69b85416a2616aea39f8cb3f930c336f1f201facd60d9f508046a6243`.
+- Fresh live blocker probe on 2026-05-06 after the latest GHCR publish: `dogswipe.build000r.com` still does not resolve; `curl https://dogswipe.build000r.com/health` returns HTTP `000`; read-only SSH shows `/opt/envs/dogswipe`, `/opt/envs/dogswipe/prod.env`, `/opt/dogswipe`, and `/mnt/volume_nyc3_cfo_v1/dogswipe` are still absent while `spaps-python`, `spaps-python-redis`, and `spaps-python-db` are running.
 
 ## Verdict
 
