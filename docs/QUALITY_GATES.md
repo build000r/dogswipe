@@ -16,7 +16,7 @@ Last verified: 2026-05-06
 | Backend typecheck | `make typecheck` | passed |
 | Alembic migration smoke | `make backend-test` | migration test upgraded to `0009` and downgraded to `base` |
 | Backend container build | `docker build -q backend` | built image `sha256:36e49501e78985bb76212fbb7498bac4662a19daf667dcd1618be3627777698e` |
-| Backend container publish | GitHub Actions `25431174343` on `main` | pushed `ghcr.io/build000r/dogswipe:c00a5258ed08944691c0843e2830d773e663eb5d` and `latest`; full-SHA tag has a readable Docker manifest |
+| Backend container publish | GitHub Actions `25431174343` on `main` | pushed `ghcr.io/build000r/dogswipe:c00a5258ed08944691c0843e2830d773e663eb5d` and `latest`; full-SHA tag has a readable Docker manifest. Latest docs-only run `25431866526` skipped GHCR login/publish as intended |
 | Production Compose config | `make deploy-config` | passed |
 | Deploy preflight | `make deploy-preflight` | CI runner: 18 passed, 1 expected warning for absent local `reverse-proxy` network, 0 failed; local private handoff preflight passes when the shared network exists |
 | AASA render smoke | `make deploy-render-aasa AASA_APPLE_TEAM_ID=ABCDE12345` | rendered bundle-aware Apple app-site association payload |
@@ -24,14 +24,14 @@ Last verified: 2026-05-06
 | Private deploy handoff template | `make deploy-private-handoff-template` | rendered throwaway private overlay/env files, validated overlay, and ran deploy preflight with 19 passed, 0 warnings, 0 failed |
 | Host bootstrap template | `make deploy-host-bootstrap-template` in GitHub Actions `25431174343` | installed non-secret deploy artifacts into a temporary host layout and verified deploy/env/data paths |
 | Private release-readiness probe | non-repo overlay for `dogswipe.build000r.com` plus ignored SPAPS env values and `IOS_RELEASE_DEVELOPMENT_TEAM=84GGQ3RBDZ` | 21 passed, 1 skipped, 0 failed; no secrets printed |
-| Production host/DNS probe | `ssh-info` read-only status plus DNS/health checks for `dogswipe.build000r.com` | SPAPS host reachable and healthy; DogSwipe deploy root/env paths absent; `dogswipe.build000r.com` unresolved |
+| Production host/DNS probe | deploy/`ssh-info` read-only status plus DNS/health checks for `dogswipe.build000r.com` | SPAPS host reachable and healthy over legacy key-backed SSH; DogSwipe deploy root/env paths absent; `dogswipe.build000r.com` unresolved; `build000r.com` has no public NS/SOA; `buildooor.com` is active on Cloudflare but has no `dogswipe` record |
 | Skillbox overlay template | `make deploy-overlay-template` | 15 passed, 0 failed |
 | SwiftUI drift scan | `make drift` | 0 Swift findings |
 | iOS release assets | `make ios-release-assets` | AppIcon, accent color, privacy manifest, associated-domains entitlement, bundle-aware Apple app-site association template, build-setting-backed auth config, and App Store Connect export option plists passed |
 | CRAP score | `make crap` | `FINAL_SCORE: 9.00` |
 | MMDX preflight | `make mmdx-preflight` | 3 charts passed |
 | SPAPS app contract | `make spaps-app-contract` | public descriptor declares the `dogswipe` slug, env-only private key handoff, and renderable `browser_auth` self-service registration payload |
-| CI quality enforcement | GitHub Actions `25431174343` `backend`, `swift-package`, and `ios` jobs for commit `c00a525` | coverage XML feeds blocking CRAP; MMDX, SPAPS app contract, registration-payload validation, SwiftUI drift, deploy/AASA render, private handoff renderers, host bootstrap, release-readiness, Docker build, conditional Docker publish, Swift package, durable order API/client changes, and iOS gates fail on regressions; iOS prefers a modern simulator, preboots it, disables parallel test workers, uses bounded destination/job/test timeouts, and runs direct-tab screenshot UI smoke |
+| CI quality enforcement | GitHub Actions `25431174343` for executable deploy changes and latest main run `25431866526` for docs commit `b8772b0` | coverage XML feeds blocking CRAP; MMDX, SPAPS app contract, registration-payload validation, SwiftUI drift, deploy/AASA render, private handoff renderers, host bootstrap, release-readiness, Docker build, conditional Docker publish, Swift package, durable order API/client changes, and iOS gates fail on regressions; iOS prefers a modern simulator, preboots it, disables parallel test workers, uses bounded destination/job/test timeouts, and runs direct-tab screenshot UI smoke. Run `25431866526` passed after rerunning a transient iOS screenshot timeout |
 | SPAPS usage audit | `python3 ../sweet-potato/skills/sweet-potato-usage-audit/scripts/audit_sweet_potato_usage.py --sweet-potato-root ../sweet-potato .` | 0 high, 0 medium, 0 low |
 
 ## Current Product Evidence
@@ -83,5 +83,5 @@ Last verified: 2026-05-06
 
 ## Known Blocks
 
-- Live deployment, production SPAPS auth proof, and hosted universal-link activation are blocked until `dogswipe.build000r.com` resolves, the production host has a DogSwipe deploy root and private env source, and the shared reverse proxy serves the API plus Apple app-site association payload. A fresh 2026-05-06 probe still shows the DNS record unresolved and the DogSwipe host paths absent.
+- Live deployment, production SPAPS auth proof, and hosted universal-link activation are blocked until the canonical domain is real, the production host has a DogSwipe deploy root and private env source, and the shared reverse proxy serves the API plus Apple app-site association payload. A fresh 2026-05-06 probe shows `build000r.com` has no public NS/SOA, `dogswipe.build000r.com` is unresolved, `buildooor.com` is active on Cloudflare without a DogSwipe subdomain, and the DogSwipe host paths are absent.
 - Live App Store signing and TestFlight upload remain blocked because bundle ownership, signing assets, and App Store Connect credentials are not available in this workspace.

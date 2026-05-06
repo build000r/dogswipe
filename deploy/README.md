@@ -50,6 +50,12 @@ bash deploy/validate-skillbox-overlay.sh \
   /path/to/skillbox-config/clients/dogswipe/overlay.yaml
 ```
 
+The current private handoff candidate is `dogswipe.build000r.com`. A fresh
+2026-05-06 DNS probe showed `build000r.com` has no public NS/SOA response.
+`buildooor.com` is an active Cloudflare zone, but switching DogSwipe to
+`dogswipe.buildooor.com` is a private release/SPAPS handoff change, not just a
+public-doc edit.
+
 Before archive/upload or live rollout, run the combined readiness gate against
 the private overlay and release environment:
 
@@ -252,6 +258,9 @@ the private overlay/env render path without committing or printing secrets.
 
 No live deployment should run until the skillbox overlay supplies the concrete
 host, deploy root, env source, production domain, Apple Team ID, health URL, and
-AASA URL. The current repo can prove the container, migration, universal-link
-asset template/render path, and Compose contract locally; it cannot prove DNS,
-certificates, Apple account ownership, or production secrets by itself.
+AASA URL. The production domain also needs public DNS authority: the current
+`dogswipe.build000r.com` candidate is blocked because `build000r.com` has no
+public NS/SOA response. The current repo can prove the container, migration,
+universal-link asset template/render path, and Compose contract locally; it
+cannot prove DNS, certificates, Apple account ownership, or production secrets
+by itself.
