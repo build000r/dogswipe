@@ -79,7 +79,7 @@ struct MatchesView: View {
                 Text("No saved bites yet")
                     .font(.title3.weight(.heavy))
                     .foregroundStyle(Color.dsInk)
-                Text("Like a local dog from Discover and it lands here.")
+                Text("Like a local hotdog from Discover and it lands here.")
                     .font(.subheadline)
                     .foregroundStyle(Color.dsMuted)
                     .multilineTextAlignment(.center)
@@ -95,7 +95,7 @@ struct MatchesView: View {
     private var savedMatches: some View {
         VStack(alignment: .leading, spacing: .dsSpace3) {
             DogSwipeSectionHeader(
-                title: "Saved dogs",
+                title: "Saved hotdogs",
                 subtitle: viewModel.isUsingCurrentLocation
                     ? "Ranked by your current walk."
                     : "Ready when the craving hits.",

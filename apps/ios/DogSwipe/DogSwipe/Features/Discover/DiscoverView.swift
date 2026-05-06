@@ -43,7 +43,7 @@ struct DiscoverView: View {
                     emptyState
                 }
 
-                Text("Swipe right for dogs")
+                Text("Swipe right for hotdogs")
                     .font(.footnote.weight(.semibold))
                     .foregroundStyle(Color.dsMuted)
                 controls

@@ -6,7 +6,7 @@ DogSwipe should feel like the fastest way to find the right local hotdog: a Tind
 
 Local food discovery breaks down because menus are scattered, craving fit is hard to compare, and nearby vendors are usually buried in generic map results. DogSwipe narrows that loop: people swipe through high-signal hotdog cards, search bounded menu snapshots for craving terms, the app explains price/distance/crave fit, and the backend records preference signals that can mature into vendor and route workflows.
 
-The visual thesis is product-first and playful without becoming a generic food feed: cream surfaces, red/mustard action colors, a script-like DogSwipe brand mark, a Chicago-style hero dog, a "Swipe right for dogs" control deck, and a match screen that turns a positive swipe into a concrete order CTA.
+The visual thesis is product-first and playful without becoming a generic food feed: cream surfaces, red/mustard action colors, a script-like DogSwipe brand mark, a Chicago-style hero dog, a "Swipe right for hotdogs" control deck, and a match screen that turns a positive swipe into a concrete order CTA.
 
 ## Minimum Winning Slice
 
