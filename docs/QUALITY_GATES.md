@@ -26,7 +26,7 @@ Last verified: 2026-05-06
 | CRAP score | `make crap` | `FINAL_SCORE: 9.00` |
 | MMDX preflight | `make mmdx-preflight` | 3 charts passed |
 | SPAPS app contract | `make spaps-app-contract` | public descriptor declares the `dogswipe` slug and env-only private key handoff |
-| CI quality enforcement | GitHub Actions `25420088742` `backend`, `swift-package`, and `ios` jobs for executable-code commit `053960b` | coverage XML feeds blocking CRAP; MMDX, SwiftUI drift, deploy/AASA render, release-readiness, Swift package, and iOS gates fail on regressions; iOS prefers a modern simulator, preboots it, disables parallel test workers, uses bounded destination/job/test timeouts, and runs direct-tab screenshot UI smoke |
+| CI quality enforcement | GitHub Actions `25421160684` `backend`, `swift-package`, and `ios` jobs for executable-code commit `acfcaa2` | coverage XML feeds blocking CRAP; MMDX, SPAPS app contract, SwiftUI drift, deploy/AASA render, release-readiness, Swift package, and iOS gates fail on regressions; iOS prefers a modern simulator, preboots it, disables parallel test workers, uses bounded destination/job/test timeouts, and runs direct-tab screenshot UI smoke |
 | SPAPS usage audit | `python3 ../sweet-potato/skills/sweet-potato-usage-audit/scripts/audit_sweet_potato_usage.py --sweet-potato-root ../sweet-potato .` | 0 high, 0 medium, 0 low |
 
 ## Current Product Evidence

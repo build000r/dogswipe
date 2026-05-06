@@ -2,7 +2,7 @@
 
 Date: 2026-05-06
 Implementation audited: hotdog swipe deck, visible Discover route controls, local match order draft, signed release/TestFlight handoff scaffolding, bundle-aware AASA render path, release-readiness gate, and public SPAPS app descriptor as of this document revision
-Latest executable-code CI run audited: `25420088742` (`053960b`)
+Latest executable-code CI run audited: `25421160684` (`acfcaa2`)
 
 ## Objective Restated
 
@@ -30,7 +30,7 @@ SwiftUI drift clean, CRAP below 20, and meaningful backend coverage above 80%.
 | CRAP below 20 | Fresh `make crap` reported `FINAL_SCORE: 9.00`; CI CRAP gate passed. | Done |
 | Meaningful backend test coverage above 80% | Fresh `make coverage` ran 75 backend tests and reported total coverage 89.61%. | Done |
 | Swift test coverage through behavior | Fresh `make swift-test` ran 33 tests across API client, scorer, and deck state. | Done |
-| iOS build/test/screenshot smoke | CI run `25420088742` passed iOS build, iOS unit tests, and screenshot UI smoke. Local `make ios-ui-test` now covers the reference Discover surface, visible route controls, draggable card advancement, Matches, match add-to-order, Vendor, Review, and Profile in isolated screenshot-mode launches. | Done |
+| iOS build/test/screenshot smoke | CI run `25421160684` passed iOS build, iOS unit tests, and screenshot UI smoke. Local `make ios-ui-test` now covers the reference Discover surface, visible route controls, draggable card advancement, Matches, match add-to-order, Vendor, Review, and Profile in isolated screenshot-mode launches. | Done |
 | MMDX architecture tracking | `docs/architecture.mmdx`; fresh `make mmdx-preflight` passed 3 charts. | Done |
 | Workgraph/planning tracked | `docs/WORKGRAPH.md` lists WG-001 through WG-042 and current ready frontier/risks. | Done |
 | README and vision docs updated | `README.md`, `docs/VISION.md`, `docs/QUALITY_GATES.md`, and `docs/WORKGRAPH.md` describe the hotdog app and current limits. | Done |
@@ -38,7 +38,7 @@ SwiftUI drift clean, CRAP below 20, and meaningful backend coverage above 80%.
 | Deploy artifacts exist | `deploy/docker-compose.prod.yml`, env template, pre/post deploy scripts, release-readiness script, reverse-proxy template, bundle-aware AASA template/render script, and `deploy/README.md`. | Done |
 | Deploy preflight passes | Fresh `make deploy-preflight` reported 19 passed, 0 warnings, 0 failed. | Done |
 | Skillbox overlay template exists | Fresh `make deploy-overlay-template` reported 15 passed, 0 failed for the placeholder template. | Done |
-| CI enforces gates | `.github/workflows/ci.yml` runs backend tests/coverage/CRAP/MMDX/SPAPS-contract/drift/lint/typecheck/migration/deploy/AASA-render/release-readiness/Docker, Swift package tests, and iOS release/build/unit/screenshot gates. Audited executable-code run `25420088742` passed with the release-readiness gate included; SPAPS-contract CI proof is pending the next run for this document revision. | Done |
+| CI enforces gates | `.github/workflows/ci.yml` runs backend tests/coverage/CRAP/MMDX/SPAPS-contract/drift/lint/typecheck/migration/deploy/AASA-render/release-readiness/Docker, Swift package tests, and iOS release/build/unit/screenshot gates. Audited executable-code run `25421160684` passed with the SPAPS app contract and release-readiness gates included. | Done |
 | Original reference-image visual parity | The supplied DogSwipe reference image is now the visual source of truth for the iOS Discover/Matches surfaces: cream/red/mustard vendor-pack chrome, Chicago Classic cards, hotdog-first art, swipe controls, and match/order CTA. | Done |
 | Live production deployment | Deploy contract and preflight are ready, but `deploy/README.md` states live rollout needs a concrete skillbox overlay: host, deploy root, env source, domain, Apple Team ID, health URL, and AASA URL. | Blocked |
 | Hosted universal-link activation | Bundle-aware AASA template, local render target, and entitlement plumbing exist, but hosted verification needs the production domain and Apple Team ID. | Blocked |
@@ -65,7 +65,7 @@ SwiftUI drift clean, CRAP below 20, and meaningful backend coverage above 80%.
 - `make -n ios-release-archive ...`: dry-run showed the signed archive command receives production API/SPAPS/universal-link settings without running Apple signing.
 - `make -n ios-testflight-upload ...`: dry-run showed the upload target requires archive and App Store Connect API key inputs before invoking `xcodebuild -exportArchive`.
 - Sweet Potato usage audit: 0 high, 0 medium, 0 low findings.
-- GitHub Actions `25420088742`: `backend` succeeded in 2m12s including release readiness and AASA render smoke, `swift-package` succeeded in 25s, and `ios` succeeded in 9m32s, including screenshot UI smoke.
+- GitHub Actions `25421160684`: `backend` succeeded in 2m7s including SPAPS app contract, release readiness, and AASA render smoke; `swift-package` succeeded in 39s; and `ios` succeeded in 11m12s, including screenshot UI smoke.
 
 ## Verdict
 
