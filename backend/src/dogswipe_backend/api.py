@@ -19,6 +19,9 @@ from .schemas import (
     DiscoveryResponse,
     MatchResponse,
     MenuIngestionResponse,
+    OrderCreateRequest,
+    OrderListResponse,
+    OrderResponse,
     SwipeRequest,
     SwipeResponse,
     VendorSubmissionListResponse,
@@ -113,6 +116,21 @@ def build_api_router() -> APIRouter:
         user_id: str = Depends(get_current_user_id),
     ) -> CravingPreferences:
         return await service.update_preferences(user_id=user_id, preferences=request)
+
+    @v1.get("/orders", response_model=OrderListResponse)
+    async def orders(
+        service: DogSwipeService = Depends(get_service),
+        user_id: str = Depends(get_current_user_id),
+    ) -> OrderListResponse:
+        return await service.orders(user_id=user_id)
+
+    @v1.post("/orders", response_model=OrderResponse, status_code=status.HTTP_201_CREATED)
+    async def create_order(
+        request: OrderCreateRequest,
+        service: DogSwipeService = Depends(get_service),
+        user_id: str = Depends(get_current_user_id),
+    ) -> OrderResponse:
+        return await service.create_order(user_id=user_id, request=request)
 
     @v1.get("/vendor/submissions", response_model=VendorSubmissionListResponse)
     async def vendor_submissions(

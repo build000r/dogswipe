@@ -28,6 +28,10 @@ struct ScreenshotDogSwipeHTTPClient: DogSwipeHTTPClient {
             )
         case ("GET", "/v1/matches"):
             return try encoder.encode(MatchResponse(matches: ScreenshotHotdogs.matches))
+        case ("GET", "/v1/orders"):
+            return try encoder.encode(OrderListResponse(orders: ScreenshotHotdogs.orders))
+        case ("POST", "/v1/orders"):
+            return try encoder.encode(OrderResponse(order: ScreenshotHotdogs.createdOrder))
         case ("GET", "/v1/preferences"), ("PUT", "/v1/preferences"):
             return try encoder.encode(
                 DiscoveryPreferences(maxDistanceMiles: 6, spicyFriendly: true, classicOnly: false)
@@ -109,6 +113,50 @@ private enum ScreenshotHotdogs {
         chicago,
         kimchi
     ]
+
+    static let orders = [
+        DogSwipeOrder(
+            id: "screenshot-order-1",
+            profileID: coney.id,
+            hotdogName: coney.name,
+            vendorName: coney.vendorName,
+            basePriceDollars: coney.priceDollars,
+            addOns: [
+                DogSwipeOrderAddOn(id: "bacon", name: "Bacon", priceDollars: 1.00),
+                DogSwipeOrderAddOn(id: "extra-pickle", name: "Extra Pickle", priceDollars: 0.50)
+            ],
+            totalDollars: 7.99,
+            status: "draft",
+            createdAt: "2026-05-06T14:00:00Z"
+        ),
+        DogSwipeOrder(
+            id: "screenshot-order-2",
+            profileID: chicago.id,
+            hotdogName: chicago.name,
+            vendorName: chicago.vendorName,
+            basePriceDollars: chicago.priceDollars,
+            addOns: [
+                DogSwipeOrderAddOn(id: "jalapenos", name: "Jalapenos", priceDollars: 0.75)
+            ],
+            totalDollars: 8.00,
+            status: "draft",
+            createdAt: "2026-05-06T13:40:00Z"
+        )
+    ]
+
+    static let createdOrder = DogSwipeOrder(
+        id: "screenshot-order-created",
+        profileID: coney.id,
+        hotdogName: coney.name,
+        vendorName: coney.vendorName,
+        basePriceDollars: coney.priceDollars,
+        addOns: [
+            DogSwipeOrderAddOn(id: "bacon", name: "Bacon", priceDollars: 1.00)
+        ],
+        totalDollars: 7.49,
+        status: "draft",
+        createdAt: "2026-05-06T14:10:00Z"
+    )
 
     static let vendorSubmissions = [
         pendingVendorSubmission,

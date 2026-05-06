@@ -163,6 +163,120 @@ public struct MatchResponse: Codable, Equatable, Sendable {
     }
 }
 
+public struct DogSwipeOrderAddOn: Identifiable, Codable, Equatable, Sendable {
+    public let id: String
+    public let name: String
+    public let priceDollars: Double
+
+    public init(id: String, name: String, priceDollars: Double) {
+        self.id = id
+        self.name = name
+        self.priceDollars = priceDollars
+    }
+
+    public var priceLabel: String {
+        Self.priceLabel(for: priceDollars)
+    }
+
+    public static func priceLabel(for amount: Double) -> String {
+        String(format: "$%.2f", amount)
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case name
+        case priceDollars = "price_dollars"
+    }
+}
+
+public struct DogSwipeOrder: Identifiable, Codable, Equatable, Sendable {
+    public let id: String
+    public let profileID: String
+    public let hotdogName: String
+    public let vendorName: String
+    public let basePriceDollars: Double
+    public let addOns: [DogSwipeOrderAddOn]
+    public let totalDollars: Double
+    public let status: String
+    public let createdAt: String
+
+    public init(
+        id: String,
+        profileID: String,
+        hotdogName: String,
+        vendorName: String,
+        basePriceDollars: Double,
+        addOns: [DogSwipeOrderAddOn],
+        totalDollars: Double,
+        status: String,
+        createdAt: String
+    ) {
+        self.id = id
+        self.profileID = profileID
+        self.hotdogName = hotdogName
+        self.vendorName = vendorName
+        self.basePriceDollars = basePriceDollars
+        self.addOns = addOns
+        self.totalDollars = totalDollars
+        self.status = status
+        self.createdAt = createdAt
+    }
+
+    public var totalLabel: String {
+        DogSwipeOrderAddOn.priceLabel(for: totalDollars)
+    }
+
+    public var addOnSummary: String {
+        guard !addOns.isEmpty else {
+            return "No add-ons"
+        }
+        return addOns.map(\.name).joined(separator: ", ")
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case profileID = "profile_id"
+        case hotdogName = "hotdog_name"
+        case vendorName = "vendor_name"
+        case basePriceDollars = "base_price_dollars"
+        case addOns = "add_ons"
+        case totalDollars = "total_dollars"
+        case status
+        case createdAt = "created_at"
+    }
+}
+
+public struct OrderCreateRequest: Codable, Equatable, Sendable {
+    public let profileID: String
+    public let addOnIDs: [String]
+
+    public init(profileID: String, addOnIDs: [String]) {
+        self.profileID = profileID
+        self.addOnIDs = addOnIDs
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case profileID = "profile_id"
+        case addOnIDs = "add_on_ids"
+    }
+}
+
+public struct OrderResponse: Codable, Equatable, Sendable {
+    public let order: DogSwipeOrder
+
+    public init(order: DogSwipeOrder) {
+        self.order = order
+    }
+}
+
+public struct OrderListResponse: Codable, Equatable, Sendable {
+    public let orders: [DogSwipeOrder]
+
+    public init(orders: [DogSwipeOrder]) {
+        self.orders = orders
+    }
+}
+
 public struct VendorSubmissionRequest: Codable, Equatable, Sendable {
     public let vendorName: String
     public let name: String

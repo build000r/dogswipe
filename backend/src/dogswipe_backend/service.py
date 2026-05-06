@@ -21,6 +21,10 @@ from .schemas import (
     HotdogProfile,
     MatchResponse,
     MenuIngestionResponse,
+    OrderAddOn,
+    OrderCreateRequest,
+    OrderListResponse,
+    OrderResponse,
     SwipeRequest,
     SwipeResponse,
     VendorSubmissionListResponse,
@@ -30,6 +34,15 @@ from .schemas import (
 
 EARTH_RADIUS_MILES = 3958.8
 MENU_QUERY_MAX_LENGTH = 64
+ORDER_ADD_ONS: dict[str, OrderAddOn] = {
+    add_on.id: add_on
+    for add_on in [
+        OrderAddOn(id="bacon", name="Bacon", price_dollars=1.00),
+        OrderAddOn(id="jalapenos", name="Jalapenos", price_dollars=0.75),
+        OrderAddOn(id="cheese-sauce", name="Cheese Sauce", price_dollars=1.25),
+        OrderAddOn(id="extra-pickle", name="Extra Pickle", price_dollars=0.50),
+    ]
+}
 
 
 class DogSwipeService:
@@ -108,6 +121,30 @@ class DogSwipeService:
         preferences: CravingPreferences,
     ) -> CravingPreferences:
         return await self.repository.upsert_preferences(user_id=user_id, preferences=preferences)
+
+    async def orders(self, *, user_id: str) -> OrderListResponse:
+        return OrderListResponse(orders=await self.repository.list_orders(user_id=user_id))
+
+    async def create_order(
+        self,
+        *,
+        user_id: str,
+        request: OrderCreateRequest,
+    ) -> OrderResponse:
+        add_ons = self._order_add_ons(request.add_on_ids)
+        profile = await self.repository.get_orderable_profile(profile_id=request.profile_id)
+        if profile is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Hotdog profile not found",
+            )
+        return OrderResponse(
+            order=await self.repository.create_order(
+                user_id=user_id,
+                profile=profile,
+                add_ons=add_ons,
+            )
+        )
 
     async def submit_vendor_profile(
         self,
@@ -370,6 +407,26 @@ class DogSwipeService:
     @staticmethod
     def _query_terms(menu_query: str) -> list[str]:
         return re.findall(r"[a-z0-9]+", menu_query.lower())
+
+    @staticmethod
+    def _order_add_ons(add_on_ids: list[str]) -> list[OrderAddOn]:
+        seen: set[str] = set()
+        add_ons: list[OrderAddOn] = []
+        for add_on_id in add_on_ids:
+            normalized = add_on_id.strip()
+            if not normalized or normalized not in ORDER_ADD_ONS:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                    detail="Unknown order add-on",
+                )
+            if normalized in seen:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                    detail="Duplicate order add-on",
+                )
+            seen.add(normalized)
+            add_ons.append(ORDER_ADD_ONS[normalized])
+        return add_ons
 
     @staticmethod
     def _profile_with_location_distance(

@@ -123,19 +123,22 @@ final class DogSwipeSmokeTests: XCTestCase {
         let analytics = DogSwipeAnalytics(sink: sink)
 
         analytics.trackScreenViewed(.discover)
+        analytics.trackScreenViewed(.orders)
         analytics.trackDiscoverySwipe(decision: "like", profileID: "hotdog-chicago")
         analytics.trackAuthMagicLinkRequested()
 
         XCTAssertEqual(sink.events.map(\.name), [
             "ios_screen_viewed",
+            "ios_screen_viewed",
             "ios_discovery_swipe",
             "ios_auth_magic_link_requested"
         ])
         XCTAssertEqual(sink.events[0].parameters, ["screen": "discover"])
-        XCTAssertEqual(sink.events[1].parameters["decision"], "like")
-        XCTAssertEqual(sink.events[1].parameters["profile_id"], "hotdog-chicago")
-        XCTAssertNil(sink.events[2].parameters["email"])
-        XCTAssertNil(sink.events[2].parameters["name"])
+        XCTAssertEqual(sink.events[1].parameters, ["screen": "orders"])
+        XCTAssertEqual(sink.events[2].parameters["decision"], "like")
+        XCTAssertEqual(sink.events[2].parameters["profile_id"], "hotdog-chicago")
+        XCTAssertNil(sink.events[3].parameters["email"])
+        XCTAssertNil(sink.events[3].parameters["name"])
     }
 
     func testCravingPreferencesStoreBuildsDiscoveryPreferences() {
@@ -153,20 +156,77 @@ final class DogSwipeSmokeTests: XCTestCase {
     }
 
     @MainActor
-    func testOrderStoreAddsLocalDraftWithSelectedAddOns() {
-        let store = OrderStore()
+    func testOrderStoreCreatesDurableDraftWithSelectedAddOns() async throws {
+        let http = MockHTTPClient()
+        http.responses = [
+            try encodedOrderResponse(
+                id: "order-hotdog-sample",
+                profile: HotdogProfile.samples[0],
+                addOns: [
+                    DogSwipeOrderAddOn(id: "bacon", name: "Bacon", priceDollars: 1.00),
+                    DogSwipeOrderAddOn(id: "extra-pickle", name: "Extra Pickle", priceDollars: 0.50)
+                ],
+                totalDollars: HotdogProfile.samples[0].priceDollars + 1.50
+            )
+        ]
+        let apiClient = DogSwipeAPIClient(
+            baseURL: URL(string: "http://localhost:8000")!,
+            httpClient: http
+        )
+        let store = OrderStore(apiClient: apiClient)
         let selectedAddOns = [
             OrderAddOn.matchDefaults[0],
             OrderAddOn.matchDefaults[3]
         ]
 
-        let item = store.add(profile: HotdogProfile.samples[0], addOns: selectedAddOns)
+        let item = try await store.add(profile: HotdogProfile.samples[0], addOns: selectedAddOns)
 
         XCTAssertEqual(store.itemCount, 1)
         XCTAssertEqual(store.latestItem, item)
         XCTAssertEqual(item.profileID, HotdogProfile.samples[0].id)
         XCTAssertEqual(item.addOnSummary, "Bacon, Extra Pickle")
         XCTAssertEqual(item.totalDollars, HotdogProfile.samples[0].priceDollars + 1.50, accuracy: 0.001)
+        let request = try XCTUnwrap(http.requests.first)
+        XCTAssertEqual(request.url?.path, "/v1/orders")
+        XCTAssertEqual(request.httpMethod, "POST")
+        let body = try jsonBody(request)
+        XCTAssertEqual(body["profile_id"] as? String, HotdogProfile.samples[0].id)
+        XCTAssertEqual(body["add_on_ids"] as? [String], ["bacon", "extra-pickle"])
+        XCTAssertNil(body["user_id"])
+    }
+
+    @MainActor
+    func testOrderStoreLoadsDurableDraftsViaAPI() async throws {
+        let http = MockHTTPClient()
+        http.responses = [
+            try JSONEncoder().encode(
+                OrderListResponse(
+                    orders: [
+                        makeOrder(
+                            id: "order-hotdog-sample",
+                            profile: HotdogProfile.samples[0],
+                            addOns: [
+                                DogSwipeOrderAddOn(id: "bacon", name: "Bacon", priceDollars: 1.00)
+                            ],
+                            totalDollars: HotdogProfile.samples[0].priceDollars + 1.00
+                        )
+                    ]
+                )
+            )
+        ]
+        let apiClient = DogSwipeAPIClient(
+            baseURL: URL(string: "http://localhost:8000")!,
+            httpClient: http
+        )
+        let store = OrderStore(apiClient: apiClient)
+
+        await store.load()
+
+        XCTAssertEqual(store.items.map(\.id), ["order-hotdog-sample"])
+        XCTAssertEqual(store.latestItem?.addOnSummary, "Bacon")
+        XCTAssertNil(store.errorMessage)
+        XCTAssertEqual(http.requests.first?.url?.path, "/v1/orders")
+        XCTAssertEqual(http.requests.first?.httpMethod, "GET")
     }
 
     @MainActor
@@ -1100,6 +1160,43 @@ final class DogSwipeSmokeTests: XCTestCase {
                     availabilityStatus: .pendingReview
                 )
             )
+        )
+    }
+
+    private func encodedOrderResponse(
+        id: String,
+        profile: HotdogProfile,
+        addOns: [DogSwipeOrderAddOn],
+        totalDollars: Double
+    ) throws -> Data {
+        try JSONEncoder().encode(
+            OrderResponse(
+                order: makeOrder(
+                    id: id,
+                    profile: profile,
+                    addOns: addOns,
+                    totalDollars: totalDollars
+                )
+            )
+        )
+    }
+
+    private func makeOrder(
+        id: String,
+        profile: HotdogProfile,
+        addOns: [DogSwipeOrderAddOn],
+        totalDollars: Double
+    ) -> DogSwipeOrder {
+        DogSwipeOrder(
+            id: id,
+            profileID: profile.id,
+            hotdogName: profile.name,
+            vendorName: profile.vendorName,
+            basePriceDollars: profile.priceDollars,
+            addOns: addOns,
+            totalDollars: totalDollars,
+            status: "draft",
+            createdAt: "2026-05-06T14:10:00Z"
         )
     }
 

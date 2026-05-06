@@ -208,6 +208,86 @@ async def test_unknown_profile_swipe_is_not_match(async_client) -> None:
 
 
 @pytest.mark.asyncio
+async def test_create_order_snapshots_profile_and_add_ons(async_client) -> None:
+    headers = {"X-DogSwipe-User-ID": "order-user"}
+
+    response = await async_client.post(
+        "/v1/orders",
+        headers=headers,
+        json={
+            "profile_id": "hotdog-coney",
+            "add_on_ids": ["bacon", "extra-pickle"],
+        },
+    )
+
+    assert response.status_code == 201
+    order = response.json()["order"]
+    assert order["profile_id"] == "hotdog-coney"
+    assert order["hotdog_name"] == "Coney Classic"
+    assert order["vendor_name"] == "Franklin Cart"
+    assert order["base_price_dollars"] == 6.5
+    assert order["total_dollars"] == 8.0
+    assert order["status"] == "draft"
+    assert [add_on["id"] for add_on in order["add_ons"]] == ["bacon", "extra-pickle"]
+    assert "user_id" not in order
+
+    list_response = await async_client.get("/v1/orders", headers=headers)
+
+    assert list_response.status_code == 200
+    assert [saved["id"] for saved in list_response.json()["orders"]] == [order["id"]]
+
+
+@pytest.mark.asyncio
+async def test_orders_are_user_scoped(async_client) -> None:
+    await async_client.post(
+        "/v1/orders",
+        headers={"X-DogSwipe-User-ID": "order-owner"},
+        json={"profile_id": "hotdog-coney", "add_on_ids": []},
+    )
+
+    response = await async_client.get(
+        "/v1/orders",
+        headers={"X-DogSwipe-User-ID": "other-order-user"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["orders"] == []
+
+
+@pytest.mark.asyncio
+async def test_create_order_rejects_unknown_add_on(async_client) -> None:
+    response = await async_client.post(
+        "/v1/orders",
+        json={"profile_id": "hotdog-coney", "add_on_ids": ["gold-leaf"]},
+    )
+
+    assert response.status_code == 422
+    assert response.json()["detail"] == "Unknown order add-on"
+
+
+@pytest.mark.asyncio
+async def test_create_order_rejects_duplicate_add_on(async_client) -> None:
+    response = await async_client.post(
+        "/v1/orders",
+        json={"profile_id": "hotdog-coney", "add_on_ids": ["bacon", "bacon"]},
+    )
+
+    assert response.status_code == 422
+    assert response.json()["detail"] == "Duplicate order add-on"
+
+
+@pytest.mark.asyncio
+async def test_create_order_requires_orderable_profile(async_client) -> None:
+    response = await async_client.post(
+        "/v1/orders",
+        json={"profile_id": "missing-hotdog", "add_on_ids": []},
+    )
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Hotdog profile not found"
+
+
+@pytest.mark.asyncio
 async def test_swipe_rejects_client_supplied_user_id(async_client) -> None:
     response = await async_client.post(
         "/v1/swipes",

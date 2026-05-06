@@ -94,6 +94,43 @@ class CravingPreferences(BaseModel):
     classic_only: bool = False
 
 
+class OrderAddOn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    id: str = Field(min_length=1, max_length=64)
+    name: str = Field(min_length=1, max_length=80)
+    price_dollars: float = Field(ge=0, le=20)
+
+
+class OrderCreateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    profile_id: str = Field(min_length=1, max_length=64)
+    add_on_ids: list[str] = Field(default_factory=list, max_length=8)
+
+
+class OrderItem(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str
+    profile_id: str
+    hotdog_name: str
+    vendor_name: str
+    base_price_dollars: float = Field(ge=0)
+    add_ons: list[OrderAddOn]
+    total_dollars: float = Field(ge=0)
+    status: str
+    created_at: datetime
+
+
+class OrderResponse(BaseModel):
+    order: OrderItem
+
+
+class OrderListResponse(BaseModel):
+    orders: list[OrderItem]
+
+
 class VendorSubmissionRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 

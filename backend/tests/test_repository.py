@@ -5,7 +5,7 @@ from datetime import UTC, datetime, timedelta
 import pytest
 
 from dogswipe_backend.repository import SqlAlchemyHotdogRepository
-from dogswipe_backend.schemas import VendorSubmissionRequest
+from dogswipe_backend.schemas import OrderAddOn, VendorSubmissionRequest
 
 
 @pytest.mark.asyncio
@@ -26,6 +26,34 @@ async def test_repository_filters_available_profiles_by_coordinate_window(databa
             "hotdog-nightcap",
         ]
         assert all(profile.latitude is not None for profile in profiles)
+
+
+@pytest.mark.asyncio
+async def test_repository_creates_user_scoped_order_snapshot(database) -> None:
+    async with database.session_factory() as session:
+        repository = SqlAlchemyHotdogRepository(session)
+        profile = await repository.get_orderable_profile(profile_id="hotdog-coney")
+        assert profile is not None
+
+        order = await repository.create_order(
+            user_id="order-owner",
+            profile=profile,
+            add_ons=[
+                OrderAddOn(id="bacon", name="Bacon", price_dollars=1),
+                OrderAddOn(id="extra-pickle", name="Extra Pickle", price_dollars=0.5),
+            ],
+        )
+
+        assert order.profile_id == "hotdog-coney"
+        assert order.hotdog_name == profile.name
+        assert order.vendor_name == profile.vendor_name
+        assert order.base_price_dollars == profile.price_dollars
+        assert order.total_dollars == profile.price_dollars + 1.5
+        assert [add_on.id for add_on in order.add_ons] == ["bacon", "extra-pickle"]
+        assert await repository.list_orders(user_id="other-user") == []
+        assert [saved.id for saved in await repository.list_orders(user_id="order-owner")] == [
+            order.id
+        ]
 
 
 @pytest.mark.asyncio

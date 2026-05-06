@@ -42,6 +42,7 @@ flowchart LR
   walk["Walking ETA"]
   menuquery["Menu query"]
   preferences["CravingPreferences contract"]
+  orders["OrderDraft contract"]
   vendor["VendorSubmission contract"]
   menu["MenuSnapshot contract"]
   highlights["Menu highlights"]
@@ -82,6 +83,7 @@ flowchart LR
   menuquery --> client
   core --> walk
   core --> preferences
+  core --> orders
   core --> vendor
   core --> menu
   menu --> highlights
@@ -90,6 +92,7 @@ flowchart LR
   keychain --> client
   api --> profiles
   api --> preferences
+  api --> orders
   api --> vendor
   api --> menu
   api --> highlights
@@ -164,6 +167,12 @@ sequenceDiagram
   API-->>App: Saved matches with resolved distance and walking ETA
   App->>App: Preview MapKit walking route from current location to matched hotdog coordinates
   App->>Maps: Open matched-hotdog directions from coordinates or address_text
+  App->>API: Create order draft with profile_id and add_on_ids
+  API->>DB: Snapshot orderable hotdog, canonical add-ons, and total for current user
+  API-->>App: Durable order draft
+  App->>API: List My Orders
+  API->>DB: Read current user's order drafts
+  API-->>App: Durable order drafts
   API->>DB: Read swipes or preferences
   API-->>App: Swipe or preference response
   App->>App: Resolve vendor pickup address to coordinates

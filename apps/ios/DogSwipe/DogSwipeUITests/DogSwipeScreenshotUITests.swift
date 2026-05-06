@@ -91,6 +91,19 @@ final class DogSwipeScreenshotUITests: XCTestCase {
         waitFor(identifier: "dogswipe.order.confirmation", timeout: 8, screenshotName: "07-match-order")
     }
 
+    func test08OrdersScreenshot() {
+        captureScreenshot(
+            tab: "orders",
+            screenIdentifier: "dogswipe.orders.screen",
+            requiredElements: [
+                .staticText("My Orders"),
+                .staticText("Chicago Classic"),
+                .staticText("$7.99")
+            ],
+            screenshotName: "08-orders"
+        )
+    }
+
     private func captureScreenshot(
         tab: String,
         screenIdentifier: String,

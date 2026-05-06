@@ -121,6 +121,24 @@ public struct DogSwipeAPIClient: Sendable {
         try await send(path: "/v1/preferences", method: "PUT", body: preferences)
     }
 
+    public func orders() async throws -> [DogSwipeOrder] {
+        let response: OrderListResponse = try await send(path: "/v1/orders")
+        return response.orders
+    }
+
+    @discardableResult
+    public func createOrder(
+        profileID: String,
+        addOnIDs: [String]
+    ) async throws -> DogSwipeOrder {
+        let response: OrderResponse = try await send(
+            path: "/v1/orders",
+            method: "POST",
+            body: OrderCreateRequest(profileID: profileID, addOnIDs: addOnIDs)
+        )
+        return response.order
+    }
+
     public func vendorSubmissions() async throws -> [HotdogProfile] {
         let response: VendorSubmissionListResponse = try await send(path: "/v1/vendor/submissions")
         return response.submissions

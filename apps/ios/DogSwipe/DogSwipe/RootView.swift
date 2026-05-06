@@ -4,6 +4,7 @@ import SwiftUI
 private enum RootTab: String, Hashable {
     case discover
     case matches
+    case orders
     case vendor
     case review
     case profile
@@ -50,7 +51,7 @@ struct RootView: View {
         _adminReviewStore = StateObject(
             wrappedValue: AdminReviewStore(apiClient: apiClient)
         )
-        _orderStore = StateObject(wrappedValue: OrderStore())
+        _orderStore = StateObject(wrappedValue: OrderStore(apiClient: apiClient))
     }
 
     var body: some View {
@@ -83,6 +84,12 @@ struct RootView: View {
                     Label("Matches", systemImage: "heart.fill")
                 }
                 .tag(RootTab.matches)
+
+            OrdersView(orderStore: orderStore)
+                .tabItem {
+                    Label("Orders", systemImage: "bag.fill")
+                }
+                .tag(RootTab.orders)
 
             VendorView(store: vendorSubmissionStore)
                 .tabItem {

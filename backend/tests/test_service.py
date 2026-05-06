@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 
 import pytest
+from fastapi import HTTPException
 
 from dogswipe_backend.menu import MenuIngestionResult
 from dogswipe_backend.repository import HotdogRepository
@@ -12,6 +13,9 @@ from dogswipe_backend.schemas import (
     AdminModerationRequest,
     CravingPreferences,
     HotdogProfile,
+    OrderAddOn,
+    OrderCreateRequest,
+    OrderItem,
     SwipeDecision,
     SwipeRequest,
     VendorSubmissionRequest,
@@ -75,6 +79,7 @@ class FakeRepository(HotdogRepository):
         self.submissions_by_user: dict[str, list[HotdogProfile]] = {}
         self.menu_refresh_candidates: list[HotdogProfile] = []
         self.menu_refreshes: list[tuple[str, str, str | None]] = []
+        self.orders_by_user: dict[str, list[OrderItem]] = {}
 
     async def list_available_profiles(
         self,
@@ -122,6 +127,36 @@ class FakeRepository(HotdogRepository):
     ) -> CravingPreferences:
         self.preferences_by_user[user_id] = preferences
         return preferences
+
+    async def get_orderable_profile(self, *, profile_id: str) -> HotdogProfile | None:
+        for profile in self.available_profiles:
+            if profile.id == profile_id and profile.availability_status in {"available", "limited"}:
+                return profile
+        return None
+
+    async def create_order(
+        self,
+        *,
+        user_id: str,
+        profile: HotdogProfile,
+        add_ons: list[OrderAddOn],
+    ) -> OrderItem:
+        order = OrderItem(
+            id=f"order-{len(self.orders_by_user.get(user_id, [])) + 1}",
+            profile_id=profile.id,
+            hotdog_name=profile.name,
+            vendor_name=profile.vendor_name,
+            base_price_dollars=profile.price_dollars,
+            add_ons=add_ons,
+            total_dollars=profile.price_dollars + sum(add_on.price_dollars for add_on in add_ons),
+            status="draft",
+            created_at=datetime(2026, 5, 6),
+        )
+        self.orders_by_user.setdefault(user_id, []).append(order)
+        return order
+
+    async def list_orders(self, *, user_id: str) -> list[OrderItem]:
+        return self.orders_by_user.get(user_id, [])
 
     async def submit_vendor_profile(
         self,
@@ -400,6 +435,55 @@ async def test_discovery_filters_by_classic_preference() -> None:
     response = await service.discovery(user_id="u1", limit=10)
 
     assert [profile.id for profile in response.profiles] == ["classic"]
+
+
+@pytest.mark.asyncio
+async def test_create_order_uses_canonical_add_on_prices() -> None:
+    repository = FakeRepository()
+    service = DogSwipeService(repository)
+
+    response = await service.create_order(
+        user_id="order-service-user",
+        request=OrderCreateRequest(
+            profile_id="hotdog-test",
+            add_on_ids=["bacon", "extra-pickle"],
+        ),
+    )
+
+    assert response.order.profile_id == "hotdog-test"
+    assert response.order.add_ons == [
+        OrderAddOn(id="bacon", name="Bacon", price_dollars=1),
+        OrderAddOn(id="extra-pickle", name="Extra Pickle", price_dollars=0.5),
+    ]
+    assert response.order.total_dollars == 2.5
+
+
+@pytest.mark.asyncio
+async def test_create_order_rejects_unknown_add_on() -> None:
+    repository = FakeRepository()
+    service = DogSwipeService(repository)
+
+    with pytest.raises(HTTPException) as exc_info:
+        await service.create_order(
+            user_id="order-service-user",
+            request=OrderCreateRequest(profile_id="hotdog-test", add_on_ids=["gold-leaf"]),
+        )
+
+    assert exc_info.value.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_orders_lists_current_user_drafts() -> None:
+    repository = FakeRepository()
+    service = DogSwipeService(repository)
+    await service.create_order(
+        user_id="order-service-user",
+        request=OrderCreateRequest(profile_id="hotdog-test", add_on_ids=[]),
+    )
+
+    response = await service.orders(user_id="order-service-user")
+
+    assert [order.profile_id for order in response.orders] == ["hotdog-test"]
 
 
 @pytest.mark.asyncio

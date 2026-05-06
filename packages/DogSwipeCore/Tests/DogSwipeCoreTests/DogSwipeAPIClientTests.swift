@@ -159,6 +159,74 @@ final class DogSwipeAPIClientTests: XCTestCase {
         XCTAssertEqual(query["longitude"], "-79.3832")
     }
 
+    func testOrdersDecodeBackendContract() async throws {
+        let http = MockHTTPClient()
+        http.nextData = """
+        {
+          "orders": [
+            {
+              "id": "order-hotdog-coney",
+              "profile_id": "hotdog-coney",
+              "hotdog_name": "Coney Classic",
+              "vendor_name": "Franklin Cart",
+              "base_price_dollars": 6.5,
+              "add_ons": [
+                {"id": "bacon", "name": "Bacon", "price_dollars": 1.0},
+                {"id": "extra-pickle", "name": "Extra Pickle", "price_dollars": 0.5}
+              ],
+              "total_dollars": 8.0,
+              "status": "draft",
+              "created_at": "2026-05-06T14:10:00Z"
+            }
+          ]
+        }
+        """.data(using: .utf8)!
+        let client = DogSwipeAPIClient(baseURL: URL(string: "http://localhost:8000")!, httpClient: http)
+
+        let orders = try await client.orders()
+
+        XCTAssertEqual(orders.map(\.id), ["order-hotdog-coney"])
+        XCTAssertEqual(orders.first?.profileID, "hotdog-coney")
+        XCTAssertEqual(orders.first?.hotdogName, "Coney Classic")
+        XCTAssertEqual(orders.first?.addOnSummary, "Bacon, Extra Pickle")
+        XCTAssertEqual(orders.first?.totalLabel, "$8.00")
+        XCTAssertEqual(http.requests.first?.url?.path, "/v1/orders")
+        XCTAssertEqual(http.requests.first?.httpMethod, "GET")
+    }
+
+    func testCreateOrderEncodesBackendContract() async throws {
+        let http = MockHTTPClient()
+        http.nextData = """
+        {
+          "order": {
+            "id": "order-hotdog-coney",
+            "profile_id": "hotdog-coney",
+            "hotdog_name": "Coney Classic",
+            "vendor_name": "Franklin Cart",
+            "base_price_dollars": 6.5,
+            "add_ons": [
+              {"id": "bacon", "name": "Bacon", "price_dollars": 1.0}
+            ],
+            "total_dollars": 7.5,
+            "status": "draft",
+            "created_at": "2026-05-06T14:10:00Z"
+          }
+        }
+        """.data(using: .utf8)!
+        let client = DogSwipeAPIClient(baseURL: URL(string: "http://localhost:8000")!, httpClient: http)
+
+        let order = try await client.createOrder(profileID: "hotdog-coney", addOnIDs: ["bacon"])
+
+        XCTAssertEqual(order.id, "order-hotdog-coney")
+        XCTAssertEqual(order.addOnSummary, "Bacon")
+        XCTAssertEqual(http.requests.first?.url?.path, "/v1/orders")
+        XCTAssertEqual(http.requests.first?.httpMethod, "POST")
+        let body = String(data: http.requests.first!.httpBody!, encoding: .utf8)!
+        XCTAssertFalse(body.contains("user_id"))
+        XCTAssertTrue(body.contains("\"profile_id\":\"hotdog-coney\""))
+        XCTAssertTrue(body.contains("\"add_on_ids\":[\"bacon\"]"))
+    }
+
     func testPreferencesDecodeBackendContract() async throws {
         let http = MockHTTPClient()
         http.nextData = """

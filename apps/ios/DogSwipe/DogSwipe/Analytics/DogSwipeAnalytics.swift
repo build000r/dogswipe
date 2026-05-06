@@ -23,6 +23,7 @@ final class DogSwipeAnalytics {
     enum Screen: String {
         case discover
         case matches
+        case orders
         case vendor
         case review
         case profile

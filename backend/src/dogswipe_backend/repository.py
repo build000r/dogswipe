@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from collections.abc import Iterable
 from datetime import UTC, datetime
 from math import cos, radians
@@ -8,8 +9,15 @@ from sqlalchemy import Select, and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.elements import ColumnElement
 
-from .models import HotdogProfileRecord, SwipeEventRecord, UserPreferenceRecord
-from .schemas import CravingPreferences, HotdogProfile, SwipeDecision, VendorSubmissionRequest
+from .models import HotdogProfileRecord, OrderRecord, SwipeEventRecord, UserPreferenceRecord
+from .schemas import (
+    CravingPreferences,
+    HotdogProfile,
+    OrderAddOn,
+    OrderItem,
+    SwipeDecision,
+    VendorSubmissionRequest,
+)
 
 
 class HotdogRepository:
@@ -44,6 +52,21 @@ class HotdogRepository:
         user_id: str,
         preferences: CravingPreferences,
     ) -> CravingPreferences:
+        raise NotImplementedError
+
+    async def get_orderable_profile(self, *, profile_id: str) -> HotdogProfile | None:
+        raise NotImplementedError
+
+    async def create_order(
+        self,
+        *,
+        user_id: str,
+        profile: HotdogProfile,
+        add_ons: list[OrderAddOn],
+    ) -> OrderItem:
+        raise NotImplementedError
+
+    async def list_orders(self, *, user_id: str) -> list[OrderItem]:
         raise NotImplementedError
 
     async def submit_vendor_profile(
@@ -217,6 +240,42 @@ class SqlAlchemyHotdogRepository(HotdogRepository):
         record.classic_only = preferences.classic_only
         await self.session.flush()
         return CravingPreferences.model_validate(record)
+
+    async def get_orderable_profile(self, *, profile_id: str) -> HotdogProfile | None:
+        record = await self.session.get(HotdogProfileRecord, profile_id)
+        if record is None or record.availability_status not in {"available", "limited"}:
+            return None
+        return HotdogProfile.model_validate(record)
+
+    async def create_order(
+        self,
+        *,
+        user_id: str,
+        profile: HotdogProfile,
+        add_ons: list[OrderAddOn],
+    ) -> OrderItem:
+        total_dollars = profile.price_dollars + sum(add_on.price_dollars for add_on in add_ons)
+        record = OrderRecord(
+            user_id=user_id,
+            profile_id=profile.id,
+            hotdog_name=profile.name,
+            vendor_name=profile.vendor_name,
+            base_price_dollars=profile.price_dollars,
+            add_ons_json=self._encode_order_add_ons(add_ons),
+            total_dollars=round(total_dollars, 2),
+            status="draft",
+        )
+        self.session.add(record)
+        await self.session.flush()
+        return self._order(record)
+
+    async def list_orders(self, *, user_id: str) -> list[OrderItem]:
+        statement = (
+            select(OrderRecord)
+            .where(OrderRecord.user_id == user_id)
+            .order_by(OrderRecord.created_at.desc(), OrderRecord.id.desc())
+        )
+        return [self._order(record) for record in await self.session.scalars(statement)]
 
     async def submit_vendor_profile(
         self,
@@ -458,6 +517,34 @@ class SqlAlchemyHotdogRepository(HotdogRepository):
             return None
         stripped = value.strip()
         return stripped or None
+
+    @staticmethod
+    def _encode_order_add_ons(add_ons: list[OrderAddOn]) -> str:
+        return json.dumps(
+            [add_on.model_dump() for add_on in add_ons],
+            separators=(",", ":"),
+        )
+
+    @staticmethod
+    def _decode_order_add_ons(value: str) -> list[OrderAddOn]:
+        raw_add_ons = json.loads(value)
+        if not isinstance(raw_add_ons, list):
+            return []
+        return [OrderAddOn.model_validate(add_on) for add_on in raw_add_ons]
+
+    @classmethod
+    def _order(cls, record: OrderRecord) -> OrderItem:
+        return OrderItem(
+            id=record.id,
+            profile_id=record.profile_id,
+            hotdog_name=record.hotdog_name,
+            vendor_name=record.vendor_name,
+            base_price_dollars=record.base_price_dollars,
+            add_ons=cls._decode_order_add_ons(record.add_ons_json),
+            total_dollars=record.total_dollars,
+            status=record.status,
+            created_at=record.created_at,
+        )
 
     @staticmethod
     def _distance_candidate_filter(

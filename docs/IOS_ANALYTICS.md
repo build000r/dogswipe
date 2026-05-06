@@ -4,7 +4,7 @@ DogSwipe's iOS analytics surface is intentionally small and contains no email ad
 
 | Event | When | Parameters |
 | --- | --- | --- |
-| `ios_screen_viewed` | Discover, Matches, Vendor, Review, or Profile appears | `screen` |
+| `ios_screen_viewed` | Discover, Matches, Orders, Vendor, Review, or Profile appears | `screen` |
 | `ios_discovery_swipe` | User records a pass, like, super-like, or undo-supported deck decision | `decision`, `profile_id` |
 | `ios_auth_magic_link_requested` | User submits a magic-link request from Profile | `method=email_magic_link` |
 | `ios_auth_magic_link_verify_submitted` | User submits or opens a magic-link verification token | `method=email_magic_link` |

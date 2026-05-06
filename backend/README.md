@@ -14,16 +14,19 @@ make backend-test
 | Method | Path | Purpose |
 | --- | --- | --- |
 | `GET` | `/health` | Shared quickstart health endpoint |
-| `GET` | `/v1/discovery` | Preference-filtered local hotdogs available for the swipe deck; accepts optional `latitude` and `longitude` query params |
+| `GET` | `/v1/discovery` | Preference-filtered local hotdogs available for the swipe deck; accepts optional `latitude`, `longitude`, and `menu_query` query params |
 | `POST` | `/v1/swipes` | Record a swipe decision for the authenticated/local user |
 | `GET` | `/v1/matches` | Return high-crave liked hotdogs for the authenticated/local user |
 | `GET` | `/v1/preferences` | Return user-scoped craving preferences |
 | `PUT` | `/v1/preferences` | Save user-scoped craving preferences |
+| `GET` | `/v1/orders` | Return durable order drafts for the authenticated/local user |
+| `POST` | `/v1/orders` | Create a durable draft from an orderable hotdog profile and canonical add-ons |
 | `GET` | `/v1/vendor/submissions` | Return the authenticated/local user's submitted hotdog listings |
 | `POST` | `/v1/vendor/submissions` | Submit a vendor-owned hotdog listing for review |
 | `PUT` | `/v1/vendor/submissions/{id}` | Revise an owned pending or change-requested listing |
 | `POST` | `/v1/vendor/submissions/{id}/ingest-menu` | Fetch and store a bounded menu URL snapshot for an owned listing |
 | `GET` | `/v1/admin/vendor/submissions` | Return pending vendor submissions for configured admins |
+| `POST` | `/v1/admin/vendor/menus/refresh` | Refresh stale vendor menu snapshots in a bounded admin batch |
 | `POST` | `/v1/admin/vendor/submissions/{id}/approve` | Approve a pending submission into discovery |
 | `POST` | `/v1/admin/vendor/submissions/{id}/request-changes` | Send a pending submission back to the vendor with a note |
 | `POST` | `/v1/admin/vendor/submissions/{id}/reject` | Reject a pending submission with a note |
@@ -77,6 +80,40 @@ make backend-test
 Client-supplied `user_id` fields are rejected here too.
 
 `GET /v1/discovery` resolves the same current user, loads saved preferences, removes hotdogs beyond `max_distance_miles`, removes non-classic items when `classic_only` is true, then ranks the remaining cards by crave score, distance fit, and spicy/classic fit. If the client supplies `latitude` and `longitude`, the backend recomputes each coordinate-backed profile's `distance_miles` from that user location before filtering/ranking. Profiles without coordinates keep their stored fallback distance. That keeps backend discovery aligned with the Swift `MatchScorer` used by the local deck and offline fallback data.
+
+## Order Draft Contract
+
+`POST /v1/orders` accepts only an orderable profile id and bounded add-on ids. The backend derives ownership from the auth context and snapshots the hotdog name, vendor, base price, canonical add-ons, total, status, and creation time. Client-supplied `user_id`, add-on names, and prices are rejected or ignored by the schema/service boundary.
+
+```json
+{
+  "profile_id": "hotdog-chicago",
+  "add_on_ids": ["bacon", "extra-pickle"]
+}
+```
+
+`GET /v1/orders` returns only the authenticated/local user's drafts:
+
+```json
+{
+  "orders": [
+    {
+      "id": "order-123",
+      "profile_id": "hotdog-chicago",
+      "hotdog_name": "Chicago Classic",
+      "vendor_name": "Street Vendor Pack",
+      "base_price_dollars": 6.49,
+      "add_ons": [
+        {"id": "bacon", "name": "Bacon", "price_dollars": 1.0},
+        {"id": "extra-pickle", "name": "Extra Pickle", "price_dollars": 0.5}
+      ],
+      "total_dollars": 7.99,
+      "status": "draft",
+      "created_at": "2026-05-06T14:10:00Z"
+    }
+  ]
+}
+```
 
 ## Vendor Submission Contract
 
@@ -136,4 +173,4 @@ DATABASE_URL=postgresql+asyncpg://... make migrate
 DATABASE_URL=postgresql+asyncpg://... make migration-current
 ```
 
-Current head is `0008`, which adds optional pickup address text for profile display and iOS Maps directions fallback.
+Current head is `0009`, which adds user-scoped durable order drafts.

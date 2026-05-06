@@ -4,17 +4,17 @@ Last verified: 2026-05-06
 
 | Gate | Command | Result |
 | --- | --- | --- |
-| Swift package tests | `make swift-test` | 33 tests passed |
+| Swift package tests | `make swift-test` | 35 tests passed |
 | iOS smoke build | `xcodebuild -quiet -project apps/ios/DogSwipe/DogSwipe.xcodeproj -scheme DogSwipe -destination 'generic/platform=iOS' build` | passed |
 | iOS unit tests | `xcodebuild -quiet -project apps/ios/DogSwipe/DogSwipe.xcodeproj -scheme DogSwipe -destination 'platform=iOS Simulator,id=<available iPhone simulator UDID>' -only-testing:DogSwipeTests test` | passed |
-| iOS screenshot UI smoke | `make ios-ui-test` | 7 isolated UI tests passed across Discover, draggable card advancement, Matches, match add-to-order, Vendor, Review, and Profile using direct screenshot-mode tab launches; Discover asserts visible `Live walk` and `Directions` route controls |
-| iOS screenshot export | `make ios-screenshots` | 5 PNG attachments exported under `.build/ios-screenshots/attachments` |
-| Backend API tests | `make backend-test` | 75 tests passed |
-| Backend coverage | `make coverage` | 89.61% total coverage |
+| iOS screenshot UI smoke | `make ios-ui-test` | 8 isolated UI tests passed across Discover, draggable card advancement, Matches, match add-to-order, Orders, Vendor, Review, and Profile using direct screenshot-mode tab launches; Discover asserts visible `Live walk` and `Directions` route controls |
+| iOS screenshot export | `make ios-screenshots` | 6 PNG attachments exported under `.build/ios-screenshots/attachments` |
+| Backend API tests | `make backend-test` | 84 tests passed |
+| Backend coverage | `make coverage` | 89.83% total coverage |
 | Clean backend install | `python3.12 -m venv /tmp/... && pip install -e 'backend[test]'` | passed |
 | Backend lint | `make lint` | passed |
 | Backend typecheck | `make typecheck` | passed |
-| Alembic migration smoke | `make backend-test` | migration test upgraded to `0008` and downgraded to `base` |
+| Alembic migration smoke | `make backend-test` | migration test upgraded to `0009` and downgraded to `base` |
 | Backend container build | `docker build -q backend` | built image `sha256:36e49501e78985bb76212fbb7498bac4662a19daf667dcd1618be3627777698e` |
 | Production Compose config | `make deploy-config` | passed |
 | Deploy preflight | `make deploy-preflight` | 19 passed, 0 warnings, 0 failed |
@@ -53,13 +53,15 @@ Last verified: 2026-05-06
 - Hotdog profile payloads include deterministic walking-time estimates derived from resolved distance; Swift decodes the field and falls back to local distance-based estimates for offline samples.
 - iOS discovery can pass a CoreLocation coordinate and menu query to the backend, and vendor submissions can include optional hotdog coordinates for dynamic response distances.
 - Hotdog profiles can include pickup address text, `DogSwipeCore` derives Apple Maps directions URLs from coordinates or address text, and iOS discovery/matches expose visible route controls for live MapKit walking-route ETA/distance from the user's current location while preserving Apple Maps handoff.
-- The Matches tab supports selectable add-ons, adds the selected hotdog to a local order draft, updates the DogSwipe bag count from state instead of a hardcoded badge, and keeps the payment/fulfillment boundary out of the first slice.
+- `POST /v1/orders` creates authenticated/local user-scoped order drafts from an orderable hotdog profile and canonical server add-ons; `GET /v1/orders` returns only the current user's durable drafts.
+- The Matches tab supports selectable add-ons, saves the selected hotdog through the backend order API, updates the DogSwipe bag count from state instead of a hardcoded badge, and keeps the payment/fulfillment boundary out of the first slice.
+- The My Orders tab lists durable backend drafts with hotdog, vendor, add-on summary, status, and total.
 - The iOS Vendor form can resolve pickup address text into latitude/longitude through an injected CoreLocation geocoder with covered success/failure states.
 - Hotdog profile payloads derive short `menu_highlights` from bounded menu snapshots; Swift decodes the array, the Discover screen can search those bounded menu/profile signals, and iOS discovery/vendor summaries display them.
 - iOS native sign-in stores SPAPS access/refresh JWTs in Keychain, refreshes sessions, and injects only the access bearer into the shared API client.
 - iOS registers `dogswipe://auth`, parses returned magic-link tokens from custom-scheme or configured HTTPS universal-link callbacks, and verifies deep links through `AuthSessionStore`.
 - The iOS target includes a hotdog-specific AppIcon catalog, accent color, and `PrivacyInfo.xcprivacy` declaration for linked auth email and precise location data used only for app functionality; `make ios-release-assets` blocks missing icon slots, alpha-channel icons, privacy manifest drift, non-configurable auth build settings, and stale TestFlight export options.
-- `--dogswipe-screenshot-mode` swaps in deterministic hotdog API fixtures, an in-memory token store, a static location provider, and direct initial-tab launches so isolated UI smoke/screenshots cover Discover, Matches, match add-to-order, Vendor, Review, and Profile without live auth, location prompts, localhost state, or tab-tap timing.
+- `--dogswipe-screenshot-mode` swaps in deterministic hotdog API fixtures, an in-memory token store, a static location provider, and direct initial-tab launches so isolated UI smoke/screenshots cover Discover, Matches, match add-to-order, Orders, Vendor, Review, and Profile without live auth, location prompts, localhost state, or tab-tap timing.
 - The deterministic Discover and Matches fixtures now use the supplied DogSwipe reference direction: cream/red/mustard street-vendor chrome, Chicago Classic hero cards, a draggable "Swipe right for dogs" control deck, and a match/order detail.
 - `DogSwipeAnalytics` emits a no-PII iOS contract for screen views, discovery swipes, auth submissions, and match/order CTAs; `docs/IOS_ANALYTICS.md` documents the allowed events.
 - `POST /v1/vendor/submissions` stores authenticated vendor hotdog listings as `pending_review`; `GET`/`PUT /v1/vendor/submissions` are user-scoped and the iOS Vendor tab can revise change-requested listings.

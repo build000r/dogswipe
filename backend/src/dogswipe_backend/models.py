@@ -70,3 +70,26 @@ class UserPreferenceRecord(Base):
         server_default=func.now(),
         onupdate=func.now(),
     )
+
+
+class OrderRecord(Base):
+    __tablename__ = "order_items"
+    __table_args__ = (
+        Index("ix_order_items_user_created", "user_id", "created_at"),
+        Index("ix_order_items_profile", "profile_id"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    user_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    profile_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    hotdog_name: Mapped[str] = mapped_column(String(80), nullable=False)
+    vendor_name: Mapped[str] = mapped_column(String(160), nullable=False)
+    base_price_dollars: Mapped[float] = mapped_column(Float, nullable=False)
+    add_ons_json: Mapped[str] = mapped_column(Text, nullable=False, default="[]")
+    total_dollars: Mapped[float] = mapped_column(Float, nullable=False)
+    status: Mapped[str] = mapped_column(String(32), nullable=False, default="draft")
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+        nullable=False,
+    )

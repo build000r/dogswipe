@@ -122,7 +122,9 @@ private struct MatchDetailView: View {
     @ObservedObject var orderStore: OrderStore
     let onKeepSwiping: () -> Void
     @State private var selectedAddOns: Set<OrderAddOn> = []
-    @State private var confirmedItemID: UUID?
+    @State private var confirmedItemID: String?
+    @State private var isAddingOrder = false
+    @State private var orderError: String?
 
     var body: some View {
         VStack(spacing: .dsSpace4) {
@@ -187,13 +189,21 @@ private struct MatchDetailView: View {
                 }
 
                 DogSwipePrimaryButton(
-                    title: confirmedItemID == nil ? "Add to Order" : "Added to Order",
+                    title: orderButtonTitle,
                     price: orderTotalLabel
                 ) {
-                    let selected = OrderAddOn.matchDefaults.filter { selectedAddOns.contains($0) }
-                    let item = orderStore.add(profile: profile, addOns: selected)
-                    confirmedItemID = item.id
-                    DogSwipeAnalytics.shared.trackOrderCTA(profileID: profile.id)
+                    Task {
+                        await addOrder()
+                    }
+                }
+                .disabled(isAddingOrder)
+
+                if let orderError {
+                    Label(orderError, systemImage: "exclamationmark.triangle.fill")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(Color.dsAccent)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .accessibilityIdentifier("dogswipe.order.error")
                 }
 
                 if let confirmationText {
@@ -226,6 +236,13 @@ private struct MatchDetailView: View {
         )
     }
 
+    private var orderButtonTitle: String {
+        if isAddingOrder {
+            return "Adding..."
+        }
+        return confirmedItemID == nil ? "Add to Order" : "Added to Order"
+    }
+
     private var confirmationText: String? {
         guard let confirmedItemID,
               let item = orderStore.items.first(where: { $0.id == confirmedItemID }) else {
@@ -244,6 +261,7 @@ private struct MatchDetailView: View {
                 selectedAddOns.insert(addOn)
             }
             confirmedItemID = nil
+            orderError = nil
         } label: {
             VStack(spacing: .dsSpace1) {
                 Text(addOn.name)
@@ -263,6 +281,25 @@ private struct MatchDetailView: View {
         .buttonStyle(.plain)
         .accessibilityLabel(addOn.name)
         .accessibilityValue(isSelected ? "Selected" : "Not selected")
+    }
+
+    private func addOrder() async {
+        guard !isAddingOrder else {
+            return
+        }
+        isAddingOrder = true
+        defer {
+            isAddingOrder = false
+        }
+        orderError = nil
+        DogSwipeAnalytics.shared.trackOrderCTA(profileID: profile.id)
+        let selected = OrderAddOn.matchDefaults.filter { selectedAddOns.contains($0) }
+        do {
+            let item = try await orderStore.add(profile: profile, addOns: selected)
+            confirmedItemID = item.id
+        } catch {
+            orderError = "Could not save order. Try again."
+        }
     }
 }
 

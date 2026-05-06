@@ -61,6 +61,9 @@ extension CGFloat {
     static let dsMatchAddOnHeight: CGFloat = 52
     static let dsMatchThumbnailWidth: CGFloat = 72
     static let dsMatchThumbnailHeight: CGFloat = 58
+    static let dsOrdersStateMinHeight: CGFloat = 260
+    static let dsOrderThumbnailWidth: CGFloat = 96
+    static let dsOrderThumbnailHeight: CGFloat = 78
 }
 
 extension View {
