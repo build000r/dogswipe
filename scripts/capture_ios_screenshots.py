@@ -49,33 +49,60 @@ def main() -> None:
     if platform.machine() == "arm64":
         destination += ",arch=arm64"
 
-    subprocess.run(
-        [
-            "xcodebuild",
-            "-quiet",
-            "-destination-timeout",
-            "120",
-            "-parallel-testing-enabled",
-            "NO",
-            "-test-timeouts-enabled",
-            "YES",
-            "-default-test-execution-time-allowance",
-            "45",
-            "-maximum-test-execution-time-allowance",
-            "90",
-            "-project",
-            str(PROJECT_PATH),
-            "-scheme",
-            "DogSwipe",
-            "-destination",
-            destination,
-            "-only-testing:DogSwipeUITests/DogSwipeScreenshotUITests",
-            "-resultBundlePath",
-            str(result_bundle),
-            "test",
-        ],
-        check=True,
-    )
+    command = [
+        "xcodebuild",
+        "-quiet",
+        "-destination-timeout",
+        "120",
+        "-parallel-testing-enabled",
+        "NO",
+        "-test-timeouts-enabled",
+        "YES",
+        "-default-test-execution-time-allowance",
+        "45",
+        "-maximum-test-execution-time-allowance",
+        "90",
+        "-project",
+        str(PROJECT_PATH),
+        "-scheme",
+        "DogSwipe",
+        "-destination",
+        destination,
+        "-only-testing:DogSwipeUITests/DogSwipeScreenshotUITests",
+        "-resultBundlePath",
+        str(result_bundle),
+        "test",
+    ]
+    try:
+        subprocess.run(command, check=True)
+    except subprocess.CalledProcessError:
+        print("xcodebuild failed; xcresult summary follows.")
+        subprocess.run(
+            [
+                "xcrun",
+                "xcresulttool",
+                "get",
+                "test-results",
+                "summary",
+                "--path",
+                str(result_bundle),
+            ],
+            check=False,
+        )
+        subprocess.run(
+            [
+                "xcrun",
+                "xcresulttool",
+                "get",
+                "test-results",
+                "tests",
+                "--path",
+                str(result_bundle),
+                "--compact",
+            ],
+            check=False,
+        )
+        raise
 
     if args.skip_export:
         print(f"UI smoke result bundle: {result_bundle}")

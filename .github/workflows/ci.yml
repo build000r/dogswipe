@@ -80,6 +80,7 @@ jobs:
       - name: Build app
         run: xcodebuild -quiet -project apps/ios/DogSwipe/DogSwipe.xcodeproj -scheme DogSwipe -destination 'generic/platform=iOS' build
       - name: Unit tests
+        timeout-minutes: 15
         run: |
           set -euo pipefail
           selection="$(python3 scripts/select_ios_simulator.py)"
@@ -88,6 +89,10 @@ jobs:
           echo "Selected iOS simulator: ${simulator_name} (${simulator_id}) on ${simulator_runtime}"
           xcrun simctl boot "$simulator_id" || true
           xcrun simctl bootstatus "$simulator_id" -b
+          destination="platform=iOS Simulator,id=${simulator_id}"
+          if [ "$(uname -m)" = "arm64" ]; then
+            destination="${destination},arch=arm64"
+          fi
           xcodebuild \
             -destination-timeout 120 \
             -parallel-testing-enabled NO \
@@ -96,7 +101,7 @@ jobs:
             -maximum-test-execution-time-allowance 60 \
             -project apps/ios/DogSwipe/DogSwipe.xcodeproj \
             -scheme DogSwipe \
-            -destination "platform=iOS Simulator,id=${simulator_id},arch=arm64" \
+            -destination "${destination}" \
             -only-testing:DogSwipeTests \
             test
       - name: Screenshot UI smoke

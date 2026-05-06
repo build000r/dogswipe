@@ -8,43 +8,104 @@ final class DogSwipeScreenshotUITests: XCTestCase {
         XCUIDevice.shared.orientation = .portrait
     }
 
-    func testHotdogWorkflowScreenshots() {
-        launch(tab: "discover")
-        waitFor(identifier: "dogswipe.discover.screen")
-        XCTAssertTrue(app.staticTexts["Best nearby bite"].exists)
-        XCTAssertTrue(app.staticTexts["Coney Classic"].waitForExistence(timeout: 3))
-        attachScreenshot(named: "01-discover")
+    func test01DiscoverScreenshot() {
+        captureScreenshot(
+            tab: "discover",
+            screenIdentifier: "dogswipe.discover.screen",
+            requiredElements: [
+                .staticText("Best nearby bite"),
+                .staticText("Coney Classic")
+            ],
+            screenshotName: "01-discover"
+        )
+    }
 
-        launch(tab: "matches")
-        waitFor(identifier: "dogswipe.matches.screen")
-        XCTAssertTrue(app.staticTexts["Coney Classic"].waitForExistence(timeout: 3))
-        XCTAssertTrue(app.staticTexts["Garden Snap"].exists)
-        attachScreenshot(named: "02-matches")
+    func test02MatchesScreenshot() {
+        captureScreenshot(
+            tab: "matches",
+            screenIdentifier: "dogswipe.matches.screen",
+            requiredElements: [
+                .staticText("Coney Classic"),
+                .staticText("Garden Snap")
+            ],
+            screenshotName: "02-matches"
+        )
+    }
 
-        launch(tab: "vendor")
-        waitFor(identifier: "dogswipe.vendor.screen")
-        XCTAssertTrue(app.staticTexts["Submit a hotdog"].waitForExistence(timeout: 3))
-        XCTAssertTrue(app.staticTexts["Your submissions"].exists)
-        attachScreenshot(named: "03-vendor")
+    func test03VendorScreenshot() {
+        captureScreenshot(
+            tab: "vendor",
+            screenIdentifier: "dogswipe.vendor.screen",
+            requiredElements: [
+                .staticText("Submit a hotdog"),
+                .staticText("Your submissions")
+            ],
+            screenshotName: "03-vendor"
+        )
+    }
 
-        launch(tab: "review")
-        waitFor(identifier: "dogswipe.review.screen")
-        XCTAssertTrue(app.staticTexts["Pending vendor hotdogs"].waitForExistence(timeout: 3))
-        XCTAssertTrue(app.buttons["Approve"].exists)
-        attachScreenshot(named: "04-review")
+    func test04ReviewScreenshot() {
+        captureScreenshot(
+            tab: "review",
+            screenIdentifier: "dogswipe.review.screen",
+            requiredElements: [
+                .staticText("Pending vendor hotdogs"),
+                .button("Approve")
+            ],
+            screenshotName: "04-review"
+        )
+    }
 
-        launch(tab: "profile")
-        waitFor(identifier: "dogswipe.profile.screen")
-        XCTAssertTrue(app.staticTexts["Your cravings"].waitForExistence(timeout: 3))
-        XCTAssertTrue(app.staticTexts["Signed out"].exists)
-        attachScreenshot(named: "05-profile")
+    func test05ProfileScreenshot() {
+        captureScreenshot(
+            tab: "profile",
+            screenIdentifier: "dogswipe.profile.screen",
+            requiredElements: [
+                .staticText("Your cravings"),
+                .staticText("Signed out")
+            ],
+            screenshotName: "05-profile"
+        )
+    }
+
+    private func captureScreenshot(
+        tab: String,
+        screenIdentifier: String,
+        requiredElements: [RequiredElement],
+        screenshotName: String
+    ) {
+        launch(tab: tab)
+        waitFor(identifier: screenIdentifier, timeout: 20, screenshotName: screenshotName)
+        for element in requiredElements {
+            waitFor(element, timeout: 20, screenshotName: screenshotName)
+        }
+        attachScreenshot(named: screenshotName)
     }
 
     @discardableResult
-    private func waitFor(identifier: String, timeout: TimeInterval = 5) -> XCUIElement {
+    private func waitFor(
+        identifier: String,
+        timeout: TimeInterval,
+        screenshotName: String
+    ) -> XCUIElement {
         let element = app.descendants(matching: .any)[identifier]
-        XCTAssertTrue(element.waitForExistence(timeout: timeout), "\(identifier) did not appear")
+        if !element.waitForExistence(timeout: timeout) {
+            attachScreenshot(named: "\(screenshotName)-failure")
+            XCTFail("\(identifier) did not appear")
+        }
         return element
+    }
+
+    private func waitFor(
+        _ requiredElement: RequiredElement,
+        timeout: TimeInterval,
+        screenshotName: String
+    ) {
+        let element = requiredElement.resolve(in: app)
+        if !element.waitForExistence(timeout: timeout) {
+            attachScreenshot(named: "\(screenshotName)-failure")
+            XCTFail("\(requiredElement.name) did not appear")
+        }
     }
 
     private func launch(tab: String) {
@@ -74,4 +135,27 @@ final class DogSwipeScreenshotUITests: XCTestCase {
 
 private enum AppLaunchArguments {
     static let screenshotMode = "--dogswipe-screenshot-mode"
+}
+
+private enum RequiredElement {
+    case staticText(String)
+    case button(String)
+
+    var name: String {
+        switch self {
+        case .staticText(let label):
+            return "static text \"\(label)\""
+        case .button(let label):
+            return "button \"\(label)\""
+        }
+    }
+
+    func resolve(in app: XCUIApplication) -> XCUIElement {
+        switch self {
+        case .staticText(let label):
+            return app.staticTexts[label]
+        case .button(let label):
+            return app.buttons[label]
+        }
+    }
 }
