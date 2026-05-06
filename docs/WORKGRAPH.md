@@ -64,5 +64,5 @@ The next ready work is to make the live infrastructure real: configure DNS for `
 
 - Public repository: https://github.com/build000r/dogswipe
 - First pushed commit: `dbf880b`
-- Recent audited commit: `0bac354`
-- Recent published backend image evidence: `ghcr.io/build000r/dogswipe:0bac35454c3861b5f31a52ce0c65edd9844d4523`
+- Recent audited commit: `2fe4ff8`
+- Recent published backend image evidence: `ghcr.io/build000r/dogswipe:2fe4ff8ec55db21f40c46ad974f352720d539371`
