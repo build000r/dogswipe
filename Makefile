@@ -7,14 +7,79 @@ CRAP_THRESHOLD ?= 20
 PIP := $(VENV)/bin/pip
 PYTEST := $(VENV)/bin/pytest
 ALEMBIC := $(VENV)/bin/alembic
+IOS_PROJECT ?= apps/ios/DogSwipe/DogSwipe.xcodeproj
+IOS_SCHEME ?= DogSwipe
+IOS_DERIVED_DATA ?= $(CURDIR)/.build/xcode-derived-data
+IOS_APP_PATH ?= $(IOS_DERIVED_DATA)/Build/Products/Debug-iphoneos/DogSwipe.app
+IOS_PHONE_BUNDLE_ID ?= com.build000r.dogswipe
+IOS_PHONE_DEVICE_ID ?= $(shell python3 -c "import json, subprocess; devices = json.loads(subprocess.check_output(['xcrun', 'xcdevice', 'list'])); match = next((d for d in devices if not d.get('simulator') and d.get('platform') == 'com.apple.platform.iphoneos' and d.get('available')), None); print(match['identifier'] if match else '')" 2>/dev/null)
+IOS_PHONE_DEVELOPMENT_TEAM ?= $(APPLE_DEVELOPMENT_TEAM)
+DOGSWIPE_PHONE_API_BASE_URL ?= http://$(shell ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null || echo localhost):8000
+IOS_PHONE_SIGNING_ARGS ?= CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=YES CODE_SIGN_STYLE=Automatic
+IOS_PHONE_TEAM_ARG := $(if $(IOS_PHONE_DEVELOPMENT_TEAM),DEVELOPMENT_TEAM=$(IOS_PHONE_DEVELOPMENT_TEAM),)
 
-.PHONY: generate-ios ios-build ios-release-assets ios-ui-test ios-screenshots swift-test backend-install backend-install-local backend-test coverage lint typecheck migrate migration-current test drift crap mmdx-preflight deploy-config deploy-preflight deploy-overlay-template deploy-post-verify
+.PHONY: generate-ios ios-build ios-release-assets ios-ui-test ios-screenshots require-phone-device ios-phone-build ios-phone-reset-app ios-phone-install ios-phone-launch ios-phone-run swift-test backend-install backend-install-local backend-test coverage lint typecheck migrate migration-current test drift crap mmdx-preflight deploy-config deploy-preflight deploy-overlay-template deploy-post-verify
 
 generate-ios:
 	cd apps/ios/DogSwipe && xcodegen generate
 
 ios-build: generate-ios
 	xcodebuild -project apps/ios/DogSwipe/DogSwipe.xcodeproj -scheme DogSwipe -destination 'generic/platform=iOS' build
+
+require-phone-device:
+	@if [ -z "$(IOS_PHONE_DEVICE_ID)" ]; then \
+		echo "No available iPhone device detected via xcdevice."; \
+		echo "Known iPhone devices:"; \
+		python3 -c 'import json, subprocess; devices = json.loads(subprocess.check_output(["xcrun", "xcdevice", "list"])); iphoneos = [d for d in devices if not d.get("simulator") and d.get("platform") == "com.apple.platform.iphoneos"]; [print("- {} ({}): available={}{}".format(d.get("name"), d.get("identifier"), d.get("available"), (" " + ((d.get("error") or {}).get("description", ""))) if ((d.get("error") or {}).get("description", "")) else "")) for d in iphoneos]'; \
+		exit 1; \
+	fi
+
+ios-phone-build: generate-ios
+	xcodebuild -project "$(IOS_PROJECT)" -scheme "$(IOS_SCHEME)" -destination 'generic/platform=iOS' -configuration Debug -derivedDataPath "$(IOS_DERIVED_DATA)" -allowProvisioningUpdates build DOGSWIPE_API_BASE_URL="$(DOGSWIPE_PHONE_API_BASE_URL)" PRODUCT_BUNDLE_IDENTIFIER="$(IOS_PHONE_BUNDLE_ID)" $(IOS_PHONE_SIGNING_ARGS) $(IOS_PHONE_TEAM_ARG)
+
+ios-phone-reset-app: require-phone-device
+	@xcrun devicectl device uninstall app --device "$(IOS_PHONE_DEVICE_ID)" "$(IOS_PHONE_BUNDLE_ID)" >/dev/null 2>&1 || true
+
+ios-phone-install: require-phone-device ios-phone-build
+	@TMP_LOG="$$(mktemp)"; \
+	if xcrun devicectl device install app --device "$(IOS_PHONE_DEVICE_ID)" "$(IOS_APP_PATH)" >"$$TMP_LOG" 2>&1; then \
+		cat "$$TMP_LOG"; \
+	else \
+		status=$$?; \
+		cat "$$TMP_LOG"; \
+		if grep -Eq 'CoreDeviceError error 4000|Connection reset by peer' "$$TMP_LOG"; then \
+			echo ""; \
+			echo "Transient device connection reset during install. Retrying once..."; \
+			if xcrun devicectl device install app --device "$(IOS_PHONE_DEVICE_ID)" "$(IOS_APP_PATH)" >"$$TMP_LOG" 2>&1; then \
+				cat "$$TMP_LOG"; \
+				rm -f "$$TMP_LOG"; \
+				exit 0; \
+			fi; \
+			status=$$?; \
+			cat "$$TMP_LOG"; \
+		fi; \
+		rm -f "$$TMP_LOG"; \
+		exit $$status; \
+	fi; \
+	rm -f "$$TMP_LOG"
+
+ios-phone-launch: require-phone-device
+	@TMP_LOG="$$(mktemp)"; \
+	if xcrun devicectl device process launch --device "$(IOS_PHONE_DEVICE_ID)" --terminate-existing "$(IOS_PHONE_BUNDLE_ID)" >"$$TMP_LOG" 2>&1; then \
+		cat "$$TMP_LOG"; \
+	else \
+		status=$$?; \
+		cat "$$TMP_LOG"; \
+		if grep -Eq 'could not be unlocked|BSErrorCodeDescription = Locked' "$$TMP_LOG"; then \
+			echo ""; \
+			echo "Unlock the iPhone and rerun 'make ios-phone-launch'."; \
+		fi; \
+		rm -f "$$TMP_LOG"; \
+		exit $$status; \
+	fi; \
+	rm -f "$$TMP_LOG"
+
+ios-phone-run: ios-phone-install ios-phone-launch
 
 ios-release-assets:
 	python3 scripts/verify_ios_release_assets.py

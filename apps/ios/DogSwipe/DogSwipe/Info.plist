@@ -30,7 +30,7 @@
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>DOGSWIPE_API_BASE_URL</key>
-	<string>http://localhost:8000</string>
+	<string>$(DOGSWIPE_API_BASE_URL)</string>
 	<key>DOGSWIPE_AUTH_REDIRECT_URL</key>
 	<string>dogswipe://auth</string>
 	<key>DOGSWIPE_AUTH_UNIVERSAL_LINK_HOSTS</key>
@@ -41,6 +41,11 @@
 	<string></string>
 	<key>DOGSWIPE_SPAPS_PUBLISHABLE_KEY</key>
 	<string></string>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>DogSwipe uses your location to sort nearby hotdogs by distance.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>

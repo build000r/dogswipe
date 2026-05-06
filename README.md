@@ -90,6 +90,15 @@ curl http://localhost:8000/health
 
 The backend defaults to local development mode with auth disabled. Production deployments should set `SPAPS_AUTH_ENABLED=true`, `SPAPS_API_KEY`, `SPAPS_APPLICATION_ID`, `DOGSWIPE_ADMIN_USER_IDS`, and a managed PostgreSQL `DATABASE_URL`. A production SPAPS application slugged `dogswipe` is registered; keep its raw app ID, publishable key, and secret key in a private env manager or the ignored local `.env.dogswipe.spaps` file, never in git.
 
+To smoke test on a connected iPhone with the local seeded backend:
+
+```bash
+docker compose up -d --build
+make ios-phone-run
+```
+
+`ios-phone-run` signs a Debug build, installs it with `devicectl`, and launches it on the first available iPhone. It points the app at this Mac's LAN API URL, for example `http://192.168.x.x:8000`, so the phone must be on the same network unless you override `DOGSWIPE_PHONE_API_BASE_URL`. If Xcode cannot infer a signing team, set `IOS_PHONE_DEVELOPMENT_TEAM` or `APPLE_DEVELOPMENT_TEAM` to your Apple Developer Team ID. Local auth is disabled by default, so the backend uses the dummy `local-user` identity without a real SPAPS account.
+
 For local Docker development, `DOGSWIPE_AUTO_CREATE_SCHEMA=true` and `DOGSWIPE_SEED_SAMPLE_PROFILES=true` create the starter tables and seed sample profiles at API startup. Keep those flags off in production and run managed migrations instead:
 
 ```bash
