@@ -48,6 +48,7 @@ extension CGFloat {
     static let dsHeaderTabHeight: CGFloat = 26
     static let dsWaveHeight: CGFloat = 22
     static let dsInfoButtonSize: CGFloat = 34
+    static let dsChipMinimumWidth: CGFloat = 92
     static let dsPrimaryButtonHeight: CGFloat = 56
     static let dsStampSize: CGFloat = 72
     static let dsSectionIconSize: CGFloat = 32
@@ -56,9 +57,10 @@ extension CGFloat {
     static let dsDeckBackOffsetY: CGFloat = 20
     static let dsHotdogPlateOffsetX: CGFloat = 8
     static let dsMatchTitleFontSize: CGFloat = 36
-    static let dsMatchHeroHeight: CGFloat = 210
+    static let dsMatchHeroHeight: CGFloat = 140
     static let dsMatchAddOnWidth: CGFloat = 118
-    static let dsMatchAddOnHeight: CGFloat = 52
+    static let dsMatchAddOnHeight: CGFloat = 42
+    static let dsMatchSavedListTopClearance: CGFloat = 96
     static let dsMatchThumbnailWidth: CGFloat = 72
     static let dsMatchThumbnailHeight: CGFloat = 58
     static let dsOrdersStateMinHeight: CGFloat = 260

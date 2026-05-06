@@ -35,6 +35,8 @@ struct MatchesView: View {
                                 orderStore: orderStore,
                                 onKeepSwiping: onKeepSwiping
                             )
+                            Color.clear
+                                .frame(height: .dsMatchSavedListTopClearance)
                             savedMatches
                         }
                         .padding(.horizontal, .dsSpace5)
@@ -58,7 +60,7 @@ struct MatchesView: View {
     }
 
     private var loadingState: some View {
-        VStack(spacing: .dsSpace3) {
+        VStack(spacing: .dsSpace4) {
             ProgressView()
                 .tint(.dsPrimary)
             Text("Loading saved bites")
@@ -70,7 +72,7 @@ struct MatchesView: View {
     }
 
     private var emptyState: some View {
-        VStack(spacing: .dsSpace4) {
+        VStack(spacing: .dsSpace3) {
             DogSwipeBrandHeader(activeTab: .favorites, cartCount: orderStore.itemCount)
             VStack(spacing: .dsSpace3) {
                 Image(systemName: "heart")
@@ -125,9 +127,13 @@ private struct MatchDetailView: View {
     @State private var confirmedItemID: String?
     @State private var isAddingOrder = false
     @State private var orderError: String?
+    private let addOnColumns = [
+        GridItem(.flexible(), spacing: .dsSpace2),
+        GridItem(.flexible(), spacing: .dsSpace2)
+    ]
 
     var body: some View {
-        VStack(spacing: .dsSpace4) {
+        VStack(spacing: .dsSpace3) {
             VStack(spacing: .dsSpace1) {
                 Text("It's a Match!")
                     .font(.system(size: .dsMatchTitleFontSize, weight: .heavy, design: .rounded))
@@ -148,7 +154,7 @@ private struct MatchDetailView: View {
                         .stroke(Color.dsDivider)
                 }
 
-            VStack(alignment: .leading, spacing: .dsSpace4) {
+            VStack(alignment: .leading, spacing: .dsSpace3) {
                 HStack(alignment: .firstTextBaseline, spacing: .dsSpace3) {
                     Text(profile.name)
                         .font(.title2.weight(.heavy))
@@ -165,13 +171,11 @@ private struct MatchDetailView: View {
                     .foregroundStyle(Color.dsMuted)
                     .fixedSize(horizontal: false, vertical: true)
 
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: .dsSpace2) {
-                        DogSwipeChip(text: "Mild", systemImage: "flame")
-                        DogSwipeChip(text: "All-Beef", systemImage: "fork.knife")
-                        DogSwipeChip(text: "Crunchy", systemImage: "leaf.fill")
-                        DogSwipeChip(text: "Popular", systemImage: "flame.fill")
-                    }
+                DogSwipeChipGrid {
+                    DogSwipeChip(text: "Mild", systemImage: "flame")
+                    DogSwipeChip(text: "All-Beef", systemImage: "fork.knife")
+                    DogSwipeChip(text: "Crunchy", systemImage: "leaf.fill")
+                    DogSwipeChip(text: "Popular", systemImage: "flame.fill")
                 }
 
                 VStack(alignment: .leading, spacing: .dsSpace3) {
@@ -179,11 +183,9 @@ private struct MatchDetailView: View {
                         .font(.headline.weight(.heavy))
                         .foregroundStyle(Color.dsInk)
 
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: .dsSpace3) {
-                            ForEach(OrderAddOn.matchDefaults) { addOn in
-                                addOnButton(addOn)
-                            }
+                    LazyVGrid(columns: addOnColumns, alignment: .leading, spacing: .dsSpace2) {
+                        ForEach(OrderAddOn.matchDefaults) { addOn in
+                            addOnButton(addOn)
                         }
                     }
                 }
@@ -223,7 +225,7 @@ private struct MatchDetailView: View {
                 .frame(maxWidth: .infinity)
                 .padding(.top, .dsSpace1)
             }
-            .padding(.dsSpace5)
+            .padding(.dsSpace4)
             .dsCardSurface()
         }
     }
@@ -272,7 +274,7 @@ private struct MatchDetailView: View {
                     .font(.caption2.weight(.semibold).monospacedDigit())
                     .foregroundStyle(Color.dsMuted)
             }
-            .frame(width: .dsMatchAddOnWidth, height: .dsMatchAddOnHeight)
+            .frame(maxWidth: .infinity, minHeight: .dsMatchAddOnHeight)
             .background(isSelected ? Color.dsPrimarySoft : Color.dsSurface, in: Capsule())
             .overlay {
                 Capsule().stroke(isSelected ? Color.dsPrimary : Color.dsDivider)

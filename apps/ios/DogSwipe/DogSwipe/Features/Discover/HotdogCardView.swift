@@ -32,11 +32,9 @@ struct HotdogCardView: View {
                     .lineLimit(2)
 
                 if !profile.menuHighlightLabels.isEmpty {
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: .dsSpace2) {
-                            ForEach(profile.menuHighlightLabels.prefix(4), id: \.self) { highlight in
-                                DogSwipeChip(text: highlight, systemImage: chipIcon(for: highlight))
-                            }
+                    DogSwipeChipGrid {
+                        ForEach(profile.menuHighlightLabels.prefix(4), id: \.self) { highlight in
+                            DogSwipeChip(text: highlight, systemImage: chipIcon(for: highlight))
                         }
                     }
                 }

@@ -147,6 +147,23 @@ struct DogSwipeChip: View {
     }
 }
 
+struct DogSwipeChipGrid<Content: View>: View {
+    private let content: () -> Content
+    private let columns = [
+        GridItem(.adaptive(minimum: .dsChipMinimumWidth), spacing: .dsSpace2, alignment: .leading)
+    ]
+
+    init(@ViewBuilder content: @escaping () -> Content) {
+        self.content = content
+    }
+
+    var body: some View {
+        LazyVGrid(columns: columns, alignment: .leading, spacing: .dsSpace2) {
+            content()
+        }
+    }
+}
+
 struct DogSwipePrimaryButton: View {
     let title: String
     let price: String?
