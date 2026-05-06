@@ -46,14 +46,15 @@ Status key: `done`, `active`, `ready`, `blocked`.
 | WG-040 Local order draft | done | WG-034, WG-037 | `apps/ios/DogSwipe/**`, `docs/**` | The match surface has selectable add-ons, adds the hotdog to a local order draft with visible confirmation, updates the DogSwipe bag count from state, and screenshot UI smoke covers the flow |
 | WG-041 Release readiness gate | done | WG-029, WG-035, WG-039 | `deploy/**`, `Makefile`, `.github/**`, `docs/**` | A combined release-readiness target validates the live overlay contract, release URL/auth settings, bundle-aware AASA render, iOS release assets, and optional App Store Connect API key handoff without printing secrets |
 | WG-042 SPAPS app contract | done | WG-017, WG-039, WG-041 | `spaps.app.json`, `scripts/**`, `Makefile`, `.github/**`, `docs/**` | The public SPAPS descriptor declares the `dogswipe` application slug, maps only env variable names for private app keys, validates native/universal auth handoff paths, and is covered by a CI gate |
+| WG-043 SPAPS operator handoff | done | WG-042 | `spaps.app.json`, `scripts/**`, `Makefile`, `deploy/**`, `docs/**` | The repo renders a non-secret Sweet Potato self-service application payload using the supported `browser_auth` blueprint, documents the private operator registration flow, and covers the renderer in the app-contract and release-readiness gates |
 
 ## Ready Frontier
 
-The next ready work is to create a concrete skillbox deploy overlay, provision or confirm the private SPAPS `dogswipe` application values, run `make deploy-release-readiness` with the private release/signing environment, run the signed TestFlight handoff with private Apple credentials, or continue deeper product slices: durable payment/fulfillment order management, full route persistence or turn-by-turn navigation if lightweight previews prove insufficient, and broader crawler-backed menu indexing if bounded snapshot search proves insufficient.
+The next ready work is to create a concrete skillbox deploy overlay, run the private SPAPS self-service registration from `docs/SPAPS_APP_HANDOFF.md`, store the resulting private SPAPS app values in the deployment env source, run `make deploy-release-readiness` with the private release/signing environment, run the signed TestFlight handoff with private Apple credentials, or continue deeper product slices: durable payment/fulfillment order management, full route persistence or turn-by-turn navigation if lightweight previews prove insufficient, and broader crawler-backed menu indexing if bounded snapshot search proves insufficient.
 
 ## Risks
 
-- Live deploy, production SPAPS auth proof, and hosted universal links are blocked until a skillbox overlay and private env source name a concrete host, deploy root, production domain, Apple Team ID, health/AASA check targets, SPAPS application ID, server secret key, publishable key, and allowed redirect URLs.
+- Live deploy, production SPAPS auth proof, and hosted universal links are blocked until a skillbox overlay and private env source name a concrete host, deploy root, production domain, Apple Team ID, health/AASA check targets, SPAPS application ID, server secret key, publishable key, and allowed redirect URLs. The public repo now renders the SPAPS self-service payload, but a private operator still has to submit it and store the one-time keys.
 - Live App Store/TestFlight submission remains blocked until signing assets, bundle ownership, and App Store Connect API credentials are known.
 
 ## Remote Checkpoint

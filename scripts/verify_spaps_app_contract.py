@@ -79,8 +79,10 @@ def verify_contract(payload: dict[str, Any]) -> list[str]:
             failures.append("spaps.application.id must stay null in the public repo")
         if application.get("slug") != "dogswipe":
             failures.append("spaps.application.slug must be dogswipe")
-        if application.get("blueprint_key") != "native_mobile_auth":
-            failures.append("spaps.application.blueprint_key must be native_mobile_auth")
+        if application.get("blueprint_key") != "browser_auth":
+            failures.append("spaps.application.blueprint_key must be browser_auth")
+        if application.get("blueprint_display_name") != "DogSwipe Native Mobile Auth":
+            failures.append("spaps.application.blueprint_display_name must be DogSwipe Native Mobile Auth")
         for field, expected in EXPECTED_ENV_KEYS.items():
             if application.get(field) != expected:
                 failures.append(f"spaps.application.{field} must be {expected}")

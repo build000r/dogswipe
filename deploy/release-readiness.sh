@@ -100,6 +100,12 @@ else
   fail "SPAPS app contract verification failed"
 fi
 
+if python3 scripts/render_spaps_registration_payload.py --check >/dev/null; then
+  pass "SPAPS registration payload renders"
+else
+  fail "SPAPS registration payload render failed"
+fi
+
 require_pattern "Apple Developer Team ID" IOS_RELEASE_DEVELOPMENT_TEAM '^[A-Z0-9]{10}$'
 require_pattern "iOS release bundle ID" IOS_RELEASE_BUNDLE_ID '^[A-Za-z0-9][A-Za-z0-9.-]+[A-Za-z0-9]$'
 require_pattern "DogSwipe API base URL" DOGSWIPE_RELEASE_API_BASE_URL '^https://[^[:space:]]+$'

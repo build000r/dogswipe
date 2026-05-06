@@ -52,6 +52,14 @@ make deploy-release-readiness
 Set `CHECK_ASC_KEY=false` when validating deploy readiness before App Store
 Connect upload credentials are available.
 
+Before creating the private SPAPS application row, render the non-secret
+self-service request body from the same release env:
+
+```bash
+DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN=<domain> \
+make spaps-registration-payload > /tmp/dogswipe-spaps-application.json
+```
+
 ## Production Env
 
 Create `deploy/prod.env` from `deploy/prod.env.example` on the deployment host.
@@ -73,9 +81,12 @@ Required runtime values:
 
 The public SPAPS descriptor at [`../spaps.app.json`](../spaps.app.json) fixes
 the application slug to `dogswipe` and maps the release env names used by the
-iOS and backend handoff. The raw application ID, publishable key, and secret key
-must come from the private deployment env source; this public repo must only
-carry env variable names and templates.
+iOS and backend handoff. [`../docs/SPAPS_APP_HANDOFF.md`](../docs/SPAPS_APP_HANDOFF.md)
+documents the private operator step that renders the `browser_auth` self-service
+application payload and maps the one-time SPAPS response into private env
+values. The raw application ID, publishable key, and secret key must come from
+the private deployment env source; this public repo must only carry env variable
+names and templates.
 
 Optional bounded menu refresh values:
 
@@ -146,8 +157,9 @@ The preflight checks Docker availability, Compose config, required env values,
 SPAPS auth requirements, local-only flags, optional menu-refresh controls, the
 Apple app-site association template, and the shared `reverse-proxy` network.
 `make deploy-release-readiness` wraps the overlay, public SPAPS app descriptor,
-release URL/auth settings, AASA render, iOS release asset verifier, and optional
-App Store Connect API key checks into one non-secret gate.
+SPAPS self-service registration payload render, release URL/auth settings, AASA
+render, iOS release asset verifier, and optional App Store Connect API key
+checks into one non-secret gate.
 
 ## Rollout Shape
 

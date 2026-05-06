@@ -15,7 +15,8 @@
     "application": {
       "id": null,
       "slug": "dogswipe",
-      "blueprint_key": "native_mobile_auth",
+      "blueprint_key": "browser_auth",
+      "blueprint_display_name": "DogSwipe Native Mobile Auth",
       "provisioning_status": "public_descriptor",
       "application_id_env": "SPAPS_APPLICATION_ID",
       "server_secret_key_env": "SPAPS_API_KEY",

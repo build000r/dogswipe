@@ -34,7 +34,7 @@ DOGSWIPE_RELEASE_AUTH_REDIRECT_URL ?= $(if $(DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN)
 DOGSWIPE_RELEASE_AUTH_UNIVERSAL_LINK_HOSTS ?= $(DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN)
 DOGSWIPE_RELEASE_SPAPS_ORIGIN ?= $(if $(DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN),https://$(DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN),)
 
-.PHONY: generate-ios ios-build ios-release-assets ios-ui-test ios-screenshots require-phone-device ios-phone-build ios-phone-reset-app ios-phone-install ios-phone-launch ios-phone-run require-ios-release-env require-ios-archive require-ios-asc-key ios-release-archive ios-testflight-export ios-testflight-upload swift-test backend-install backend-install-local backend-test coverage lint typecheck migrate migration-current test drift crap mmdx-preflight spaps-app-contract deploy-config deploy-preflight deploy-render-aasa deploy-release-readiness deploy-overlay-template deploy-post-verify
+.PHONY: generate-ios ios-build ios-release-assets ios-ui-test ios-screenshots require-phone-device ios-phone-build ios-phone-reset-app ios-phone-install ios-phone-launch ios-phone-run require-ios-release-env require-ios-archive require-ios-asc-key ios-release-archive ios-testflight-export ios-testflight-upload swift-test backend-install backend-install-local backend-test coverage lint typecheck migrate migration-current test drift crap mmdx-preflight spaps-app-contract spaps-registration-payload deploy-config deploy-preflight deploy-render-aasa deploy-release-readiness deploy-overlay-template deploy-post-verify
 
 generate-ios:
 	cd apps/ios/DogSwipe && xcodegen generate
@@ -253,6 +253,16 @@ mmdx-preflight:
 
 spaps-app-contract:
 	python3 scripts/verify_spaps_app_contract.py
+	ALLOW_PLACEHOLDERS=true python3 scripts/render_spaps_registration_payload.py --check
+
+spaps-registration-payload:
+	@ALLOW_PLACEHOLDERS="$(ALLOW_PLACEHOLDERS)" \
+	IOS_RELEASE_BUNDLE_ID="$(IOS_RELEASE_BUNDLE_ID)" \
+	DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN="$(DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN)" \
+	DOGSWIPE_RELEASE_SPAPS_ORIGIN="$(DOGSWIPE_RELEASE_SPAPS_ORIGIN)" \
+	DOGSWIPE_RELEASE_AUTH_REDIRECT_URL="$(DOGSWIPE_RELEASE_AUTH_REDIRECT_URL)" \
+	DOGSWIPE_RELEASE_AUTH_UNIVERSAL_LINK_HOSTS="$(DOGSWIPE_RELEASE_AUTH_UNIVERSAL_LINK_HOSTS)" \
+	python3 scripts/render_spaps_registration_payload.py
 
 deploy-config:
 	DOGSWIPE_ENV_FILE=prod.env.example DOGSWIPE_IMAGE=dogswipe-api:local POSTGRES_PASSWORD=postgres docker compose --env-file deploy/prod.env.example -f deploy/docker-compose.prod.yml config >/dev/null

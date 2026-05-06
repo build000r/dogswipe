@@ -78,6 +78,7 @@ make swift-test
 make backend-install-local
 make backend-test
 make spaps-app-contract
+ALLOW_PLACEHOLDERS=true make spaps-registration-payload
 ```
 
 `backend-install-local` uses a sibling Sweet Potato checkout at `../sweet-potato` so this workspace can track current SPAPS package contracts. For a clean public install, publish or install `spaps-server-quickstart~=0.5.1` and run `make backend-install`.
@@ -89,7 +90,7 @@ docker compose up --build
 curl http://localhost:8000/health
 ```
 
-The backend defaults to local development mode with auth disabled. Production deployments should set `SPAPS_AUTH_ENABLED=true`, `SPAPS_API_KEY`, `SPAPS_APPLICATION_ID`, `DOGSWIPE_ADMIN_USER_IDS`, and a managed PostgreSQL `DATABASE_URL`. The public SPAPS app descriptor lives in `spaps.app.json` and fixes the application slug to `dogswipe` for CLI/device-flow handoff. Keep the raw application ID, publishable key, and secret key in a private env manager or the ignored local `.env.dogswipe.spaps` file, never in git.
+The backend defaults to local development mode with auth disabled. Production deployments should set `SPAPS_AUTH_ENABLED=true`, `SPAPS_API_KEY`, `SPAPS_APPLICATION_ID`, `DOGSWIPE_ADMIN_USER_IDS`, and a managed PostgreSQL `DATABASE_URL`. The public SPAPS app descriptor lives in `spaps.app.json`, fixes the application slug to `dogswipe`, and renders a Sweet Potato self-service registration payload with the supported `browser_auth` blueprint plus DogSwipe native-iOS settings. Keep the raw application ID, publishable key, and secret key in a private env manager or the ignored local `.env.dogswipe.spaps` file, never in git.
 
 To smoke test on a connected iPhone with the local seeded backend:
 
@@ -108,13 +109,14 @@ export DOGSWIPE_RELEASE_API_BASE_URL=https://<dogswipe-api-domain>
 export DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN=<dogswipe-api-domain>
 export DOGSWIPE_RELEASE_SPAPS_PUBLISHABLE_KEY=spaps_pub_...
 
+make spaps-registration-payload > /tmp/dogswipe-spaps-application.json
 make deploy-render-aasa
 make deploy-release-readiness
 make ios-release-archive
 make ios-testflight-export
 ```
 
-`deploy-render-aasa` renders the Apple app-site association payload with the same Apple Team ID and bundle identifier used by the signed archive. `deploy-release-readiness` checks the live overlay, production release URLs, SPAPS publishable-key shape, AASA render, iOS release assets, and optional App Store Connect API key handoff without printing secrets. `ios-release-archive` also accepts `DOGSWIPE_RELEASE_SPAPS_API_BASE_URL`, `DOGSWIPE_RELEASE_SPAPS_ORIGIN`, `DOGSWIPE_RELEASE_AUTH_REDIRECT_URL`, and `DOGSWIPE_RELEASE_AUTH_UNIVERSAL_LINK_HOSTS`; the latter three default from `DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN`. `ios-testflight-upload` can upload the archive through an App Store Connect API key when `ASC_KEY_PATH`, `ASC_KEY_ID`, and `ASC_ISSUER_ID` are set. `.gitignore` blocks common Apple signing artifacts such as `.p8`, `.p12`, and `.mobileprovision` files.
+`spaps-registration-payload` renders the non-secret body for `POST /api/self-service/applications`; the full operator flow is in [docs/SPAPS_APP_HANDOFF.md](docs/SPAPS_APP_HANDOFF.md). `deploy-render-aasa` renders the Apple app-site association payload with the same Apple Team ID and bundle identifier used by the signed archive. `deploy-release-readiness` checks the live overlay, production release URLs, SPAPS registration payload, SPAPS publishable-key shape, AASA render, iOS release assets, and optional App Store Connect API key handoff without printing secrets. `ios-release-archive` also accepts `DOGSWIPE_RELEASE_SPAPS_API_BASE_URL`, `DOGSWIPE_RELEASE_SPAPS_ORIGIN`, `DOGSWIPE_RELEASE_AUTH_REDIRECT_URL`, and `DOGSWIPE_RELEASE_AUTH_UNIVERSAL_LINK_HOSTS`; the latter three default from `DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN`. `ios-testflight-upload` can upload the archive through an App Store Connect API key when `ASC_KEY_PATH`, `ASC_KEY_ID`, and `ASC_ISSUER_ID` are set. `.gitignore` blocks common Apple signing artifacts such as `.p8`, `.p12`, and `.mobileprovision` files.
 
 For local Docker development, `DOGSWIPE_AUTO_CREATE_SCHEMA=true` and `DOGSWIPE_SEED_SAMPLE_PROFILES=true` create the starter tables and seed sample profiles at API startup. Keep those flags off in production and run managed migrations instead:
 
@@ -154,7 +156,7 @@ Target gates for this repo:
 - iOS UI smoke: deterministic screenshot-mode launch covers Discover, draggable card advancement, Matches, Vendor, Review, and Profile
 - iOS screenshots: exported XCTest attachments produce five local PNGs under `.build/ios-screenshots/attachments`
 
-GitHub Actions enforces the same blocking gates for backend coverage, CRAP, MMDX architecture syntax, SPAPS app contract validation, SwiftUI drift, deploy preflight, iOS release asset verification, iOS build/tests, and screenshot UI smoke.
+GitHub Actions enforces the same blocking gates for backend coverage, CRAP, MMDX architecture syntax, SPAPS app contract and registration-payload validation, SwiftUI drift, deploy preflight, iOS release asset verification, iOS build/tests, and screenshot UI smoke.
 
 Latest recorded gate results live in [docs/QUALITY_GATES.md](docs/QUALITY_GATES.md).
 The current prompt-to-artifact completion audit lives in [docs/COMPLETION_AUDIT.md](docs/COMPLETION_AUDIT.md).
@@ -166,12 +168,12 @@ The placement decision is `NEW REPO`: this app owns a durable product boundary r
 
 ## Current Scope
 
-The current app can load local hotdog profiles, render cream/red/mustard swipe cards with a local Chicago-style product visual when no image URL is available, request and verify SPAPS magic links including native `dogswipe://auth` and configured HTTPS universal-link returns, store access/refresh JWTs in Keychain, record swipes, persist shared craving controls that filter/rank discovery, use CoreLocation-backed coordinates for live distance ranking across discovery and saved matches, search bounded menu snapshots from the Discover screen, show deterministic walking-time estimates, preview live MapKit walking routes through visible Live walk/Directions controls on discovery cards and match rows, surface menu highlights from bounded snapshots, open Apple Maps directions from coordinates or pickup address text, select match add-ons, add a saved hotdog to a local order draft with confirmation and a real bag count, resolve vendor pickup addresses into coordinates, submit and revise vendor-owned hotdog listings, refresh bounded menu URL snapshots as a vendor, refresh stale vendor menu snapshots as an admin or optional background worker, approve/reject/request edits as an admin, fetch matches through the shared Swift API client, and emit a no-PII iOS analytics contract for screen/swipe/auth/match/order events. The iOS target includes a hotdog-specific AppIcon catalog, accent color, `PrivacyInfo.xcprivacy` declaration for auth email and precise location use, associated-domains entitlement plumbing, a deployable Apple app-site association template, and deterministic screenshot-mode fixtures for UI smoke/screenshots. Backend migrations are managed through Alembic up to `0008`, local Docker development can auto-create and seed the starter data with explicit local-only flags, `spaps.app.json` declares the public SPAPS application slug without storing keys, CI enforces the core quality gates, and production deploy artifacts are ready for a concrete skillbox target.
+The current app can load local hotdog profiles, render cream/red/mustard swipe cards with a local Chicago-style product visual when no image URL is available, request and verify SPAPS magic links including native `dogswipe://auth` and configured HTTPS universal-link returns, store access/refresh JWTs in Keychain, record swipes, persist shared craving controls that filter/rank discovery, use CoreLocation-backed coordinates for live distance ranking across discovery and saved matches, search bounded menu snapshots from the Discover screen, show deterministic walking-time estimates, preview live MapKit walking routes through visible Live walk/Directions controls on discovery cards and match rows, surface menu highlights from bounded snapshots, open Apple Maps directions from coordinates or pickup address text, select match add-ons, add a saved hotdog to a local order draft with confirmation and a real bag count, resolve vendor pickup addresses into coordinates, submit and revise vendor-owned hotdog listings, refresh bounded menu URL snapshots as a vendor, refresh stale vendor menu snapshots as an admin or optional background worker, approve/reject/request edits as an admin, fetch matches through the shared Swift API client, and emit a no-PII iOS analytics contract for screen/swipe/auth/match/order events. The iOS target includes a hotdog-specific AppIcon catalog, accent color, `PrivacyInfo.xcprivacy` declaration for auth email and precise location use, associated-domains entitlement plumbing, a deployable Apple app-site association template, and deterministic screenshot-mode fixtures for UI smoke/screenshots. Backend migrations are managed through Alembic up to `0008`, local Docker development can auto-create and seed the starter data with explicit local-only flags, `spaps.app.json` declares the public SPAPS application slug without storing keys, `make spaps-registration-payload` renders the supported Sweet Potato app-registration body, CI enforces the core quality gates, and production deploy artifacts are ready for a concrete skillbox target.
 
 ## Known Limits
 
 - Live deployment and hosted universal-link activation are blocked until a skillbox deploy overlay names a host, service, production origin, env source, deploy root, Apple Team ID, and health/AASA URLs.
-- Production SPAPS auth proof is blocked until the private env source supplies the `dogswipe` application ID, server secret key, publishable key, and matching allowed redirect URLs.
+- Production SPAPS auth proof is blocked until an operator creates the private `dogswipe` SPAPS application from [docs/SPAPS_APP_HANDOFF.md](docs/SPAPS_APP_HANDOFF.md) and stores its application ID, server secret key, publishable key, and matching redirect/origin values in the private env source.
 - Live TestFlight submission is blocked until Apple signing assets, bundle ownership, and App Store Connect credentials are available; archive/export/upload handoff targets are present.
 - Broad crawler-based menu indexing beyond bounded snapshot search, full turn-by-turn navigation or route persistence beyond lightweight MapKit previews, and durable payment/fulfillment order management beyond the first-slice local order draft are future slices.
 

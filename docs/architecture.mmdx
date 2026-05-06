@@ -29,6 +29,7 @@ flowchart LR
   aasa["Apple app-site association"]
   pubkey["SPAPS publishable key"]
   appcontract["spaps.app.json"]
+  registration["SPAPS registration payload"]
   keychain["Keychain access token"]
   refresh["Keychain refresh token"]
   vm["View models"]
@@ -62,6 +63,8 @@ flowchart LR
   pubkey --> authclient
   appcontract --> authclient
   appcontract --> deploy
+  appcontract --> registration
+  registration --> spaps
   appcontract --> spaps
   authclient --> spaps
   ios --> keychain
@@ -118,7 +121,8 @@ stateDiagram-v2
   BackendCoverage --> CrapScore
   CrapScore --> MMDXPreflight
   MMDXPreflight --> SPAPSContract
-  SPAPSContract --> DeployPreflight
+  SPAPSContract --> RegistrationPayload
+  RegistrationPayload --> DeployPreflight
   DeployPreflight --> SwiftTests
   SwiftTests --> DriftScan
   DriftScan --> IOSBuild
@@ -131,6 +135,7 @@ stateDiagram-v2
 ```mermaid
 sequenceDiagram
   participant App as iOS App
+  participant Operator as Release operator
   participant AuthLink as dogswipe or universal auth link
   participant Maps as Apple Maps
   participant API as DogSwipe API
@@ -139,6 +144,8 @@ sequenceDiagram
   participant SPAPS as Sweet Potato/SPAPS
   participant DB as PostgreSQL
 
+  Operator->>SPAPS: Submit rendered browser_auth dogswipe registration payload
+  SPAPS-->>Operator: Application ID, publishable key, secret key
   App->>SPAPS: X-API-Key spaps_pub... request magic link with redirect_url
   SPAPS-->>AuthLink: Magic-link email token
   AuthLink-->>App: URL open with token_hash/code
