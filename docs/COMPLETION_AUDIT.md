@@ -1,8 +1,8 @@
 # Completion Audit
 
 Date: 2026-05-06
-Code commit audited: `333a13c` (`ci: opt into node 24 actions runtime`)
-CI run audited: `25415081802`
+Latest app commit audited: `6397425` (`feat(ios): add draggable swipe deck`)
+CI run audited: `25416010353`
 
 ## Objective Restated
 
@@ -23,13 +23,13 @@ SwiftUI drift clean, CRAP below 20, and meaningful backend coverage above 80%.
 | Sweet Potato Python starter exists | `backend/pyproject.toml` depends on `spaps-server-quickstart~=0.5.1`; FastAPI app lives under `backend/src/dogswipe_backend`. | Done |
 | SPAPS auth alignment | iOS `SPAPSAuthClient`, Keychain-backed `AuthSessionStore`, backend SPAPS/local identity boundary, and Sweet Potato usage audit with 0 findings. | Done |
 | Product corrected to local hotdogs | `README.md`, `docs/VISION.md`, backend seed/contracts, Swift models, iOS Discover/Matches/Vendor/Review/Profile copy and fixtures. | Done |
-| Swipe-first discovery loop | Discovery cards, swipe state, undo, matches, menu search, preferences, location-aware distance/walk estimates, directions, and route previews are implemented and tested. | Done |
+| Swipe-first discovery loop | Discovery cards, drag-to-like/pass/superlike gestures, swipe action buttons, undo, matches, menu search, preferences, location-aware distance/walk estimates, directions, and route previews are implemented and tested. | Done |
 | Vendor/admin workflow | Vendor submissions, menu snapshots, admin approval/reject/change-request flow, stale menu refresh, and iOS surfaces are implemented and documented. | Done |
 | Frontend production quality gate | Fresh `make drift` reported 0 Swift findings; CI `backend` job also passed SwiftUI drift gate. | Done |
 | CRAP below 20 | Fresh `make crap` reported `FINAL_SCORE: 9.00`; CI CRAP gate passed. | Done |
 | Meaningful backend test coverage above 80% | Fresh `make coverage` ran 75 backend tests and reported total coverage 89.61%. | Done |
 | Swift test coverage through behavior | Fresh `make swift-test` ran 33 tests across API client, scorer, and deck state. | Done |
-| iOS build/test/screenshot smoke | CI run `25415081802` passed iOS build, iOS unit tests, and screenshot UI smoke. Local `make ios-ui-test` and `make ios-screenshots` passed after the screenshot harness was changed to launch each tab directly in isolated screenshot-mode tests. | Done |
+| iOS build/test/screenshot smoke | CI run `25416010353` passed iOS build, iOS unit tests, and screenshot UI smoke. Local `make ios-ui-test` now covers the reference Discover surface, draggable card advancement, Matches, Vendor, Review, and Profile in isolated screenshot-mode launches. | Done |
 | MMDX architecture tracking | `docs/architecture.mmdx`; fresh `make mmdx-preflight` passed 3 charts. | Done |
 | Workgraph/planning tracked | `docs/WORKGRAPH.md` lists WG-001 through WG-038 and current ready frontier/risks. | Done |
 | README and vision docs updated | `README.md`, `docs/VISION.md`, `docs/QUALITY_GATES.md`, and `docs/WORKGRAPH.md` describe the hotdog app and current limits. | Done |
@@ -37,7 +37,7 @@ SwiftUI drift clean, CRAP below 20, and meaningful backend coverage above 80%.
 | Deploy artifacts exist | `deploy/docker-compose.prod.yml`, env template, pre/post deploy scripts, reverse-proxy template, AASA template, and `deploy/README.md`. | Done |
 | Deploy preflight passes | Fresh `make deploy-preflight` reported 19 passed, 0 warnings, 0 failed. | Done |
 | Skillbox overlay template exists | Fresh `make deploy-overlay-template` reported 15 passed, 0 failed for the placeholder template. | Done |
-| CI enforces gates | `.github/workflows/ci.yml` runs backend tests/coverage/CRAP/MMDX/drift/lint/typecheck/migration/deploy/Docker, Swift package tests, and iOS release/build/unit/screenshot gates. Audited run `25415081802` passed. | Done |
+| CI enforces gates | `.github/workflows/ci.yml` runs backend tests/coverage/CRAP/MMDX/drift/lint/typecheck/migration/deploy/Docker, Swift package tests, and iOS release/build/unit/screenshot gates. Audited run `25416010353` passed. | Done |
 | Original reference-image visual parity | The supplied DogSwipe reference image is now the visual source of truth for the iOS Discover/Matches surfaces: cream/red/mustard vendor-pack chrome, Chicago Classic cards, hotdog-first art, swipe controls, and match/order CTA. | Done |
 | Live production deployment | Deploy contract and preflight are ready, but `deploy/README.md` states live rollout needs a concrete skillbox overlay: host, deploy root, env source, domain, Apple Team ID, health URL, and AASA URL. | Blocked |
 | Hosted universal-link activation | AASA template and entitlement plumbing exist, but hosted verification needs the production domain and Apple Team ID. | Blocked |
@@ -49,7 +49,7 @@ SwiftUI drift clean, CRAP below 20, and meaningful backend coverage above 80%.
 - `make swift-test`: 33 tests passed.
 - `make ios-build`: generic iOS build passed.
 - `xcodebuild -quiet -project apps/ios/DogSwipe/DogSwipe.xcodeproj -scheme DogSwipe -destination 'platform=iOS Simulator,id=<iPhone 17 Pro simulator UDID>,arch=arm64' -only-testing:DogSwipeTests test`: iOS unit tests passed.
-- `make ios-ui-test`: 5 isolated screenshot UI tests passed.
+- `make ios-ui-test`: 6 isolated screenshot UI tests passed, including draggable Discover card advancement.
 - `make ios-screenshots`: 5 PNG attachments exported and inspected.
 - `make coverage`: 75 tests passed; total coverage 89.61%.
 - `make drift`: 0 Swift findings.
@@ -59,7 +59,7 @@ SwiftUI drift clean, CRAP below 20, and meaningful backend coverage above 80%.
 - `make deploy-overlay-template`: 15 passed, 0 failed.
 - `make ios-release-assets`: iOS release assets verified.
 - Sweet Potato usage audit: 0 high, 0 medium, 0 low findings.
-- GitHub Actions `25415081802`: `backend` succeeded in 2m4s, `swift-package` succeeded in 27s, and `ios` succeeded in 10m50s, including screenshot UI smoke.
+- GitHub Actions `25416010353`: `backend` succeeded in 2m30s, `swift-package` succeeded in 31s, and `ios` succeeded in 10m42s, including screenshot UI smoke.
 
 ## Verdict
 
