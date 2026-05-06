@@ -17,7 +17,7 @@ Last verified: 2026-05-06
 | Alembic migration smoke | `make backend-test` | migration test upgraded to `0009` and downgraded to `base` |
 | Backend container build | `docker build -q backend` | built image `sha256:36e49501e78985bb76212fbb7498bac4662a19daf667dcd1618be3627777698e` |
 | Production Compose config | `make deploy-config` | passed |
-| Deploy preflight | `make deploy-preflight` | 19 passed, 0 warnings, 0 failed |
+| Deploy preflight | `make deploy-preflight` | CI runner: 18 passed, 1 expected warning for absent local `reverse-proxy` network, 0 failed; local private handoff preflight passes when the shared network exists |
 | AASA render smoke | `make deploy-render-aasa AASA_APPLE_TEAM_ID=ABCDE12345` | rendered bundle-aware Apple app-site association payload |
 | Release readiness | `make deploy-release-readiness ALLOW_PLACEHOLDERS=true ...` | 21 passed, 1 skipped, 0 failed, including SPAPS app contract and registration-payload verification |
 | Private deploy handoff template | `make deploy-private-handoff-template` | rendered throwaway private overlay/env files, validated overlay, and ran deploy preflight with 19 passed, 0 warnings, 0 failed |
@@ -29,7 +29,7 @@ Last verified: 2026-05-06
 | CRAP score | `make crap` | `FINAL_SCORE: 9.00` |
 | MMDX preflight | `make mmdx-preflight` | 3 charts passed |
 | SPAPS app contract | `make spaps-app-contract` | public descriptor declares the `dogswipe` slug, env-only private key handoff, and renderable `browser_auth` self-service registration payload |
-| CI quality enforcement | GitHub Actions `25424553583` `backend`, `swift-package`, and `ios` jobs for executable-code commit `281c465` | coverage XML feeds blocking CRAP; MMDX, SPAPS app contract, registration-payload validation, SwiftUI drift, deploy/AASA render, release-readiness, Swift package, durable order API/client changes, and iOS gates fail on regressions; iOS prefers a modern simulator, preboots it, disables parallel test workers, uses bounded destination/job/test timeouts, and runs direct-tab screenshot UI smoke |
+| CI quality enforcement | GitHub Actions `25426953053` `backend`, `swift-package`, and `ios` jobs for commit `4b86ad4` | coverage XML feeds blocking CRAP; MMDX, SPAPS app contract, registration-payload validation, SwiftUI drift, deploy/AASA render, private handoff renderers, release-readiness, Swift package, durable order API/client changes, and iOS gates fail on regressions; iOS prefers a modern simulator, preboots it, disables parallel test workers, uses bounded destination/job/test timeouts, and runs direct-tab screenshot UI smoke |
 | SPAPS usage audit | `python3 ../sweet-potato/skills/sweet-potato-usage-audit/scripts/audit_sweet_potato_usage.py --sweet-potato-root ../sweet-potato .` | 0 high, 0 medium, 0 low |
 
 ## Current Product Evidence
@@ -80,5 +80,5 @@ Last verified: 2026-05-06
 
 ## Known Blocks
 
-- Live deployment, production SPAPS auth proof, and hosted universal-link activation are blocked until `dogswipe.build000r.com` resolves, the production host has a DogSwipe deploy root and private env source, and the shared reverse proxy serves the API plus Apple app-site association payload.
+- Live deployment, production SPAPS auth proof, and hosted universal-link activation are blocked until `dogswipe.build000r.com` resolves, the production host has a DogSwipe deploy root and private env source, and the shared reverse proxy serves the API plus Apple app-site association payload. A fresh 2026-05-06 probe still shows the DNS record unresolved and the DogSwipe host paths absent.
 - Live App Store signing and TestFlight upload remain blocked because bundle ownership, signing assets, and App Store Connect credentials are not available in this workspace.
