@@ -19,12 +19,13 @@ Last verified: 2026-05-06
 | Production Compose config | `make deploy-config` | passed |
 | Deploy preflight | `make deploy-preflight` | 19 passed, 0 warnings, 0 failed |
 | AASA render smoke | `make deploy-render-aasa AASA_APPLE_TEAM_ID=ABCDE12345` | rendered bundle-aware Apple app-site association payload |
-| Release readiness | `make deploy-release-readiness ALLOW_PLACEHOLDERS=true ...` | placeholder-mode release handoff gate passed without secrets |
+| Release readiness | `make deploy-release-readiness ALLOW_PLACEHOLDERS=true ...` | 20 passed, 1 skipped, 0 failed, including SPAPS app contract verification |
 | Skillbox overlay template | `make deploy-overlay-template` | 15 passed, 0 failed |
 | SwiftUI drift scan | `make drift` | 0 Swift findings |
 | iOS release assets | `make ios-release-assets` | AppIcon, accent color, privacy manifest, associated-domains entitlement, bundle-aware Apple app-site association template, build-setting-backed auth config, and App Store Connect export option plists passed |
 | CRAP score | `make crap` | `FINAL_SCORE: 9.00` |
 | MMDX preflight | `make mmdx-preflight` | 3 charts passed |
+| SPAPS app contract | `make spaps-app-contract` | public descriptor declares the `dogswipe` slug and env-only private key handoff |
 | CI quality enforcement | GitHub Actions `25420088742` `backend`, `swift-package`, and `ios` jobs for executable-code commit `053960b` | coverage XML feeds blocking CRAP; MMDX, SwiftUI drift, deploy/AASA render, release-readiness, Swift package, and iOS gates fail on regressions; iOS prefers a modern simulator, preboots it, disables parallel test workers, uses bounded destination/job/test timeouts, and runs direct-tab screenshot UI smoke |
 | SPAPS usage audit | `python3 ../sweet-potato/skills/sweet-potato-usage-audit/scripts/audit_sweet_potato_usage.py --sweet-potato-root ../sweet-potato .` | 0 high, 0 medium, 0 low |
 
@@ -33,6 +34,7 @@ Last verified: 2026-05-06
 - `DogSwipeAPIClient` decodes backend snake_case profile payloads.
 - `DogSwipeAPIClient` encodes swipe requests without client-controlled user identity.
 - `DogSwipeAPIClient` can attach a trimmed user bearer token from an injected provider and omits blank auth values.
+- `spaps.app.json` gives the SPAPS CLI and release handoff a non-secret `dogswipe` application descriptor while requiring private env values for the raw application ID, server secret key, and publishable key.
 - `SPAPSAuthClient` requests and verifies magic links with a publishable key, optional native origin, and `dogswipe://auth` redirect URL, never a secret SPAPS API key.
 - `AuthSessionStore` can request SPAPS magic links with a configured HTTPS universal-link redirect URL, and `AuthDeepLink` only accepts universal auth callbacks from configured hosts.
 - The iOS target includes `DogSwipe.entitlements` with `applinks:$(DOGSWIPE_ASSOCIATED_DOMAIN)`, and `make ios-release-assets` verifies the entitlement, build settings, Info.plist keys, AASA template, and App Store Connect export/upload option plists together.
@@ -65,10 +67,10 @@ Last verified: 2026-05-06
 - Configured admins can list pending vendor submissions, approve one into discovery, reject one, request edits with a review note, and production preflight requires `DOGSWIPE_ADMIN_USER_IDS` when SPAPS auth is enabled.
 - Production deploy artifacts define the Compose stack, env contract, preflight checks, release-readiness checks, post-deploy verification, reverse-proxy template, bundle-aware Apple app-site association render path, and CI workflow.
 - Signed iOS release handoff artifacts define `ios-release-archive`, `ios-testflight-export`, and `ios-testflight-upload` Make targets with build-setting-backed production API/SPAPS/universal-link inputs and App Store Connect export/upload option plists; Apple `.p8`, `.p12`, and `.mobileprovision` files are ignored.
-- GitHub Actions enforces backend coverage XML generation, scoped CRAP threshold, MMDX architecture preflight, SwiftUI drift, deploy preflight/readiness including AASA template/render validation, iOS build/test gates, and screenshot UI smoke.
+- GitHub Actions enforces backend coverage XML generation, scoped CRAP threshold, MMDX architecture preflight, SPAPS app contract validation, SwiftUI drift, deploy preflight/readiness including AASA template/render validation, iOS build/test gates, and screenshot UI smoke.
 - A DogSwipe skillbox overlay template and validator exist so live deploy setup, including the AASA URL and Apple Team ID contract, can be checked without committing host secrets.
 
 ## Known Blocks
 
-- Live deployment and hosted universal-link activation are blocked until a skillbox deploy overlay names a host, service, production origin, Apple Team ID, health URL, and AASA URL.
+- Live deployment, production SPAPS auth proof, and hosted universal-link activation are blocked until a skillbox deploy overlay and private env source name a host, service, production origin, Apple Team ID, SPAPS application ID/key values, health URL, and AASA URL.
 - Live App Store signing and TestFlight upload remain blocked because bundle ownership, signing assets, and App Store Connect credentials are not available in this workspace.

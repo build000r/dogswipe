@@ -71,9 +71,11 @@ Required runtime values:
 - `SPAPS_APPLICATION_ID`
 - `DOGSWIPE_ADMIN_USER_IDS`
 
-The production SPAPS application slug is `dogswipe`. Its raw application ID,
-publishable key, and secret key should come from the private deployment env
-source; this public repo must only carry env variable names and templates.
+The public SPAPS descriptor at [`../spaps.app.json`](../spaps.app.json) fixes
+the application slug to `dogswipe` and maps the release env names used by the
+iOS and backend handoff. The raw application ID, publishable key, and secret key
+must come from the private deployment env source; this public repo must only
+carry env variable names and templates.
 
 Optional bounded menu refresh values:
 
@@ -143,9 +145,9 @@ bash deploy/pre-deploy-checks.sh
 The preflight checks Docker availability, Compose config, required env values,
 SPAPS auth requirements, local-only flags, optional menu-refresh controls, the
 Apple app-site association template, and the shared `reverse-proxy` network.
-`make deploy-release-readiness` wraps the overlay, release URL/auth settings,
-AASA render, iOS release asset verifier, and optional App Store Connect API key
-checks into one non-secret gate.
+`make deploy-release-readiness` wraps the overlay, public SPAPS app descriptor,
+release URL/auth settings, AASA render, iOS release asset verifier, and optional
+App Store Connect API key checks into one non-secret gate.
 
 ## Rollout Shape
 

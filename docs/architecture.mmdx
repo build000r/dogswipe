@@ -28,6 +28,7 @@ flowchart LR
   entitlement["Associated Domains entitlement"]
   aasa["Apple app-site association"]
   pubkey["SPAPS publishable key"]
+  appcontract["spaps.app.json"]
   keychain["Keychain access token"]
   refresh["Keychain refresh token"]
   vm["View models"]
@@ -59,6 +60,9 @@ flowchart LR
   entitlement --> authlink
   aasa --> authlink
   pubkey --> authclient
+  appcontract --> authclient
+  appcontract --> deploy
+  appcontract --> spaps
   authclient --> spaps
   ios --> keychain
   ios --> refresh
@@ -113,7 +117,8 @@ stateDiagram-v2
   BackendTests --> BackendCoverage
   BackendCoverage --> CrapScore
   CrapScore --> MMDXPreflight
-  MMDXPreflight --> DeployPreflight
+  MMDXPreflight --> SPAPSContract
+  SPAPSContract --> DeployPreflight
   DeployPreflight --> SwiftTests
   SwiftTests --> DriftScan
   DriftScan --> IOSBuild

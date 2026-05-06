@@ -35,6 +35,8 @@ jobs:
         run: make crap SKILLS_ROOT="$RUNNER_TEMP/quality-skills"
       - name: MMDX preflight
         run: make mmdx-preflight SKILLS_ROOT="$RUNNER_TEMP/quality-skills"
+      - name: SPAPS app contract
+        run: make spaps-app-contract
       - name: SwiftUI drift gate
         run: make drift SKILLS_ROOT="$RUNNER_TEMP/quality-skills"
       - name: Lint

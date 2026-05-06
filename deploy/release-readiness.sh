@@ -94,6 +94,12 @@ else
   fi
 fi
 
+if python3 scripts/verify_spaps_app_contract.py >/dev/null; then
+  pass "SPAPS app contract verifies"
+else
+  fail "SPAPS app contract verification failed"
+fi
+
 require_pattern "Apple Developer Team ID" IOS_RELEASE_DEVELOPMENT_TEAM '^[A-Z0-9]{10}$'
 require_pattern "iOS release bundle ID" IOS_RELEASE_BUNDLE_ID '^[A-Za-z0-9][A-Za-z0-9.-]+[A-Za-z0-9]$'
 require_pattern "DogSwipe API base URL" DOGSWIPE_RELEASE_API_BASE_URL '^https://[^[:space:]]+$'
