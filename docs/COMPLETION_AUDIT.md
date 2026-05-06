@@ -34,13 +34,13 @@ SwiftUI drift clean, CRAP below 20, and meaningful backend coverage above 80%.
 | Workgraph/planning tracked | `docs/WORKGRAPH.md` lists WG-001 through WG-040 and current ready frontier/risks. | Done |
 | README and vision docs updated | `README.md`, `docs/VISION.md`, `docs/QUALITY_GATES.md`, and `docs/WORKGRAPH.md` describe the hotdog app and current limits. | Done |
 | Build-vs-clone decision captured | `README.md` records `NEW REPO` and `BORROW + BUILD` using Sweet Potato/SPAPS patterns. | Done |
-| Deploy artifacts exist | `deploy/docker-compose.prod.yml`, env template, pre/post deploy scripts, reverse-proxy template, AASA template, and `deploy/README.md`. | Done |
+| Deploy artifacts exist | `deploy/docker-compose.prod.yml`, env template, pre/post deploy scripts, reverse-proxy template, bundle-aware AASA template/render script, and `deploy/README.md`. | Done |
 | Deploy preflight passes | Fresh `make deploy-preflight` reported 19 passed, 0 warnings, 0 failed. | Done |
 | Skillbox overlay template exists | Fresh `make deploy-overlay-template` reported 15 passed, 0 failed for the placeholder template. | Done |
 | CI enforces gates | `.github/workflows/ci.yml` runs backend tests/coverage/CRAP/MMDX/drift/lint/typecheck/migration/deploy/Docker, Swift package tests, and iOS release/build/unit/screenshot gates. Audited executable-code run `25418266074` passed. | Done |
 | Original reference-image visual parity | The supplied DogSwipe reference image is now the visual source of truth for the iOS Discover/Matches surfaces: cream/red/mustard vendor-pack chrome, Chicago Classic cards, hotdog-first art, swipe controls, and match/order CTA. | Done |
 | Live production deployment | Deploy contract and preflight are ready, but `deploy/README.md` states live rollout needs a concrete skillbox overlay: host, deploy root, env source, domain, Apple Team ID, health URL, and AASA URL. | Blocked |
-| Hosted universal-link activation | AASA template and entitlement plumbing exist, but hosted verification needs the production domain and Apple Team ID. | Blocked |
+| Hosted universal-link activation | Bundle-aware AASA template, local render target, and entitlement plumbing exist, but hosted verification needs the production domain and Apple Team ID. | Blocked |
 | App Store signing/TestFlight handoff | The iOS release archive/export/upload Make targets, build-setting-backed production auth/link configuration, App Store Connect export option plists, and secret ignore rules exist; proving live upload still needs signing assets, Apple account ownership, and App Store Connect credentials. | Blocked |
 | Process-only orchestration requests | Repo artifacts show planning, workgraph, docs, gates, deploy, and quality evidence. Swarm/model-specific execution details are not independently verifiable from the current repo state and are not app runtime deliverables. | Weak evidence |
 
@@ -56,6 +56,7 @@ SwiftUI drift clean, CRAP below 20, and meaningful backend coverage above 80%.
 - `make crap`: `FINAL_SCORE: 9.00`.
 - `make mmdx-preflight`: 3 charts passed.
 - `make deploy-preflight`: 19 passed, 0 warnings, 0 failed.
+- `make deploy-render-aasa AASA_APPLE_TEAM_ID=ABCDE12345`: rendered the bundle-aware Apple app-site association payload.
 - `make deploy-overlay-template`: 15 passed, 0 failed.
 - `make ios-release-assets`: iOS release assets verified, including build-setting-backed auth/link configuration and App Store Connect export/upload option plists.
 - `make -n ios-release-archive ...`: dry-run showed the signed archive command receives production API/SPAPS/universal-link settings without running Apple signing.

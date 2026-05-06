@@ -8,6 +8,9 @@ COMPOSE_CMD="${COMPOSE_CMD:-docker compose --env-file "$ENV_FILE" -f "$COMPOSE_F
 HEALTH_ENDPOINT="${HEALTH_ENDPOINT:-http://localhost:8000/health}"
 PUBLIC_HEALTH_URL="${PUBLIC_HEALTH_URL:-}"
 PUBLIC_AASA_URL="${PUBLIC_AASA_URL:-}"
+APPLE_TEAM_ID="${APPLE_TEAM_ID:-}"
+IOS_RELEASE_BUNDLE_ID="${IOS_RELEASE_BUNDLE_ID:-com.build000r.dogswipe}"
+EXPECTED_AASA_APP_ID="${EXPECTED_AASA_APP_ID:-}"
 
 passed=0
 failed=0
@@ -62,6 +65,30 @@ if [[ -n "$PUBLIC_AASA_URL" ]]; then
     && python3 -m json.tool "$aasa_payload" >/dev/null \
     && grep -q '"applinks"' "$aasa_payload"; then
     pass "public Apple app-site association responds"
+    expected_app_id="$EXPECTED_AASA_APP_ID"
+    if [[ -z "$expected_app_id" && -n "$APPLE_TEAM_ID" ]]; then
+      expected_app_id="${APPLE_TEAM_ID}.${IOS_RELEASE_BUNDLE_ID}"
+    fi
+    if [[ -n "$expected_app_id" ]]; then
+      if python3 - "$aasa_payload" "$expected_app_id" <<'PY'
+import json
+import sys
+
+payload_path, expected = sys.argv[1:]
+payload = json.loads(open(payload_path).read())
+details = payload.get("applinks", {}).get("details", [])
+app_ids = [app_id for detail in details for app_id in detail.get("appIDs", [])]
+if expected not in app_ids:
+    raise SystemExit(1)
+PY
+      then
+        pass "public Apple app-site association includes expected app ID"
+      else
+        fail "public Apple app-site association missing expected app ID: $expected_app_id"
+      fi
+    else
+      echo "SKIP: expected AASA app ID is not set"
+    fi
   else
     fail "public Apple app-site association failed: $PUBLIC_AASA_URL"
   fi

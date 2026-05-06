@@ -57,6 +57,8 @@ jobs:
           DOGSWIPE_ENV_FILE: prod.env.example
           POSTGRES_PASSWORD: ci-postgres
         run: make deploy-preflight
+      - name: Render Apple app-site association
+        run: make deploy-render-aasa AASA_APPLE_TEAM_ID=ABCDE12345
       - name: Skillbox overlay template
         run: make deploy-overlay-template
       - name: Docker image build

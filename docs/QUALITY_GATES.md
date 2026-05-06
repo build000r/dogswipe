@@ -18,9 +18,10 @@ Last verified: 2026-05-06
 | Backend container build | `docker build -q backend` | built image `sha256:36e49501e78985bb76212fbb7498bac4662a19daf667dcd1618be3627777698e` |
 | Production Compose config | `make deploy-config` | passed |
 | Deploy preflight | `make deploy-preflight` | 19 passed, 0 warnings, 0 failed |
+| AASA render smoke | `make deploy-render-aasa AASA_APPLE_TEAM_ID=ABCDE12345` | rendered bundle-aware Apple app-site association payload |
 | Skillbox overlay template | `make deploy-overlay-template` | 15 passed, 0 failed |
 | SwiftUI drift scan | `make drift` | 0 Swift findings |
-| iOS release assets | `make ios-release-assets` | AppIcon, accent color, privacy manifest, associated-domains entitlement, Apple app-site association template, build-setting-backed auth config, and App Store Connect export option plists passed |
+| iOS release assets | `make ios-release-assets` | AppIcon, accent color, privacy manifest, associated-domains entitlement, bundle-aware Apple app-site association template, build-setting-backed auth config, and App Store Connect export option plists passed |
 | CRAP score | `make crap` | `FINAL_SCORE: 9.00` |
 | MMDX preflight | `make mmdx-preflight` | 3 charts passed |
 | CI quality enforcement | GitHub Actions `25418266074` `backend`, `swift-package`, and `ios` jobs for executable-code commit `f21b4a0` | coverage XML feeds blocking CRAP; MMDX, SwiftUI drift, deploy, Swift package, and iOS gates fail on regressions; iOS prefers a modern simulator, preboots it, disables parallel test workers, uses bounded destination/job/test timeouts, and runs direct-tab screenshot UI smoke |
@@ -61,9 +62,9 @@ Last verified: 2026-05-06
 - `POST /v1/vendor/submissions/{id}/ingest-menu` is owner-scoped, stores bounded menu URL snapshot status/excerpt/timestamp fields, and the iOS Vendor tab can refresh and render the snapshot state.
 - `POST /v1/admin/vendor/menus/refresh` is admin-scoped, refreshes stale vendor menu snapshots in bounded batches, reports checked/refreshed/failed counts, and the iOS Admin tab can trigger the refresh.
 - Configured admins can list pending vendor submissions, approve one into discovery, reject one, request edits with a review note, and production preflight requires `DOGSWIPE_ADMIN_USER_IDS` when SPAPS auth is enabled.
-- Production deploy artifacts define the Compose stack, env contract, preflight checks, post-deploy verification, reverse-proxy template, Apple app-site association template, and CI workflow.
+- Production deploy artifacts define the Compose stack, env contract, preflight checks, post-deploy verification, reverse-proxy template, bundle-aware Apple app-site association render path, and CI workflow.
 - Signed iOS release handoff artifacts define `ios-release-archive`, `ios-testflight-export`, and `ios-testflight-upload` Make targets with build-setting-backed production API/SPAPS/universal-link inputs and App Store Connect export/upload option plists; Apple `.p8`, `.p12`, and `.mobileprovision` files are ignored.
-- GitHub Actions enforces backend coverage XML generation, scoped CRAP threshold, MMDX architecture preflight, SwiftUI drift, deploy preflight including AASA template validation, iOS build/test gates, and screenshot UI smoke.
+- GitHub Actions enforces backend coverage XML generation, scoped CRAP threshold, MMDX architecture preflight, SwiftUI drift, deploy preflight including AASA template/render validation, iOS build/test gates, and screenshot UI smoke.
 - A DogSwipe skillbox overlay template and validator exist so live deploy setup, including the AASA URL and Apple Team ID contract, can be checked without committing host secrets.
 
 ## Known Blocks

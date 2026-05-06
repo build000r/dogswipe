@@ -74,8 +74,18 @@ configuration.
 
 Generate the deployed Apple app-site association file from
 [`deploy/apple-app-site-association.template.json`](apple-app-site-association.template.json)
-by replacing `${APPLE_TEAM_ID}` with the Apple Developer Team ID. The reverse
-proxy template serves the rendered file from both:
+by replacing `${APPLE_TEAM_ID}` with the Apple Developer Team ID and
+`${IOS_BUNDLE_ID}` with the exact bundle identifier used for the signed archive:
+
+```bash
+AASA_APPLE_TEAM_ID=<apple-team-id> \
+IOS_RELEASE_BUNDLE_ID=com.build000r.dogswipe \
+make deploy-render-aasa
+```
+
+The rendered payload is written to `.build/aasa/apple-app-site-association` by
+default. Copy that payload to the web root expected by the reverse-proxy
+template. The reverse proxy serves the rendered file from both:
 
 - `https://<domain>/.well-known/apple-app-site-association`
 - `https://<domain>/apple-app-site-association`
@@ -133,6 +143,8 @@ Apple app-site association template, and the shared `reverse-proxy` network.
    ```bash
    PUBLIC_HEALTH_URL=https://<domain>/health \
      PUBLIC_AASA_URL=https://<domain>/.well-known/apple-app-site-association \
+     APPLE_TEAM_ID=<apple-team-id> \
+     IOS_RELEASE_BUNDLE_ID=com.build000r.dogswipe \
      bash deploy/post-deploy-verify.sh
    ```
 
@@ -141,5 +153,5 @@ Apple app-site association template, and the shared `reverse-proxy` network.
 No live deployment should run until the skillbox overlay supplies the concrete
 host, deploy root, env source, production domain, Apple Team ID, health URL, and
 AASA URL. The current repo can prove the container, migration, universal-link
-asset template, and Compose contract locally; it cannot prove DNS,
+asset template/render path, and Compose contract locally; it cannot prove DNS,
 certificates, Apple account ownership, or production secrets by itself.

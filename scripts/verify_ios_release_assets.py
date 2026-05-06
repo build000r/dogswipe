@@ -182,7 +182,7 @@ def verify_universal_link_surface() -> list[str]:
                 failures.append("Apple app-site association template has no applinks details")
             else:
                 app_ids = details[0].get("appIDs", [])
-                if "${APPLE_TEAM_ID}.com.build000r.dogswipe" not in app_ids:
+                if "${APPLE_TEAM_ID}.${IOS_BUNDLE_ID}" not in app_ids:
                     failures.append("Apple app-site association template has the wrong app ID")
                 components = details[0].get("components", [])
                 paths = {

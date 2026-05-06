@@ -3,7 +3,7 @@
     "details": [
       {
         "appIDs": [
-          "${APPLE_TEAM_ID}.com.build000r.dogswipe"
+          "${APPLE_TEAM_ID}.${IOS_BUNDLE_ID}"
         ],
         "components": [
           {
