@@ -130,6 +130,7 @@ Target gates for this repo:
 GitHub Actions enforces the same blocking gates for backend coverage, CRAP, MMDX architecture syntax, SwiftUI drift, deploy preflight, iOS release asset verification, iOS build/tests, and screenshot UI smoke.
 
 Latest recorded gate results live in [docs/QUALITY_GATES.md](docs/QUALITY_GATES.md).
+The current prompt-to-artifact completion audit lives in [docs/COMPLETION_AUDIT.md](docs/COMPLETION_AUDIT.md).
 
 ## Build Vs Clone Decision
 
