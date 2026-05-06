@@ -66,6 +66,6 @@ The next ready work is to make the live infrastructure real: choose the canonica
 
 - Public repository: https://github.com/build000r/dogswipe
 - First pushed commit: `dbf880b`
-- Recent audited commit: `b8772b0`
-- Recent published backend image evidence: `ghcr.io/build000r/dogswipe:c00a5258ed08944691c0843e2830d773e663eb5d`
-- Latest main CI evidence: GitHub Actions `25431866526` passed after rerunning a transient iOS screenshot timeout; docs-only GHCR publish was skipped.
+- Recent audited commit: `7e2a522`
+- Recent published backend image evidence: `ghcr.io/build000r/dogswipe:7e2a5221091fa40da0344e44ba6722858405dcf9`
+- Latest main CI evidence: GitHub Actions `25442723419` passed `backend`, `swift-package`, and `ios`, and published the current full-SHA backend image.
