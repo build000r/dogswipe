@@ -37,7 +37,7 @@ DOGSWIPE_RELEASE_AUTH_REDIRECT_URL ?= $(if $(DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN)
 DOGSWIPE_RELEASE_AUTH_UNIVERSAL_LINK_HOSTS ?= $(DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN)
 DOGSWIPE_RELEASE_SPAPS_ORIGIN ?= $(if $(DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN),https://$(DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN),)
 
-.PHONY: generate-ios ios-build ios-release-assets ios-ui-test ios-screenshots require-phone-device ios-phone-build ios-phone-reset-app ios-phone-install ios-phone-launch ios-phone-run require-ios-release-env require-ios-archive require-ios-asc-key ios-release-archive ios-testflight-export ios-testflight-upload swift-test backend-install backend-install-local backend-test coverage lint typecheck migrate migration-current test drift crap mmdx-preflight spaps-app-contract spaps-registration-payload deploy-config deploy-preflight deploy-render-aasa deploy-dns-preflight deploy-dns-preflight-template deploy-live-readiness deploy-live-readiness-template deploy-release-readiness deploy-overlay-template deploy-private-handoff-template deploy-post-verify
+.PHONY: generate-ios ios-build ios-release-assets ios-ui-test ios-screenshots require-phone-device ios-phone-build ios-phone-reset-app ios-phone-install ios-phone-launch ios-phone-run require-ios-release-env require-ios-archive require-ios-asc-key ios-release-archive ios-testflight-export ios-testflight-upload swift-test backend-install backend-install-local backend-test coverage lint typecheck migrate migration-current test drift crap mmdx-preflight spaps-app-contract spaps-registration-payload deploy-config deploy-preflight deploy-render-aasa deploy-dns-handoff deploy-dns-handoff-template deploy-dns-preflight deploy-dns-preflight-template deploy-live-readiness deploy-live-readiness-template deploy-release-readiness deploy-overlay-template deploy-private-handoff-template deploy-post-verify
 
 generate-ios:
 	cd apps/ios/DogSwipe && xcodegen generate
@@ -279,6 +279,18 @@ deploy-render-aasa:
 		exit 1; \
 	}
 	python3 deploy/render-aasa.py --apple-team-id "$(AASA_APPLE_TEAM_ID)" --bundle-id "$(IOS_RELEASE_BUNDLE_ID)" --output "$(AASA_RENDER_PATH)"
+
+deploy-dns-handoff:
+	@DOGSWIPE_DNS_ZONE="$(DOGSWIPE_DNS_ZONE)" \
+	DOGSWIPE_DNS_TTL="$(DOGSWIPE_DNS_TTL)" \
+	DOGSWIPE_EXPECTED_A_RECORD="$(DOGSWIPE_EXPECTED_A_RECORD)" \
+	DOGSWIPE_DEPLOY_IP="$(DOGSWIPE_DEPLOY_IP)" \
+	bash deploy/render-dns-handoff.sh "$(DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN)"
+
+deploy-dns-handoff-template:
+	@$(MAKE) --no-print-directory deploy-dns-handoff \
+		DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN=dogswipe.example.com \
+		DOGSWIPE_EXPECTED_A_RECORD=192.0.2.10
 
 deploy-dns-preflight:
 	@CHECK_PUBLIC_URLS="$(CHECK_PUBLIC_URLS)" \

@@ -141,6 +141,7 @@ make drift
 make crap
 make mmdx-preflight
 make ios-release-assets
+make deploy-dns-handoff-template
 make deploy-dns-preflight DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN=<domain>
 make deploy-live-readiness-template
 make ios-ui-test
@@ -155,6 +156,7 @@ Target gates for this repo:
 - CRAP: scoped `FINAL_SCORE < 20`
 - MMDX: architecture stack preflights cleanly
 - Deploy preflight: production Compose config and env contract resolve without secrets
+- DNS handoff: production DNS record, aligned release env values, and follow-up preflight commands render without secrets
 - DNS preflight: production domain has public DNS authority, resolves to a host record, and can optionally prove public health/AASA URLs
 - Live readiness: overlay, DNS, release, optional private env, and optional post-deploy checks are chained in operator order
 - Private deploy handoff template: non-secret renderer path creates throwaway private env/overlay files and validates them through deploy preflight

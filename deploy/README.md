@@ -62,8 +62,17 @@ Compose rollout:
 ```bash
 DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN=<domain> \
 DOGSWIPE_EXPECTED_A_RECORD=<public-host-ip> \
+make deploy-dns-handoff
+
+DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN=<domain> \
+DOGSWIPE_EXPECTED_A_RECORD=<public-host-ip> \
 make deploy-dns-preflight
 ```
+
+`make deploy-dns-handoff-template` exercises the public no-secret handoff
+renderer with a reserved example IP. The handoff output names the DNS zone,
+record name, A-record value, private release env values that must stay aligned,
+and the follow-up preflight commands for DNS-only and public URL verification.
 
 `deploy-release-readiness` can include the same check when the domain should
 already be live:

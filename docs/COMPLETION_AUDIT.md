@@ -1,7 +1,7 @@
 # Completion Audit
 
 Date: 2026-05-06
-Implementation audited: hotdog swipe deck, wrapped Discover/Matches chips, visible Discover route controls, durable backend-backed order drafts with My Orders, signed release/TestFlight handoff scaffolding, bundle-aware AASA render path, release-readiness gate, DNS preflight, public SPAPS app descriptor, SPAPS operator handoff, private deploy handoff renderers, GHCR image publishing, and private release-readiness probe in the current branch state.
+Implementation audited: hotdog swipe deck, wrapped Discover/Matches chips, visible Discover route controls, durable backend-backed order drafts with My Orders, signed release/TestFlight handoff scaffolding, bundle-aware AASA render path, release-readiness gate, DNS handoff/preflight, public SPAPS app descriptor, SPAPS operator handoff, private deploy handoff renderers, GHCR image publishing, and private release-readiness probe in the current branch state.
 Recent complete executable-code CI evidence: GitHub Actions `25442723419` for `7e2a5221091fa40da0344e44ba6722858405dcf9` passed `backend`, `swift-package`, and `ios` jobs and published the backend image to GHCR. The current full-SHA image tag is `ghcr.io/build000r/dogswipe:7e2a5221091fa40da0344e44ba6722858405dcf9`.
 
 ## Objective Restated
@@ -36,10 +36,11 @@ SwiftUI drift clean, CRAP below 20, and meaningful backend coverage above 80%.
 | Workgraph/planning tracked | `docs/WORKGRAPH.md` lists WG-001 through WG-048 and current ready frontier/risks. | Done |
 | README and vision docs updated | `README.md`, `docs/VISION.md`, `docs/QUALITY_GATES.md`, and `docs/WORKGRAPH.md` describe the hotdog app and current limits. | Done |
 | Build-vs-clone decision captured | `README.md` records `NEW REPO` and `BORROW + BUILD` using Sweet Potato/SPAPS patterns. | Done |
-| Deploy artifacts exist | `deploy/docker-compose.prod.yml`, env template, host bootstrap script, pre/post deploy scripts, DNS preflight script, live-readiness wrapper, release-readiness script, reverse-proxy template, bundle-aware AASA template/render script, GHCR publish workflow, and `deploy/README.md`. | Done |
+| Deploy artifacts exist | `deploy/docker-compose.prod.yml`, env template, host bootstrap script, pre/post deploy scripts, DNS handoff renderer, DNS preflight script, live-readiness wrapper, release-readiness script, reverse-proxy template, bundle-aware AASA template/render script, GHCR publish workflow, and `deploy/README.md`. | Done |
 | Production image publishing | CI run `25442723419` built and pushed `ghcr.io/build000r/dogswipe:7e2a5221091fa40da0344e44ba6722858405dcf9` plus `latest`; `docker manifest inspect` returned a readable manifest for the full-SHA tag with config digest `sha256:c6ec27bbbe0fffc5c77edb0e05dafde8be7eac2d4f775e61601bf612dda223a6`. | Done |
 | Deploy preflight passes | CI run `25442723419` passed `make deploy-preflight` with 18 passed, 1 expected runner warning for the absent local `reverse-proxy` network, and 0 failed; local deploy handoff preflight passes when the shared network exists. | Done |
 | DNS preflight exists | `make deploy-dns-preflight-template` proves the pass/fail branches without secrets; `make deploy-dns-preflight DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN=buildooor.com` passes against an active zone, while the current DogSwipe candidate `dogswipe.build000r.com` fails early because `build000r.com` has no public NS/SOA authority. `deploy-release-readiness` can include this check with `CHECK_DNS=true`. | Done |
+| DNS operator handoff exists | `make deploy-dns-handoff-template` renders a reserved-example A record; `make deploy-dns-handoff DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN=dogswipe.buildooor.com DOGSWIPE_EXPECTED_A_RECORD=104.131.188.214` renders the exact `dogswipe` A record for the active `buildooor.com` zone plus aligned release env and preflight commands without secrets. | Done |
 | Live readiness wrapper exists | `make deploy-live-readiness-template` chains overlay validation, DNS preflight, release readiness, and explicit skips for private env/post-deploy checks in operator order without secrets. | Done |
 | Host bootstrap template passes | CI run `25442723419` passed `make deploy-host-bootstrap-template`, which installs non-secret deploy artifacts into a temporary host layout and verifies deploy/env/data paths without writing secrets. | Done |
 | Skillbox overlay template exists | Fresh `make deploy-overlay-template` reported 15 passed, 0 failed for the placeholder template. | Done |
@@ -72,6 +73,8 @@ SwiftUI drift clean, CRAP below 20, and meaningful backend coverage above 80%.
 - `make deploy-render-aasa AASA_APPLE_TEAM_ID=ABCDE12345`: rendered the bundle-aware Apple app-site association payload.
 - `make deploy-release-readiness ALLOW_PLACEHOLDERS=true ...`: release handoff gate passed in placeholder mode without secrets; 21 passed, 2 skipped, 0 failed, including SPAPS app contract and registration-payload verification.
 - `make deploy-release-readiness ALLOW_PLACEHOLDERS=true CHECK_DNS=true ... DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN=buildooor.com`: release handoff gate passed with DNS preflight included; 22 passed, 1 skipped, 0 failed.
+- `make deploy-dns-handoff-template`: passed; rendered the no-secret reserved-example DNS record and follow-up preflight commands.
+- `make deploy-dns-handoff DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN=dogswipe.buildooor.com DOGSWIPE_EXPECTED_A_RECORD=104.131.188.214`: passed; rendered `Zone: buildooor.com`, `Name: dogswipe`, `Type: A`, `Value: 104.131.188.214`, aligned release env values, and post-DNS/public-URL preflight commands.
 - `make deploy-dns-preflight-template`: passed; it verified `example.com` succeeds and `dogswipe.invalid` fails with the expected missing NS/SOA authority message.
 - `make deploy-live-readiness-template`: passed; it ran overlay validation, DNS preflight, release readiness, and explicit private env/post-deploy skips in operator order.
 - `make deploy-dns-preflight DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN=buildooor.com`: active Cloudflare zone probe passed with 4 passed, 2 skipped, 0 failed.
