@@ -61,6 +61,14 @@ jobs:
         run: make deploy-render-aasa AASA_APPLE_TEAM_ID=ABCDE12345
       - name: Skillbox overlay template
         run: make deploy-overlay-template
+      - name: Release readiness
+        run: |
+          make deploy-release-readiness \
+            ALLOW_PLACEHOLDERS=true \
+            IOS_RELEASE_DEVELOPMENT_TEAM=ABCDE12345 \
+            DOGSWIPE_RELEASE_API_BASE_URL=https://dogswipe-api.example.com \
+            DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN=dogswipe-api.example.com \
+            DOGSWIPE_RELEASE_SPAPS_PUBLISHABLE_KEY=spaps_pub_example
       - name: Docker image build
         run: docker build -q backend
 

@@ -108,11 +108,12 @@ export DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN=<dogswipe-api-domain>
 export DOGSWIPE_RELEASE_SPAPS_PUBLISHABLE_KEY=spaps_pub_...
 
 make deploy-render-aasa
+make deploy-release-readiness
 make ios-release-archive
 make ios-testflight-export
 ```
 
-`deploy-render-aasa` renders the Apple app-site association payload with the same Apple Team ID and bundle identifier used by the signed archive. `ios-release-archive` also accepts `DOGSWIPE_RELEASE_SPAPS_API_BASE_URL`, `DOGSWIPE_RELEASE_SPAPS_ORIGIN`, `DOGSWIPE_RELEASE_AUTH_REDIRECT_URL`, and `DOGSWIPE_RELEASE_AUTH_UNIVERSAL_LINK_HOSTS`; the latter three default from `DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN`. `ios-testflight-upload` can upload the archive through an App Store Connect API key when `ASC_KEY_PATH`, `ASC_KEY_ID`, and `ASC_ISSUER_ID` are set. `.gitignore` blocks common Apple signing artifacts such as `.p8`, `.p12`, and `.mobileprovision` files.
+`deploy-render-aasa` renders the Apple app-site association payload with the same Apple Team ID and bundle identifier used by the signed archive. `deploy-release-readiness` checks the live overlay, production release URLs, SPAPS publishable-key shape, AASA render, iOS release assets, and optional App Store Connect API key handoff without printing secrets. `ios-release-archive` also accepts `DOGSWIPE_RELEASE_SPAPS_API_BASE_URL`, `DOGSWIPE_RELEASE_SPAPS_ORIGIN`, `DOGSWIPE_RELEASE_AUTH_REDIRECT_URL`, and `DOGSWIPE_RELEASE_AUTH_UNIVERSAL_LINK_HOSTS`; the latter three default from `DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN`. `ios-testflight-upload` can upload the archive through an App Store Connect API key when `ASC_KEY_PATH`, `ASC_KEY_ID`, and `ASC_ISSUER_ID` are set. `.gitignore` blocks common Apple signing artifacts such as `.p8`, `.p12`, and `.mobileprovision` files.
 
 For local Docker development, `DOGSWIPE_AUTO_CREATE_SCHEMA=true` and `DOGSWIPE_SEED_SAMPLE_PROFILES=true` create the starter tables and seed sample profiles at API startup. Keep those flags off in production and run managed migrations instead:
 
@@ -121,7 +122,7 @@ DATABASE_URL=postgresql+asyncpg://... make migrate
 DATABASE_URL=postgresql+asyncpg://... make migration-current
 ```
 
-Production deploy artifacts live in [deploy/README.md](deploy/README.md). The repo now includes a production Compose file, env template, pre/post deploy verification scripts, an AASA render target, and a reverse-proxy site template. A live rollout still requires a skillbox overlay with the concrete host, deploy root, env source, domain, Apple Team ID, health URL, and AASA URL.
+Production deploy artifacts live in [deploy/README.md](deploy/README.md). The repo now includes a production Compose file, env template, pre/post deploy verification scripts, an AASA render/readiness target, and a reverse-proxy site template. A live rollout still requires a skillbox overlay with the concrete host, deploy root, env source, domain, Apple Team ID, health URL, and AASA URL.
 
 The iOS target reads `DOGSWIPE_API_BASE_URL` from its Info.plist and defaults to `http://localhost:8000`, which works for simulator-local backend development. It also reads build-setting-backed `DOGSWIPE_SPAPS_API_BASE_URL`, `DOGSWIPE_SPAPS_PUBLISHABLE_KEY`, `DOGSWIPE_SPAPS_ORIGIN`, `DOGSWIPE_AUTH_REDIRECT_URL`, and `DOGSWIPE_AUTH_UNIVERSAL_LINK_HOSTS` for native magic-link sign-in. For auth-enabled environments, configure a `spaps_pub_...` publishable key and matching origin; the app requests/verifies magic links through SPAPS, registers the `dogswipe://auth` URL scheme, can verify configured HTTPS universal-link callbacks from allowed hosts, stores access/refresh JWTs in Keychain, and injects only the access bearer through `DogSwipeAPIClient`. Release builds should override `DOGSWIPE_ASSOCIATED_DOMAIN` with the production link domain and host the rendered Apple app-site association payload from `make deploy-render-aasa`. Discovery and Matches can request iOS when-in-use location permission, pass current coordinates to the backend so response distances reflect the user position, and preview an on-device MapKit walking route for coordinate-backed hotdogs before handing off to Apple Maps. Discovery also exposes a compact menu search field behind the filter control that sends `menu_query` to the backend and applies the same query locally when offline. The Vendor form can resolve pickup address text through CoreLocation geocoding and prefill latitude/longitude before submission. Secret SPAPS API keys remain server-only.
 

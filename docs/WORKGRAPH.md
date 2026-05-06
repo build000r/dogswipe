@@ -44,10 +44,11 @@ Status key: `done`, `active`, `ready`, `blocked`.
 | WG-038 Menu-aware discovery search | done | WG-031, WG-037 | `backend/**`, `packages/DogSwipeCore/**`, `apps/ios/DogSwipe/**`, `docs/**` | Discovery accepts `menu_query`, searches bounded profile/menu fields, the Swift client encodes it, local sample ranking applies it offline, and the iOS Discover screen exposes compact craving search |
 | WG-039 TestFlight handoff scaffolding | done | WG-033, WG-035 | `Makefile`, `apps/ios/DogSwipe/**`, `deploy/**`, `scripts/**`, `docs/**` | Release builds can inject production API/SPAPS/universal-link settings through build settings, signed archives have Make targets, the AASA payload renders from the same team/bundle inputs, App Store Connect export/upload option plists exist, release verification covers them, and signing secrets remain ignored |
 | WG-040 Local order draft | done | WG-034, WG-037 | `apps/ios/DogSwipe/**`, `docs/**` | The match surface has selectable add-ons, adds the hotdog to a local order draft with visible confirmation, updates the DogSwipe bag count from state, and screenshot UI smoke covers the flow |
+| WG-041 Release readiness gate | done | WG-029, WG-035, WG-039 | `deploy/**`, `Makefile`, `.github/**`, `docs/**` | A combined release-readiness target validates the live overlay contract, release URL/auth settings, bundle-aware AASA render, iOS release assets, and optional App Store Connect API key handoff without printing secrets |
 
 ## Ready Frontier
 
-The next ready work is to create a concrete skillbox deploy overlay, run the signed TestFlight handoff with private Apple credentials, or continue deeper product slices: durable payment/fulfillment order management, full route persistence or turn-by-turn navigation if lightweight previews prove insufficient, and broader crawler-backed menu indexing if bounded snapshot search proves insufficient.
+The next ready work is to create a concrete skillbox deploy overlay, run `make deploy-release-readiness` with the private release/signing environment, run the signed TestFlight handoff with private Apple credentials, or continue deeper product slices: durable payment/fulfillment order management, full route persistence or turn-by-turn navigation if lightweight previews prove insufficient, and broader crawler-backed menu indexing if bounded snapshot search proves insufficient.
 
 ## Risks
 

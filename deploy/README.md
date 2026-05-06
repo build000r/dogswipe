@@ -33,6 +33,25 @@ bash deploy/validate-skillbox-overlay.sh deploy/skillbox-overlay.example.yaml --
 bash deploy/validate-skillbox-overlay.sh /path/to/skillbox-config/clients/dogswipe/overlay.yaml
 ```
 
+Before archive/upload or live rollout, run the combined readiness gate against
+the private overlay and release environment:
+
+```bash
+DEPLOY_OVERLAY_FILE=/path/to/skillbox-config/clients/dogswipe/overlay.yaml \
+IOS_RELEASE_DEVELOPMENT_TEAM=<apple-team-id> \
+DOGSWIPE_RELEASE_API_BASE_URL=https://<domain> \
+DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN=<domain> \
+DOGSWIPE_RELEASE_SPAPS_PUBLISHABLE_KEY=spaps_pub_... \
+CHECK_ASC_KEY=true \
+ASC_KEY_PATH=/private/path/AuthKey_ABC123.p8 \
+ASC_KEY_ID=<key-id> \
+ASC_ISSUER_ID=<issuer-id> \
+make deploy-release-readiness
+```
+
+Set `CHECK_ASC_KEY=false` when validating deploy readiness before App Store
+Connect upload credentials are available.
+
 ## Production Env
 
 Create `deploy/prod.env` from `deploy/prod.env.example` on the deployment host.
@@ -124,6 +143,9 @@ bash deploy/pre-deploy-checks.sh
 The preflight checks Docker availability, Compose config, required env values,
 SPAPS auth requirements, local-only flags, optional menu-refresh controls, the
 Apple app-site association template, and the shared `reverse-proxy` network.
+`make deploy-release-readiness` wraps the overlay, release URL/auth settings,
+AASA render, iOS release asset verifier, and optional App Store Connect API key
+checks into one non-secret gate.
 
 ## Rollout Shape
 

@@ -26,12 +26,15 @@ IOS_TESTFLIGHT_UPLOAD_OPTIONS ?= deploy/ios-export-options.testflight-upload.pli
 IOS_RELEASE_SIGNING_ARGS ?= CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=YES CODE_SIGN_STYLE=Automatic
 AASA_RENDER_PATH ?= $(CURDIR)/.build/aasa/apple-app-site-association
 AASA_APPLE_TEAM_ID ?= $(IOS_RELEASE_DEVELOPMENT_TEAM)
+DEPLOY_OVERLAY_FILE ?= deploy/skillbox-overlay.example.yaml
+ALLOW_PLACEHOLDERS ?= false
+CHECK_ASC_KEY ?= false
 DOGSWIPE_RELEASE_SPAPS_API_BASE_URL ?= https://api.sweetpotato.dev
 DOGSWIPE_RELEASE_AUTH_REDIRECT_URL ?= $(if $(DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN),https://$(DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN)/auth,)
 DOGSWIPE_RELEASE_AUTH_UNIVERSAL_LINK_HOSTS ?= $(DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN)
 DOGSWIPE_RELEASE_SPAPS_ORIGIN ?= $(if $(DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN),https://$(DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN),)
 
-.PHONY: generate-ios ios-build ios-release-assets ios-ui-test ios-screenshots require-phone-device ios-phone-build ios-phone-reset-app ios-phone-install ios-phone-launch ios-phone-run require-ios-release-env require-ios-archive require-ios-asc-key ios-release-archive ios-testflight-export ios-testflight-upload swift-test backend-install backend-install-local backend-test coverage lint typecheck migrate migration-current test drift crap mmdx-preflight deploy-config deploy-preflight deploy-render-aasa deploy-overlay-template deploy-post-verify
+.PHONY: generate-ios ios-build ios-release-assets ios-ui-test ios-screenshots require-phone-device ios-phone-build ios-phone-reset-app ios-phone-install ios-phone-launch ios-phone-run require-ios-release-env require-ios-archive require-ios-asc-key ios-release-archive ios-testflight-export ios-testflight-upload swift-test backend-install backend-install-local backend-test coverage lint typecheck migrate migration-current test drift crap mmdx-preflight deploy-config deploy-preflight deploy-render-aasa deploy-release-readiness deploy-overlay-template deploy-post-verify
 
 generate-ios:
 	cd apps/ios/DogSwipe && xcodegen generate
@@ -260,6 +263,23 @@ deploy-render-aasa:
 		exit 1; \
 	}
 	python3 deploy/render-aasa.py --apple-team-id "$(AASA_APPLE_TEAM_ID)" --bundle-id "$(IOS_RELEASE_BUNDLE_ID)" --output "$(AASA_RENDER_PATH)"
+
+deploy-release-readiness:
+	@ALLOW_PLACEHOLDERS="$(ALLOW_PLACEHOLDERS)" \
+	CHECK_ASC_KEY="$(CHECK_ASC_KEY)" \
+	IOS_RELEASE_DEVELOPMENT_TEAM="$(IOS_RELEASE_DEVELOPMENT_TEAM)" \
+	IOS_RELEASE_BUNDLE_ID="$(IOS_RELEASE_BUNDLE_ID)" \
+	DOGSWIPE_RELEASE_API_BASE_URL="$(DOGSWIPE_RELEASE_API_BASE_URL)" \
+	DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN="$(DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN)" \
+	DOGSWIPE_RELEASE_SPAPS_API_BASE_URL="$(DOGSWIPE_RELEASE_SPAPS_API_BASE_URL)" \
+	DOGSWIPE_RELEASE_SPAPS_PUBLISHABLE_KEY="$(DOGSWIPE_RELEASE_SPAPS_PUBLISHABLE_KEY)" \
+	DOGSWIPE_RELEASE_SPAPS_ORIGIN="$(DOGSWIPE_RELEASE_SPAPS_ORIGIN)" \
+	DOGSWIPE_RELEASE_AUTH_REDIRECT_URL="$(DOGSWIPE_RELEASE_AUTH_REDIRECT_URL)" \
+	DOGSWIPE_RELEASE_AUTH_UNIVERSAL_LINK_HOSTS="$(DOGSWIPE_RELEASE_AUTH_UNIVERSAL_LINK_HOSTS)" \
+	ASC_KEY_PATH="$(ASC_KEY_PATH)" \
+	ASC_KEY_ID="$(ASC_KEY_ID)" \
+	ASC_ISSUER_ID="$(ASC_ISSUER_ID)" \
+	bash deploy/release-readiness.sh "$(DEPLOY_OVERLAY_FILE)"
 
 deploy-overlay-template:
 	bash deploy/validate-skillbox-overlay.sh deploy/skillbox-overlay.example.yaml --allow-placeholders

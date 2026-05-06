@@ -19,6 +19,7 @@ Last verified: 2026-05-06
 | Production Compose config | `make deploy-config` | passed |
 | Deploy preflight | `make deploy-preflight` | 19 passed, 0 warnings, 0 failed |
 | AASA render smoke | `make deploy-render-aasa AASA_APPLE_TEAM_ID=ABCDE12345` | rendered bundle-aware Apple app-site association payload |
+| Release readiness | `make deploy-release-readiness ALLOW_PLACEHOLDERS=true ...` | placeholder-mode release handoff gate passed without secrets |
 | Skillbox overlay template | `make deploy-overlay-template` | 15 passed, 0 failed |
 | SwiftUI drift scan | `make drift` | 0 Swift findings |
 | iOS release assets | `make ios-release-assets` | AppIcon, accent color, privacy manifest, associated-domains entitlement, bundle-aware Apple app-site association template, build-setting-backed auth config, and App Store Connect export option plists passed |
@@ -62,9 +63,9 @@ Last verified: 2026-05-06
 - `POST /v1/vendor/submissions/{id}/ingest-menu` is owner-scoped, stores bounded menu URL snapshot status/excerpt/timestamp fields, and the iOS Vendor tab can refresh and render the snapshot state.
 - `POST /v1/admin/vendor/menus/refresh` is admin-scoped, refreshes stale vendor menu snapshots in bounded batches, reports checked/refreshed/failed counts, and the iOS Admin tab can trigger the refresh.
 - Configured admins can list pending vendor submissions, approve one into discovery, reject one, request edits with a review note, and production preflight requires `DOGSWIPE_ADMIN_USER_IDS` when SPAPS auth is enabled.
-- Production deploy artifacts define the Compose stack, env contract, preflight checks, post-deploy verification, reverse-proxy template, bundle-aware Apple app-site association render path, and CI workflow.
+- Production deploy artifacts define the Compose stack, env contract, preflight checks, release-readiness checks, post-deploy verification, reverse-proxy template, bundle-aware Apple app-site association render path, and CI workflow.
 - Signed iOS release handoff artifacts define `ios-release-archive`, `ios-testflight-export`, and `ios-testflight-upload` Make targets with build-setting-backed production API/SPAPS/universal-link inputs and App Store Connect export/upload option plists; Apple `.p8`, `.p12`, and `.mobileprovision` files are ignored.
-- GitHub Actions enforces backend coverage XML generation, scoped CRAP threshold, MMDX architecture preflight, SwiftUI drift, deploy preflight including AASA template/render validation, iOS build/test gates, and screenshot UI smoke.
+- GitHub Actions enforces backend coverage XML generation, scoped CRAP threshold, MMDX architecture preflight, SwiftUI drift, deploy preflight/readiness including AASA template/render validation, iOS build/test gates, and screenshot UI smoke.
 - A DogSwipe skillbox overlay template and validator exist so live deploy setup, including the AASA URL and Apple Team ID contract, can be checked without committing host secrets.
 
 ## Known Blocks

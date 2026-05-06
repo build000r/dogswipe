@@ -1,7 +1,7 @@
 # Completion Audit
 
 Date: 2026-05-06
-Implementation audited: hotdog swipe deck, visible Discover route controls, local match order draft, signed release/TestFlight handoff scaffolding, and bundle-aware AASA render path as of this document revision
+Implementation audited: hotdog swipe deck, visible Discover route controls, local match order draft, signed release/TestFlight handoff scaffolding, bundle-aware AASA render path, and release-readiness gate as of this document revision
 Latest executable-code CI run audited: `25419200055` (`1077c93`)
 
 ## Objective Restated
@@ -31,13 +31,13 @@ SwiftUI drift clean, CRAP below 20, and meaningful backend coverage above 80%.
 | Swift test coverage through behavior | Fresh `make swift-test` ran 33 tests across API client, scorer, and deck state. | Done |
 | iOS build/test/screenshot smoke | CI run `25419200055` passed iOS build, iOS unit tests, and screenshot UI smoke. Local `make ios-ui-test` now covers the reference Discover surface, visible route controls, draggable card advancement, Matches, match add-to-order, Vendor, Review, and Profile in isolated screenshot-mode launches. | Done |
 | MMDX architecture tracking | `docs/architecture.mmdx`; fresh `make mmdx-preflight` passed 3 charts. | Done |
-| Workgraph/planning tracked | `docs/WORKGRAPH.md` lists WG-001 through WG-040 and current ready frontier/risks. | Done |
+| Workgraph/planning tracked | `docs/WORKGRAPH.md` lists WG-001 through WG-041 and current ready frontier/risks. | Done |
 | README and vision docs updated | `README.md`, `docs/VISION.md`, `docs/QUALITY_GATES.md`, and `docs/WORKGRAPH.md` describe the hotdog app and current limits. | Done |
 | Build-vs-clone decision captured | `README.md` records `NEW REPO` and `BORROW + BUILD` using Sweet Potato/SPAPS patterns. | Done |
-| Deploy artifacts exist | `deploy/docker-compose.prod.yml`, env template, pre/post deploy scripts, reverse-proxy template, bundle-aware AASA template/render script, and `deploy/README.md`. | Done |
+| Deploy artifacts exist | `deploy/docker-compose.prod.yml`, env template, pre/post deploy scripts, release-readiness script, reverse-proxy template, bundle-aware AASA template/render script, and `deploy/README.md`. | Done |
 | Deploy preflight passes | Fresh `make deploy-preflight` reported 19 passed, 0 warnings, 0 failed. | Done |
 | Skillbox overlay template exists | Fresh `make deploy-overlay-template` reported 15 passed, 0 failed for the placeholder template. | Done |
-| CI enforces gates | `.github/workflows/ci.yml` runs backend tests/coverage/CRAP/MMDX/drift/lint/typecheck/migration/deploy/AASA-render/Docker, Swift package tests, and iOS release/build/unit/screenshot gates. Audited executable-code run `25419200055` passed. | Done |
+| CI enforces gates | `.github/workflows/ci.yml` runs backend tests/coverage/CRAP/MMDX/drift/lint/typecheck/migration/deploy/AASA-render/release-readiness/Docker, Swift package tests, and iOS release/build/unit/screenshot gates. Audited executable-code run `25419200055` passed before the release-readiness addition. | Done |
 | Original reference-image visual parity | The supplied DogSwipe reference image is now the visual source of truth for the iOS Discover/Matches surfaces: cream/red/mustard vendor-pack chrome, Chicago Classic cards, hotdog-first art, swipe controls, and match/order CTA. | Done |
 | Live production deployment | Deploy contract and preflight are ready, but `deploy/README.md` states live rollout needs a concrete skillbox overlay: host, deploy root, env source, domain, Apple Team ID, health URL, and AASA URL. | Blocked |
 | Hosted universal-link activation | Bundle-aware AASA template, local render target, and entitlement plumbing exist, but hosted verification needs the production domain and Apple Team ID. | Blocked |
@@ -57,6 +57,7 @@ SwiftUI drift clean, CRAP below 20, and meaningful backend coverage above 80%.
 - `make mmdx-preflight`: 3 charts passed.
 - `make deploy-preflight`: 19 passed, 0 warnings, 0 failed.
 - `make deploy-render-aasa AASA_APPLE_TEAM_ID=ABCDE12345`: rendered the bundle-aware Apple app-site association payload.
+- `make deploy-release-readiness ALLOW_PLACEHOLDERS=true ...`: release handoff gate passed in placeholder mode without secrets.
 - `make deploy-overlay-template`: 15 passed, 0 failed.
 - `make ios-release-assets`: iOS release assets verified, including build-setting-backed auth/link configuration and App Store Connect export/upload option plists.
 - `make -n ios-release-archive ...`: dry-run showed the signed archive command receives production API/SPAPS/universal-link settings without running Apple signing.
@@ -73,8 +74,9 @@ links and live App Store/TestFlight signing/upload.
 
 ## Required Inputs To Finish
 
-1. DogSwipe skillbox deploy overlay values: host, deploy root, env source,
-   production domain, Apple Team ID, public health URL, and AASA URL.
+1. DogSwipe skillbox deploy overlay values, validated by
+   `make deploy-release-readiness`: host, deploy root, env source, production
+   domain, Apple Team ID, public health URL, and AASA URL.
 2. Apple signing/TestFlight credentials to run `make ios-release-archive` and
    `make ios-testflight-upload`, or an explicit decision to keep live TestFlight
    proof out of scope.
