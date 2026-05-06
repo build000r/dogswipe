@@ -87,7 +87,7 @@ if [[ "$failed" -eq 0 ]]; then
 fi
 
 if [[ "$failed" -eq 0 ]]; then
-  a_records="$(dig +short A "$domain" | sed -n '/^[0-9.]\+$/p' || true)"
+  a_records="$(dig +short A "$domain" | grep -E '^([0-9]{1,3}\.){3}[0-9]{1,3}$' || true)"
   aaaa_records="$(dig +short AAAA "$domain" | sed -n '/:/p' || true)"
   if [[ -n "$a_records" || -n "$aaaa_records" ]]; then
     pass "domain resolves to at least one A/AAAA record"
