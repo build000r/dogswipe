@@ -4,6 +4,7 @@ set -euo pipefail
 overlay_file="${1:-deploy/skillbox-overlay.example.yaml}"
 allow_placeholders="${ALLOW_PLACEHOLDERS:-false}"
 check_asc_key="${CHECK_ASC_KEY:-false}"
+check_dns="${CHECK_DNS:-false}"
 
 passed=0
 failed=0
@@ -175,6 +176,16 @@ if [[ "$check_asc_key" == "true" ]]; then
   fi
 else
   skip "App Store Connect API key file check is disabled"
+fi
+
+if [[ "$check_dns" == "true" ]]; then
+  if bash deploy/dns-preflight.sh "$(env_value DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN)"; then
+    pass "DNS preflight passes"
+  else
+    fail "DNS preflight failed"
+  fi
+else
+  skip "DNS preflight is disabled"
 fi
 
 echo "Release readiness summary: $passed passed, $skipped skipped, $failed failed"

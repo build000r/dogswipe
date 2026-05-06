@@ -56,6 +56,46 @@ The current private handoff candidate is `dogswipe.build000r.com`. A fresh
 `dogswipe.buildooor.com` is a private release/SPAPS handoff change, not just a
 public-doc edit.
 
+After the canonical domain is chosen, prove DNS before attempting the live
+Compose rollout:
+
+```bash
+DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN=<domain> \
+DOGSWIPE_EXPECTED_A_RECORD=<public-host-ip> \
+make deploy-dns-preflight
+```
+
+`deploy-release-readiness` can include the same check when the domain should
+already be live:
+
+```bash
+CHECK_DNS=true \
+DOGSWIPE_EXPECTED_A_RECORD=<public-host-ip> \
+make deploy-release-readiness
+```
+
+Set `CHECK_PUBLIC_URLS=true` after the reverse proxy and certificates are in
+place to prove `https://<domain>/health` and the hosted Apple app-site
+association URL.
+
+For the full operator-facing readiness path, run the wrapper after the private
+overlay and release env are set:
+
+```bash
+DEPLOY_OVERLAY_FILE=/path/to/skillbox-config/clients/dogswipe/overlay.yaml \
+DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN=<domain> \
+DOGSWIPE_EXPECTED_A_RECORD=<public-host-ip> \
+IOS_RELEASE_DEVELOPMENT_TEAM=<apple-team-id> \
+DOGSWIPE_RELEASE_API_BASE_URL=https://<domain> \
+DOGSWIPE_RELEASE_SPAPS_PUBLISHABLE_KEY=spaps_pub_... \
+make deploy-live-readiness
+```
+
+Set `RUN_DEPLOY_PREFLIGHT=true` when the private `prod.env` exists locally or
+on the deployment host. Set `RUN_POST_DEPLOY_VERIFY=true` only after Compose is
+running. `make deploy-live-readiness-template` exercises the public no-secret
+wrapper path in CI.
+
 Before archive/upload or live rollout, run the combined readiness gate against
 the private overlay and release environment:
 
@@ -222,9 +262,12 @@ SPAPS auth requirements, local-only flags, optional menu-refresh controls, the
 Apple app-site association template, and the shared `reverse-proxy` network.
 `make deploy-release-readiness` wraps the overlay, public SPAPS app descriptor,
 SPAPS self-service registration payload render, release URL/auth settings, AASA
-render, iOS release asset verifier, and optional App Store Connect API key
-checks into one non-secret gate. `make deploy-private-handoff-template` verifies
-the private overlay/env render path without committing or printing secrets.
+render, iOS release asset verifier, optional DNS preflight, and optional App
+Store Connect API key checks into one non-secret gate. `make
+deploy-live-readiness` chains the overlay, DNS, release, optional private env,
+and optional post-deploy checks in operator order. `make
+deploy-private-handoff-template` verifies the private overlay/env render path
+without committing or printing secrets.
 
 ## Rollout Shape
 

@@ -117,7 +117,7 @@ make ios-release-archive
 make ios-testflight-export
 ```
 
-`spaps-registration-payload` renders the non-secret body for `POST /api/self-service/applications`; the full operator flow is in [docs/SPAPS_APP_HANDOFF.md](docs/SPAPS_APP_HANDOFF.md). `deploy-render-aasa` renders the Apple app-site association payload with the same Apple Team ID and bundle identifier used by the signed archive. `deploy-release-readiness` checks the live overlay, production release URLs, SPAPS registration payload, SPAPS publishable-key shape, AASA render, iOS release assets, and optional App Store Connect API key handoff without printing secrets. `ios-release-archive` also accepts `DOGSWIPE_RELEASE_SPAPS_API_BASE_URL`, `DOGSWIPE_RELEASE_SPAPS_ORIGIN`, `DOGSWIPE_RELEASE_AUTH_REDIRECT_URL`, and `DOGSWIPE_RELEASE_AUTH_UNIVERSAL_LINK_HOSTS`; the latter three default from `DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN`. `ios-testflight-upload` can upload the archive through an App Store Connect API key when `ASC_KEY_PATH`, `ASC_KEY_ID`, and `ASC_ISSUER_ID` are set. `.gitignore` blocks common Apple signing artifacts such as `.p8`, `.p12`, and `.mobileprovision` files.
+`spaps-registration-payload` renders the non-secret body for `POST /api/self-service/applications`; the full operator flow is in [docs/SPAPS_APP_HANDOFF.md](docs/SPAPS_APP_HANDOFF.md). `deploy-render-aasa` renders the Apple app-site association payload with the same Apple Team ID and bundle identifier used by the signed archive. `deploy-release-readiness` checks the live overlay, production release URLs, SPAPS registration payload, SPAPS publishable-key shape, AASA render, iOS release assets, optional DNS preflight, and optional App Store Connect API key handoff without printing secrets. `ios-release-archive` also accepts `DOGSWIPE_RELEASE_SPAPS_API_BASE_URL`, `DOGSWIPE_RELEASE_SPAPS_ORIGIN`, `DOGSWIPE_RELEASE_AUTH_REDIRECT_URL`, and `DOGSWIPE_RELEASE_AUTH_UNIVERSAL_LINK_HOSTS`; the latter three default from `DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN`. `ios-testflight-upload` can upload the archive through an App Store Connect API key when `ASC_KEY_PATH`, `ASC_KEY_ID`, and `ASC_ISSUER_ID` are set. `.gitignore` blocks common Apple signing artifacts such as `.p8`, `.p12`, and `.mobileprovision` files.
 
 For local Docker development, `DOGSWIPE_AUTO_CREATE_SCHEMA=true` and `DOGSWIPE_SEED_SAMPLE_PROFILES=true` create the starter tables and seed sample profiles at API startup. Keep those flags off in production and run managed migrations instead:
 
@@ -141,6 +141,8 @@ make drift
 make crap
 make mmdx-preflight
 make ios-release-assets
+make deploy-dns-preflight DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN=<domain>
+make deploy-live-readiness-template
 make ios-ui-test
 make ios-screenshots
 ```
@@ -153,6 +155,8 @@ Target gates for this repo:
 - CRAP: scoped `FINAL_SCORE < 20`
 - MMDX: architecture stack preflights cleanly
 - Deploy preflight: production Compose config and env contract resolve without secrets
+- DNS preflight: production domain has public DNS authority, resolves to a host record, and can optionally prove public health/AASA URLs
+- Live readiness: overlay, DNS, release, optional private env, and optional post-deploy checks are chained in operator order
 - Private deploy handoff template: non-secret renderer path creates throwaway private env/overlay files and validates them through deploy preflight
 - iOS release assets: AppIcon catalog, accent color, privacy manifest, associated-domains entitlement, and Apple app-site association template pass manifest verification
 - iOS UI smoke: deterministic screenshot-mode launch covers Discover, draggable card advancement, Matches, match add-to-order, Orders, Vendor, Review, and Profile

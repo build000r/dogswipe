@@ -70,6 +70,10 @@ jobs:
         run: make deploy-private-handoff-template
       - name: Host bootstrap template
         run: make deploy-host-bootstrap-template
+      - name: DNS preflight template
+        run: make deploy-dns-preflight-template
+      - name: Live readiness template
+        run: make deploy-live-readiness-template
       - name: Release readiness
         run: |
           make deploy-release-readiness \

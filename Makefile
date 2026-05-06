@@ -29,12 +29,15 @@ AASA_APPLE_TEAM_ID ?= $(IOS_RELEASE_DEVELOPMENT_TEAM)
 DEPLOY_OVERLAY_FILE ?= deploy/skillbox-overlay.example.yaml
 ALLOW_PLACEHOLDERS ?= false
 CHECK_ASC_KEY ?= false
+CHECK_DNS ?= false
+CHECK_PUBLIC_URLS ?= false
+DOGSWIPE_EXPECTED_A_RECORD ?= $(DOGSWIPE_DEPLOY_IP)
 DOGSWIPE_RELEASE_SPAPS_API_BASE_URL ?= https://api.sweetpotato.dev
 DOGSWIPE_RELEASE_AUTH_REDIRECT_URL ?= $(if $(DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN),https://$(DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN)/auth,)
 DOGSWIPE_RELEASE_AUTH_UNIVERSAL_LINK_HOSTS ?= $(DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN)
 DOGSWIPE_RELEASE_SPAPS_ORIGIN ?= $(if $(DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN),https://$(DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN),)
 
-.PHONY: generate-ios ios-build ios-release-assets ios-ui-test ios-screenshots require-phone-device ios-phone-build ios-phone-reset-app ios-phone-install ios-phone-launch ios-phone-run require-ios-release-env require-ios-archive require-ios-asc-key ios-release-archive ios-testflight-export ios-testflight-upload swift-test backend-install backend-install-local backend-test coverage lint typecheck migrate migration-current test drift crap mmdx-preflight spaps-app-contract spaps-registration-payload deploy-config deploy-preflight deploy-render-aasa deploy-release-readiness deploy-overlay-template deploy-private-handoff-template deploy-post-verify
+.PHONY: generate-ios ios-build ios-release-assets ios-ui-test ios-screenshots require-phone-device ios-phone-build ios-phone-reset-app ios-phone-install ios-phone-launch ios-phone-run require-ios-release-env require-ios-archive require-ios-asc-key ios-release-archive ios-testflight-export ios-testflight-upload swift-test backend-install backend-install-local backend-test coverage lint typecheck migrate migration-current test drift crap mmdx-preflight spaps-app-contract spaps-registration-payload deploy-config deploy-preflight deploy-render-aasa deploy-dns-preflight deploy-dns-preflight-template deploy-live-readiness deploy-live-readiness-template deploy-release-readiness deploy-overlay-template deploy-private-handoff-template deploy-post-verify
 
 generate-ios:
 	cd apps/ios/DogSwipe && xcodegen generate
@@ -277,9 +280,77 @@ deploy-render-aasa:
 	}
 	python3 deploy/render-aasa.py --apple-team-id "$(AASA_APPLE_TEAM_ID)" --bundle-id "$(IOS_RELEASE_BUNDLE_ID)" --output "$(AASA_RENDER_PATH)"
 
+deploy-dns-preflight:
+	@CHECK_PUBLIC_URLS="$(CHECK_PUBLIC_URLS)" \
+	DOGSWIPE_EXPECTED_A_RECORD="$(DOGSWIPE_EXPECTED_A_RECORD)" \
+	DOGSWIPE_DEPLOY_IP="$(DOGSWIPE_DEPLOY_IP)" \
+	PUBLIC_HEALTH_URL="$(PUBLIC_HEALTH_URL)" \
+	PUBLIC_AASA_URL="$(PUBLIC_AASA_URL)" \
+	bash deploy/dns-preflight.sh "$(DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN)"
+
+deploy-dns-preflight-template:
+	@set -euo pipefail; \
+	DOGSWIPE_EXPECTED_A_RECORD= bash deploy/dns-preflight.sh example.com; \
+	tmp="$$(mktemp)"; \
+	if DOGSWIPE_EXPECTED_A_RECORD= bash deploy/dns-preflight.sh dogswipe.invalid >"$$tmp" 2>&1; then \
+		cat "$$tmp"; \
+		echo "Expected dogswipe.invalid to fail DNS authority"; \
+		rm -f "$$tmp"; \
+		exit 1; \
+	fi; \
+	grep -q "DNS zone has no public NS/SOA authority" "$$tmp"; \
+	cat "$$tmp"; \
+	rm -f "$$tmp"
+
+deploy-live-readiness:
+	@ALLOW_PLACEHOLDERS="$(ALLOW_PLACEHOLDERS)" \
+	CHECK_ASC_KEY="$(CHECK_ASC_KEY)" \
+	CHECK_PUBLIC_URLS="$(CHECK_PUBLIC_URLS)" \
+	RUN_DEPLOY_PREFLIGHT="$(RUN_DEPLOY_PREFLIGHT)" \
+	RUN_POST_DEPLOY_VERIFY="$(RUN_POST_DEPLOY_VERIFY)" \
+	DEPLOY_OVERLAY_FILE="$(DEPLOY_OVERLAY_FILE)" \
+	DOGSWIPE_EXPECTED_A_RECORD="$(DOGSWIPE_EXPECTED_A_RECORD)" \
+	DOGSWIPE_DEPLOY_IP="$(DOGSWIPE_DEPLOY_IP)" \
+	IOS_RELEASE_DEVELOPMENT_TEAM="$(IOS_RELEASE_DEVELOPMENT_TEAM)" \
+	IOS_RELEASE_BUNDLE_ID="$(IOS_RELEASE_BUNDLE_ID)" \
+	DOGSWIPE_RELEASE_API_BASE_URL="$(DOGSWIPE_RELEASE_API_BASE_URL)" \
+	DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN="$(DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN)" \
+	DOGSWIPE_RELEASE_SPAPS_API_BASE_URL="$(DOGSWIPE_RELEASE_SPAPS_API_BASE_URL)" \
+	DOGSWIPE_RELEASE_SPAPS_PUBLISHABLE_KEY="$(DOGSWIPE_RELEASE_SPAPS_PUBLISHABLE_KEY)" \
+	DOGSWIPE_RELEASE_SPAPS_ORIGIN="$(DOGSWIPE_RELEASE_SPAPS_ORIGIN)" \
+	DOGSWIPE_RELEASE_AUTH_REDIRECT_URL="$(DOGSWIPE_RELEASE_AUTH_REDIRECT_URL)" \
+	DOGSWIPE_RELEASE_AUTH_UNIVERSAL_LINK_HOSTS="$(DOGSWIPE_RELEASE_AUTH_UNIVERSAL_LINK_HOSTS)" \
+	ENV_FILE="$(ENV_FILE)" \
+	DOGSWIPE_ENV_FILE="$(DOGSWIPE_ENV_FILE)" \
+	PUBLIC_HEALTH_URL="$(PUBLIC_HEALTH_URL)" \
+	PUBLIC_AASA_URL="$(PUBLIC_AASA_URL)" \
+	APPLE_TEAM_ID="$(APPLE_TEAM_ID)" \
+	ASC_KEY_PATH="$(ASC_KEY_PATH)" \
+	ASC_KEY_ID="$(ASC_KEY_ID)" \
+	ASC_ISSUER_ID="$(ASC_ISSUER_ID)" \
+	bash deploy/live-readiness.sh
+
+deploy-live-readiness-template:
+	@$(MAKE) --no-print-directory deploy-live-readiness \
+		ALLOW_PLACEHOLDERS=true \
+		DEPLOY_OVERLAY_FILE=deploy/skillbox-overlay.example.yaml \
+		IOS_RELEASE_DEVELOPMENT_TEAM=ABCDE12345 \
+		DOGSWIPE_RELEASE_API_BASE_URL=https://example.com \
+		DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN=example.com \
+		DOGSWIPE_RELEASE_SPAPS_PUBLISHABLE_KEY=spaps_pub_example \
+		DOGSWIPE_EXPECTED_A_RECORD= \
+		RUN_DEPLOY_PREFLIGHT=false \
+		RUN_POST_DEPLOY_VERIFY=false
+
 deploy-release-readiness:
 	@ALLOW_PLACEHOLDERS="$(ALLOW_PLACEHOLDERS)" \
 	CHECK_ASC_KEY="$(CHECK_ASC_KEY)" \
+	CHECK_DNS="$(CHECK_DNS)" \
+	CHECK_PUBLIC_URLS="$(CHECK_PUBLIC_URLS)" \
+	DOGSWIPE_EXPECTED_A_RECORD="$(DOGSWIPE_EXPECTED_A_RECORD)" \
+	DOGSWIPE_DEPLOY_IP="$(DOGSWIPE_DEPLOY_IP)" \
+	PUBLIC_HEALTH_URL="$(PUBLIC_HEALTH_URL)" \
+	PUBLIC_AASA_URL="$(PUBLIC_AASA_URL)" \
 	IOS_RELEASE_DEVELOPMENT_TEAM="$(IOS_RELEASE_DEVELOPMENT_TEAM)" \
 	IOS_RELEASE_BUNDLE_ID="$(IOS_RELEASE_BUNDLE_ID)" \
 	DOGSWIPE_RELEASE_API_BASE_URL="$(DOGSWIPE_RELEASE_API_BASE_URL)" \
