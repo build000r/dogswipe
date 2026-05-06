@@ -33,6 +33,23 @@ bash deploy/validate-skillbox-overlay.sh deploy/skillbox-overlay.example.yaml --
 bash deploy/validate-skillbox-overlay.sh /path/to/skillbox-config/clients/dogswipe/overlay.yaml
 ```
 
+The safer path is to render the private overlay from environment variables.
+This writes the file with owner-only permissions and refuses to print the
+overlay body to stdout:
+
+```bash
+DOGSWIPE_DEPLOY_SSH=aiops@sweet-potato-prod \
+DOGSWIPE_DEPLOY_IP=<tailscale-or-host-ip> \
+DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN=dogswipe.build000r.com \
+IOS_RELEASE_DEVELOPMENT_TEAM=<apple-team-id> \
+DOGSWIPE_ENV_FILE=/opt/envs/dogswipe/prod.env \
+python3 deploy/render-skillbox-overlay.py \
+  --output /path/to/skillbox-config/clients/dogswipe/overlay.yaml
+
+bash deploy/validate-skillbox-overlay.sh \
+  /path/to/skillbox-config/clients/dogswipe/overlay.yaml
+```
+
 Before archive/upload or live rollout, run the combined readiness gate against
 the private overlay and release environment:
 
@@ -95,6 +112,25 @@ Optional bounded menu refresh values:
 - `DOGSWIPE_MENU_REFRESH_BATCH_SIZE=20`
 - `DOGSWIPE_MENU_REFRESH_MAX_AGE_HOURS=24`
 
+Use the renderer when creating the private env file so secrets are written only
+to the requested output path and the file mode is `0600`:
+
+```bash
+POSTGRES_PASSWORD=<strong-password> \
+DOGSWIPE_IMAGE=ghcr.io/build000r/dogswipe:<tag> \
+DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN=dogswipe.build000r.com \
+DOGSWIPE_ENV_FILE=/opt/envs/dogswipe/prod.env \
+SPAPS_API_URL=https://api.sweetpotato.dev \
+SPAPS_API_KEY=<server-only-spaps-key> \
+SPAPS_APPLICATION_ID=<spaps-application-id> \
+DOGSWIPE_ADMIN_USER_IDS=<comma-separated-admin-user-ids> \
+python3 deploy/render-prod-env.py --output /opt/envs/dogswipe/prod.env
+```
+
+For public CI/template validation only, `make deploy-private-handoff-template`
+renders throwaway placeholder overlay/env files under a temporary directory,
+validates the overlay, and runs the deploy preflight against the rendered env.
+
 ## Universal Links
 
 The iOS project includes an associated-domains entitlement that resolves
@@ -147,10 +183,10 @@ private App Store Connect API key source. Apple `.p8`, `.p12`, and
 ## Preflight
 
 ```bash
-cp deploy/prod.env.example deploy/prod.env
-export DOGSWIPE_IMAGE=ghcr.io/build000r/dogswipe:<tag>
-export POSTGRES_PASSWORD='<strong-password>'
-bash deploy/pre-deploy-checks.sh
+make deploy-private-handoff-template
+ENV_FILE=/opt/envs/dogswipe/prod.env \
+  DOGSWIPE_ENV_FILE=/opt/envs/dogswipe/prod.env \
+  bash deploy/pre-deploy-checks.sh
 ```
 
 The preflight checks Docker availability, Compose config, required env values,
@@ -159,7 +195,8 @@ Apple app-site association template, and the shared `reverse-proxy` network.
 `make deploy-release-readiness` wraps the overlay, public SPAPS app descriptor,
 SPAPS self-service registration payload render, release URL/auth settings, AASA
 render, iOS release asset verifier, and optional App Store Connect API key
-checks into one non-secret gate.
+checks into one non-secret gate. `make deploy-private-handoff-template` verifies
+the private overlay/env render path without committing or printing secrets.
 
 ## Rollout Shape
 

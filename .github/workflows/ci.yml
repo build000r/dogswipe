@@ -63,6 +63,8 @@ jobs:
         run: make deploy-render-aasa AASA_APPLE_TEAM_ID=ABCDE12345
       - name: Skillbox overlay template
         run: make deploy-overlay-template
+      - name: Private deploy handoff template
+        run: make deploy-private-handoff-template
       - name: Release readiness
         run: |
           make deploy-release-readiness \

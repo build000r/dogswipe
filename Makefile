@@ -34,7 +34,7 @@ DOGSWIPE_RELEASE_AUTH_REDIRECT_URL ?= $(if $(DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN)
 DOGSWIPE_RELEASE_AUTH_UNIVERSAL_LINK_HOSTS ?= $(DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN)
 DOGSWIPE_RELEASE_SPAPS_ORIGIN ?= $(if $(DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN),https://$(DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN),)
 
-.PHONY: generate-ios ios-build ios-release-assets ios-ui-test ios-screenshots require-phone-device ios-phone-build ios-phone-reset-app ios-phone-install ios-phone-launch ios-phone-run require-ios-release-env require-ios-archive require-ios-asc-key ios-release-archive ios-testflight-export ios-testflight-upload swift-test backend-install backend-install-local backend-test coverage lint typecheck migrate migration-current test drift crap mmdx-preflight spaps-app-contract spaps-registration-payload deploy-config deploy-preflight deploy-render-aasa deploy-release-readiness deploy-overlay-template deploy-post-verify
+.PHONY: generate-ios ios-build ios-release-assets ios-ui-test ios-screenshots require-phone-device ios-phone-build ios-phone-reset-app ios-phone-install ios-phone-launch ios-phone-run require-ios-release-env require-ios-archive require-ios-asc-key ios-release-archive ios-testflight-export ios-testflight-upload swift-test backend-install backend-install-local backend-test coverage lint typecheck migrate migration-current test drift crap mmdx-preflight spaps-app-contract spaps-registration-payload deploy-config deploy-preflight deploy-render-aasa deploy-release-readiness deploy-overlay-template deploy-private-handoff-template deploy-post-verify
 
 generate-ios:
 	cd apps/ios/DogSwipe && xcodegen generate
@@ -296,6 +296,29 @@ deploy-release-readiness:
 
 deploy-overlay-template:
 	bash deploy/validate-skillbox-overlay.sh deploy/skillbox-overlay.example.yaml --allow-placeholders
+
+deploy-private-handoff-template:
+	@tmp="$$(mktemp -d)"; \
+	set -euo pipefail; \
+	trap 'rm -rf "$$tmp"' EXIT; \
+	DOGSWIPE_DEPLOY_SSH=aiops@dogswipe-host \
+	DOGSWIPE_DEPLOY_IP=192.0.2.10 \
+	DOGSWIPE_DEPLOY_ROOT=/opt/dogswipe \
+	DOGSWIPE_ENV_FILE="$$tmp/prod.env" \
+	DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN=dogswipe.example.com \
+	IOS_RELEASE_DEVELOPMENT_TEAM=ABCDE12345 \
+	python3 deploy/render-skillbox-overlay.py --allow-placeholders --output "$$tmp/overlay.yaml"; \
+	bash deploy/validate-skillbox-overlay.sh "$$tmp/overlay.yaml" --allow-placeholders; \
+	POSTGRES_PASSWORD=replace-me \
+	DOGSWIPE_IMAGE=dogswipe-api:local \
+	SPAPS_API_URL=https://api.sweetpotato.dev \
+	SPAPS_API_KEY=replace-me \
+	SPAPS_APPLICATION_ID=00000000-0000-0000-0000-000000000000 \
+	DOGSWIPE_ADMIN_USER_IDS=local-admin \
+	DOGSWIPE_ENV_FILE="$$tmp/prod.env" \
+	DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN=dogswipe.example.com \
+	python3 deploy/render-prod-env.py --allow-placeholders --output "$$tmp/prod.env"; \
+	ENV_FILE="$$tmp/prod.env" DOGSWIPE_ENV_FILE="$$tmp/prod.env" bash deploy/pre-deploy-checks.sh
 
 deploy-post-verify:
 	bash deploy/post-deploy-verify.sh

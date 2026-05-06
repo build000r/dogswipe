@@ -1,8 +1,8 @@
 # Completion Audit
 
 Date: 2026-05-06
-Implementation audited: hotdog swipe deck, visible Discover route controls, durable backend-backed order drafts with My Orders, signed release/TestFlight handoff scaffolding, bundle-aware AASA render path, release-readiness gate, public SPAPS app descriptor, SPAPS operator handoff, and private release-readiness probe as of commit `d2bb097`.
-Latest executable-code CI run audited: GitHub Actions `25424553583` for `281c4655e4c4e36d68f48630645e50829d158c57` passed `backend`, `swift-package`, and `ios` jobs.
+Implementation audited: hotdog swipe deck, visible Discover route controls, durable backend-backed order drafts with My Orders, signed release/TestFlight handoff scaffolding, bundle-aware AASA render path, release-readiness gate, public SPAPS app descriptor, SPAPS operator handoff, private deploy handoff renderers, and private release-readiness probe in the current branch state.
+Latest complete executable-code CI run audited before the private deploy handoff renderer checkpoint: GitHub Actions `25426019820` for `0c32416da67fbecbe141c5f6ebbaf305f6bc67c4` passed `backend`, `swift-package`, and `ios` jobs.
 
 ## Objective Restated
 
@@ -39,6 +39,7 @@ SwiftUI drift clean, CRAP below 20, and meaningful backend coverage above 80%.
 | Deploy artifacts exist | `deploy/docker-compose.prod.yml`, env template, pre/post deploy scripts, release-readiness script, reverse-proxy template, bundle-aware AASA template/render script, and `deploy/README.md`. | Done |
 | Deploy preflight passes | Fresh `make deploy-preflight` reported 19 passed, 0 warnings, 0 failed. | Done |
 | Skillbox overlay template exists | Fresh `make deploy-overlay-template` reported 15 passed, 0 failed for the placeholder template. | Done |
+| Private deploy handoff renderers | `deploy/render-prod-env.py` and `deploy/render-skillbox-overlay.py` write private output paths only, set owner-only permissions, validate required fields, and are covered by `make deploy-private-handoff-template`. | Done |
 | Private release-readiness probe | A non-repo overlay using `dogswipe.build000r.com`, the ignored SPAPS publishable key, `IOS_RELEASE_DEVELOPMENT_TEAM=84GGQ3RBDZ`, and HTTPS universal-link auth values passed `make deploy-release-readiness` with 21 passed, 1 skipped, 0 failed. | Done locally |
 | Production host readiness | Read-only SSH probe resolved `aiops@sweet-potato-prod` and showed SPAPS healthy, but `/opt/envs/dogswipe`, `/opt/envs/dogswipe/prod.env`, `/opt/dogswipe`, and `/mnt/volume_nyc3_cfo_v1/dogswipe` do not exist yet. | Blocked |
 | Production DNS readiness | `dogswipe.build000r.com` did not resolve and `https://dogswipe.build000r.com/health` returned HTTP `000` during the probe. | Blocked |
@@ -67,6 +68,7 @@ SwiftUI drift clean, CRAP below 20, and meaningful backend coverage above 80%.
 - `make deploy-render-aasa AASA_APPLE_TEAM_ID=ABCDE12345`: rendered the bundle-aware Apple app-site association payload.
 - `make deploy-release-readiness ALLOW_PLACEHOLDERS=true ...`: release handoff gate passed in placeholder mode without secrets; 21 passed, 1 skipped, 0 failed, including SPAPS app contract and registration-payload verification.
 - `make deploy-overlay-template`: 15 passed, 0 failed.
+- `make deploy-private-handoff-template`: rendered throwaway private overlay/env files, validated the overlay, and ran deploy preflight with 19 passed, 0 warnings, 0 failed.
 - Private release-readiness probe with a non-repo overlay for `dogswipe.build000r.com`, ignored SPAPS values, `IOS_RELEASE_DEVELOPMENT_TEAM=84GGQ3RBDZ`, and HTTPS auth/universal-link settings: 21 passed, 1 skipped, 0 failed.
 - `ssh-info` read-only production status: `spaps-python` was healthy; DogSwipe deploy root/env paths were absent.
 - DNS/health probe: `dogswipe.build000r.com` did not resolve; public health check returned HTTP `000`.
@@ -79,12 +81,12 @@ SwiftUI drift clean, CRAP below 20, and meaningful backend coverage above 80%.
 ## Verdict
 
 The repo is production-quality and deploy-ready within the information available
-locally. Private SPAPS application values are now present in an ignored local
-env file and the private release-readiness gate passes without printing
-secrets. The full objective is not complete because live deployment still needs
-DNS, host directories, the production env source, and reverse-proxy activation,
-and live App Store/TestFlight signing/upload still needs Apple/App Store Connect
-inputs.
+locally. Private SPAPS application values are present in an ignored local env
+file, the private release-readiness gate passes without printing secrets, and
+the repo now renders private production env/overlay handoff files safely. The
+full objective is not complete because live deployment still needs DNS, host
+directories, the production env source, and reverse-proxy activation, and live
+App Store/TestFlight signing/upload still needs Apple/App Store Connect inputs.
 
 ## Required Inputs To Finish
 
