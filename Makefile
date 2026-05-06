@@ -320,5 +320,20 @@ deploy-private-handoff-template:
 	python3 deploy/render-prod-env.py --allow-placeholders --output "$$tmp/prod.env"; \
 	ENV_FILE="$$tmp/prod.env" DOGSWIPE_ENV_FILE="$$tmp/prod.env" bash deploy/pre-deploy-checks.sh
 
+deploy-host-bootstrap-template:
+	@tmp="$$(mktemp -d)"; \
+	set -euo pipefail; \
+	trap 'rm -rf "$$tmp"' EXIT; \
+	DOGSWIPE_DEPLOY_ROOT="$$tmp/opt/dogswipe" \
+	DOGSWIPE_ENV_FILE="$$tmp/opt/envs/dogswipe/prod.env" \
+	DOGSWIPE_STORAGE_ROOT="$$tmp/mnt/volume_nyc3_cfo_v1" \
+	bash deploy/bootstrap-host.sh --apply; \
+	test -f "$$tmp/opt/dogswipe/deploy/docker-compose.prod.yml"; \
+	test -f "$$tmp/opt/dogswipe/deploy/pre-deploy-checks.sh"; \
+	test -f "$$tmp/opt/dogswipe/deploy/post-deploy-verify.sh"; \
+	test -f "$$tmp/opt/dogswipe/deploy/reverse-proxy/dogswipe-api.conf.template"; \
+	test -d "$$tmp/opt/envs/dogswipe"; \
+	test -d "$$tmp/mnt/volume_nyc3_cfo_v1/dogswipe/pgdata"
+
 deploy-post-verify:
 	bash deploy/post-deploy-verify.sh

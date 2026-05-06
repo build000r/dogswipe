@@ -22,6 +22,7 @@ Last verified: 2026-05-06
 | AASA render smoke | `make deploy-render-aasa AASA_APPLE_TEAM_ID=ABCDE12345` | rendered bundle-aware Apple app-site association payload |
 | Release readiness | `make deploy-release-readiness ALLOW_PLACEHOLDERS=true ...` | 21 passed, 1 skipped, 0 failed, including SPAPS app contract and registration-payload verification |
 | Private deploy handoff template | `make deploy-private-handoff-template` | rendered throwaway private overlay/env files, validated overlay, and ran deploy preflight with 19 passed, 0 warnings, 0 failed |
+| Host bootstrap template | `make deploy-host-bootstrap-template` | installed non-secret deploy artifacts into a temporary host layout and verified deploy/env/data paths |
 | Private release-readiness probe | non-repo overlay for `dogswipe.build000r.com` plus ignored SPAPS env values and `IOS_RELEASE_DEVELOPMENT_TEAM=84GGQ3RBDZ` | 21 passed, 1 skipped, 0 failed; no secrets printed |
 | Production host/DNS probe | `ssh-info` read-only status plus DNS/health checks for `dogswipe.build000r.com` | SPAPS host reachable and healthy; DogSwipe deploy root/env paths absent; `dogswipe.build000r.com` unresolved |
 | Skillbox overlay template | `make deploy-overlay-template` | 15 passed, 0 failed |
@@ -72,11 +73,11 @@ Last verified: 2026-05-06
 - `POST /v1/vendor/submissions/{id}/ingest-menu` is owner-scoped, stores bounded menu URL snapshot status/excerpt/timestamp fields, and the iOS Vendor tab can refresh and render the snapshot state.
 - `POST /v1/admin/vendor/menus/refresh` is admin-scoped, refreshes stale vendor menu snapshots in bounded batches, reports checked/refreshed/failed counts, and the iOS Admin tab can trigger the refresh.
 - Configured admins can list pending vendor submissions, approve one into discovery, reject one, request edits with a review note, and production preflight requires `DOGSWIPE_ADMIN_USER_IDS` when SPAPS auth is enabled.
-- Production deploy artifacts define the Compose stack, env contract, preflight checks, release-readiness checks, post-deploy verification, reverse-proxy template, bundle-aware Apple app-site association render path, and CI workflow.
+- Production deploy artifacts define the Compose stack, env contract, host bootstrap, preflight checks, release-readiness checks, post-deploy verification, reverse-proxy template, bundle-aware Apple app-site association render path, and CI workflow.
 - CI publishes a deterministic backend image tag to `ghcr.io/build000r/dogswipe:<full-git-sha>` plus `latest` for `main` pushes that change `backend/**` or `.github/workflows/ci.yml`; a recent verified tag is `ghcr.io/build000r/dogswipe:2fe4ff8ec55db21f40c46ad974f352720d539371`.
 - Private deploy handoff renderers write production env and skillbox overlay files to caller-provided private paths, set owner-only permissions, refuse stdout secret output, and are covered by `make deploy-private-handoff-template`.
 - Signed iOS release handoff artifacts define `ios-release-archive`, `ios-testflight-export`, and `ios-testflight-upload` Make targets with build-setting-backed production API/SPAPS/universal-link inputs and App Store Connect export/upload option plists; Apple `.p8`, `.p12`, and `.mobileprovision` files are ignored.
-- GitHub Actions enforces backend coverage XML generation, scoped CRAP threshold, MMDX architecture preflight, SPAPS app contract and registration-payload validation, SwiftUI drift, deploy preflight/readiness including AASA template/render validation, iOS build/test gates, and screenshot UI smoke.
+- GitHub Actions enforces backend coverage XML generation, scoped CRAP threshold, MMDX architecture preflight, SPAPS app contract and registration-payload validation, SwiftUI drift, deploy preflight/readiness including host bootstrap and AASA template/render validation, iOS build/test gates, and screenshot UI smoke.
 - A DogSwipe skillbox overlay template and validator exist so live deploy setup, including the AASA URL and Apple Team ID contract, can be checked without committing host secrets.
 - The ignored local SPAPS handoff file contains non-placeholder private app values in this workspace, and a private release-readiness probe validates the app-side release contract for `dogswipe.build000r.com`; live DNS, host env setup, and reverse-proxy activation remain separate infrastructure work.
 

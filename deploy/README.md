@@ -131,6 +131,28 @@ For public CI/template validation only, `make deploy-private-handoff-template`
 renders throwaway placeholder overlay/env files under a temporary directory,
 validates the overlay, and runs the deploy preflight against the rendered env.
 
+## Host Bootstrap
+
+Before writing private env values or starting Compose, prepare the target host
+layout and copy only non-secret deploy artifacts:
+
+```bash
+DOGSWIPE_DEPLOY_ROOT=/opt/dogswipe \
+DOGSWIPE_ENV_FILE=/opt/envs/dogswipe/prod.env \
+DOGSWIPE_STORAGE_ROOT=/mnt/volume_nyc3_cfo_v1 \
+bash deploy/bootstrap-host.sh
+```
+
+Dry-run is the default. Run the same command with `--apply` on the deployment
+host after confirming the resolved paths. The script creates the deploy root,
+env-file parent directory, PostgreSQL data directory, AASA web path, and copies
+the Compose file, env template, pre/post deploy scripts, AASA renderer/template,
+and reverse-proxy template into the deploy root. It never writes secrets and
+warns if the private production env file is still absent.
+
+`make deploy-host-bootstrap-template` exercises the bootstrap contract against a
+temporary directory and is safe for CI.
+
 ## Universal Links
 
 The iOS project includes an associated-domains entitlement that resolves
