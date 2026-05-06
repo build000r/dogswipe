@@ -2,7 +2,7 @@
 
 Date: 2026-05-06
 Implementation audited: hotdog swipe deck, visible Discover route controls, and signed release/TestFlight handoff scaffolding as of this document revision
-Latest completed CI run audited before this revision: `25416869461`
+Latest completed CI run audited: `25417343119`
 
 ## Objective Restated
 
@@ -29,7 +29,7 @@ SwiftUI drift clean, CRAP below 20, and meaningful backend coverage above 80%.
 | CRAP below 20 | Fresh `make crap` reported `FINAL_SCORE: 9.00`; CI CRAP gate passed. | Done |
 | Meaningful backend test coverage above 80% | Fresh `make coverage` ran 75 backend tests and reported total coverage 89.61%. | Done |
 | Swift test coverage through behavior | Fresh `make swift-test` ran 33 tests across API client, scorer, and deck state. | Done |
-| iOS build/test/screenshot smoke | CI run `25416869461` passed iOS build, iOS unit tests, and screenshot UI smoke. Local `make ios-ui-test` now covers the reference Discover surface, visible route controls, draggable card advancement, Matches, Vendor, Review, and Profile in isolated screenshot-mode launches. | Done |
+| iOS build/test/screenshot smoke | CI run `25417343119` passed iOS build, iOS unit tests, and screenshot UI smoke. Local `make ios-ui-test` now covers the reference Discover surface, visible route controls, draggable card advancement, Matches, Vendor, Review, and Profile in isolated screenshot-mode launches. | Done |
 | MMDX architecture tracking | `docs/architecture.mmdx`; fresh `make mmdx-preflight` passed 3 charts. | Done |
 | Workgraph/planning tracked | `docs/WORKGRAPH.md` lists WG-001 through WG-038 and current ready frontier/risks. | Done |
 | README and vision docs updated | `README.md`, `docs/VISION.md`, `docs/QUALITY_GATES.md`, and `docs/WORKGRAPH.md` describe the hotdog app and current limits. | Done |
@@ -37,7 +37,7 @@ SwiftUI drift clean, CRAP below 20, and meaningful backend coverage above 80%.
 | Deploy artifacts exist | `deploy/docker-compose.prod.yml`, env template, pre/post deploy scripts, reverse-proxy template, AASA template, and `deploy/README.md`. | Done |
 | Deploy preflight passes | Fresh `make deploy-preflight` reported 19 passed, 0 warnings, 0 failed. | Done |
 | Skillbox overlay template exists | Fresh `make deploy-overlay-template` reported 15 passed, 0 failed for the placeholder template. | Done |
-| CI enforces gates | `.github/workflows/ci.yml` runs backend tests/coverage/CRAP/MMDX/drift/lint/typecheck/migration/deploy/Docker, Swift package tests, and iOS release/build/unit/screenshot gates. Audited run `25416010353` passed. | Done |
+| CI enforces gates | `.github/workflows/ci.yml` runs backend tests/coverage/CRAP/MMDX/drift/lint/typecheck/migration/deploy/Docker, Swift package tests, and iOS release/build/unit/screenshot gates. Audited run `25417343119` passed. | Done |
 | Original reference-image visual parity | The supplied DogSwipe reference image is now the visual source of truth for the iOS Discover/Matches surfaces: cream/red/mustard vendor-pack chrome, Chicago Classic cards, hotdog-first art, swipe controls, and match/order CTA. | Done |
 | Live production deployment | Deploy contract and preflight are ready, but `deploy/README.md` states live rollout needs a concrete skillbox overlay: host, deploy root, env source, domain, Apple Team ID, health URL, and AASA URL. | Blocked |
 | Hosted universal-link activation | AASA template and entitlement plumbing exist, but hosted verification needs the production domain and Apple Team ID. | Blocked |
@@ -61,7 +61,7 @@ SwiftUI drift clean, CRAP below 20, and meaningful backend coverage above 80%.
 - `make -n ios-release-archive ...`: dry-run showed the signed archive command receives production API/SPAPS/universal-link settings without running Apple signing.
 - `make -n ios-testflight-upload ...`: dry-run showed the upload target requires archive and App Store Connect API key inputs before invoking `xcodebuild -exportArchive`.
 - Sweet Potato usage audit: 0 high, 0 medium, 0 low findings.
-- GitHub Actions `25416869461`: `backend` succeeded in 1m54s, `swift-package` succeeded in 29s, and `ios` succeeded in 9m34s, including screenshot UI smoke.
+- GitHub Actions `25417343119`: `backend` succeeded in 2m1s, `swift-package` succeeded in 30s, and `ios` succeeded in 6m46s, including screenshot UI smoke.
 
 ## Verdict
 
