@@ -1,7 +1,24 @@
 import DogSwipeCore
 import SwiftUI
 
+private enum RootTab: String, Hashable {
+    case discover
+    case matches
+    case vendor
+    case review
+    case profile
+
+    static var initial: RootTab {
+        guard AppEnvironment.isScreenshotMode,
+              let value = ProcessInfo.processInfo.environment["DOGSWIPE_INITIAL_TAB"] else {
+            return .discover
+        }
+        return RootTab(rawValue: value) ?? .discover
+    }
+}
+
 struct RootView: View {
+    @State private var selectedTab: RootTab
     @StateObject private var authSessionStore: AuthSessionStore
     @StateObject private var preferencesStore: CravingPreferencesStore
     @StateObject private var vendorSubmissionStore: VendorSubmissionStore
@@ -15,6 +32,7 @@ struct RootView: View {
     ) {
         let apiClient = AppEnvironment.apiClient(tokenStore: accessTokenStore)
         self.apiClient = apiClient
+        _selectedTab = State(initialValue: RootTab.initial)
         _authSessionStore = StateObject(
             wrappedValue: AuthSessionStore(
                 accessTokenStore: accessTokenStore,
@@ -34,7 +52,7 @@ struct RootView: View {
     }
 
     var body: some View {
-        TabView {
+        TabView(selection: $selectedTab) {
             DiscoverView(
                 preferencesStore: preferencesStore,
                 viewModel: DiscoverViewModel(
@@ -45,6 +63,7 @@ struct RootView: View {
                 .tabItem {
                     Label("Discover", systemImage: "fork.knife.circle.fill")
                 }
+                .tag(RootTab.discover)
 
             MatchesView(
                 preferencesStore: preferencesStore,
@@ -56,16 +75,19 @@ struct RootView: View {
                 .tabItem {
                     Label("Matches", systemImage: "heart.fill")
                 }
+                .tag(RootTab.matches)
 
             VendorView(store: vendorSubmissionStore)
                 .tabItem {
                     Label("Vendor", systemImage: "storefront")
                 }
+                .tag(RootTab.vendor)
 
             AdminReviewView(store: adminReviewStore)
                 .tabItem {
                     Label("Review", systemImage: "checkmark.seal.fill")
                 }
+                .tag(RootTab.review)
 
             ProfileView(
                 preferencesStore: preferencesStore,
@@ -74,6 +96,7 @@ struct RootView: View {
                 .tabItem {
                     Label("Profile", systemImage: "person.crop.circle")
                 }
+                .tag(RootTab.profile)
         }
         .tint(.dsPrimary)
         .accessibilityIdentifier("dogswipe.root")

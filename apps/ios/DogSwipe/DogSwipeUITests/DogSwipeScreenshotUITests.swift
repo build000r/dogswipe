@@ -6,41 +6,35 @@ final class DogSwipeScreenshotUITests: XCTestCase {
     override func setUpWithError() throws {
         continueAfterFailure = false
         XCUIDevice.shared.orientation = .portrait
-
-        app = XCUIApplication()
-        app.launchArguments = [
-            AppLaunchArguments.screenshotMode,
-            "-AppleLanguages",
-            "(en)",
-            "-AppleLocale",
-            "en_US"
-        ]
-        app.launchEnvironment["DOGSWIPE_SCREENSHOT_MODE"] = "1"
-        app.launch()
     }
 
     func testHotdogWorkflowScreenshots() {
+        launch(tab: "discover")
         waitFor(identifier: "dogswipe.discover.screen")
         XCTAssertTrue(app.staticTexts["Best nearby bite"].exists)
         XCTAssertTrue(app.staticTexts["Coney Classic"].waitForExistence(timeout: 3))
         attachScreenshot(named: "01-discover")
 
-        tapTab("Matches", screenIdentifier: "dogswipe.matches.screen")
+        launch(tab: "matches")
+        waitFor(identifier: "dogswipe.matches.screen")
         XCTAssertTrue(app.staticTexts["Coney Classic"].waitForExistence(timeout: 3))
         XCTAssertTrue(app.staticTexts["Garden Snap"].exists)
         attachScreenshot(named: "02-matches")
 
-        tapTab("Vendor", screenIdentifier: "dogswipe.vendor.screen")
+        launch(tab: "vendor")
+        waitFor(identifier: "dogswipe.vendor.screen")
         XCTAssertTrue(app.staticTexts["Submit a hotdog"].waitForExistence(timeout: 3))
         XCTAssertTrue(app.staticTexts["Your submissions"].exists)
         attachScreenshot(named: "03-vendor")
 
-        tapTab("Review", screenIdentifier: "dogswipe.review.screen")
+        launch(tab: "review")
+        waitFor(identifier: "dogswipe.review.screen")
         XCTAssertTrue(app.staticTexts["Pending vendor hotdogs"].waitForExistence(timeout: 3))
         XCTAssertTrue(app.buttons["Approve"].exists)
         attachScreenshot(named: "04-review")
 
-        tapTab("Profile", screenIdentifier: "dogswipe.profile.screen")
+        launch(tab: "profile")
+        waitFor(identifier: "dogswipe.profile.screen")
         XCTAssertTrue(app.staticTexts["Your cravings"].waitForExistence(timeout: 3))
         XCTAssertTrue(app.staticTexts["Signed out"].exists)
         attachScreenshot(named: "05-profile")
@@ -53,25 +47,21 @@ final class DogSwipeScreenshotUITests: XCTestCase {
         return element
     }
 
-    private func tapTab(_ title: String, screenIdentifier: String) {
-        let screen = app.descendants(matching: .any)[screenIdentifier]
-        if screen.exists {
-            return
+    private func launch(tab: String) {
+        if let runningApp = app, runningApp.state != .notRunning {
+            runningApp.terminate()
         }
-
-        for _ in 0..<3 {
-            let tab = app.tabBars.buttons[title]
-            XCTAssertTrue(tab.waitForExistence(timeout: 3), "\(title) tab did not appear")
-            tab.tap()
-            if screen.waitForExistence(timeout: 3) {
-                return
-            }
-            tab.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
-            if screen.waitForExistence(timeout: 3) {
-                return
-            }
-        }
-        XCTFail("\(title) tab did not open \(screenIdentifier)")
+        app = XCUIApplication()
+        app.launchArguments = [
+            AppLaunchArguments.screenshotMode,
+            "-AppleLanguages",
+            "(en)",
+            "-AppleLocale",
+            "en_US"
+        ]
+        app.launchEnvironment["DOGSWIPE_SCREENSHOT_MODE"] = "1"
+        app.launchEnvironment["DOGSWIPE_INITIAL_TAB"] = tab
+        app.launch()
     }
 
     private func attachScreenshot(named name: String) {
