@@ -49,7 +49,7 @@ Status key: `done`, `active`, `ready`, `blocked`.
 | WG-043 SPAPS operator handoff | done | WG-042 | `spaps.app.json`, `scripts/**`, `Makefile`, `deploy/**`, `docs/**` | The repo renders a non-secret Sweet Potato self-service application payload using the supported `browser_auth` blueprint, documents the private operator registration flow, covers the renderer in the app-contract and release-readiness gates, and this workspace has ignored private SPAPS values that pass a non-secret release-readiness probe |
 | WG-044 Durable order drafts | done | WG-040, WG-009 | `backend/**`, `packages/DogSwipeCore/**`, `apps/ios/DogSwipe/**`, `docs/**` | Matched hotdogs can be saved as user-scoped backend order drafts with canonical add-ons, the iOS My Orders tab lists durable drafts, and backend/Swift/iOS/UI tests cover the contract |
 | WG-045 Private deploy handoff renderers | done | WG-029, WG-041, WG-043 | `deploy/**`, `.github/**`, `Makefile`, `docs/**` | The repo can render private production env and skillbox overlay files to caller-provided paths without printing secrets, validate them through a throwaway template target, and run deploy preflight against the rendered env |
-| WG-046 GHCR image publish | done | WG-016, WG-045 | `.github/workflows/ci.yml`, `deploy/**`, `docs/**` | CI builds and publishes `ghcr.io/build000r/dogswipe:<full-git-sha>` plus `latest` on pushes to `main`, giving production `DOGSWIPE_IMAGE` a deterministic pullable image tag |
+| WG-046 GHCR image publish | done | WG-016, WG-045 | `.github/workflows/ci.yml`, `deploy/**`, `docs/**` | CI builds Docker on every backend run and publishes `ghcr.io/build000r/dogswipe:<full-git-sha>` plus `latest` for backend-image-changing `main` pushes, giving production `DOGSWIPE_IMAGE` a deterministic pullable image tag without republishing docs-only commits |
 
 ## Ready Frontier
 
@@ -64,5 +64,5 @@ The next ready work is to make the live infrastructure real: configure DNS for `
 
 - Public repository: https://github.com/build000r/dogswipe
 - First pushed commit: `dbf880b`
-- Latest pushed commit audited: `1e31894`
-- Latest published backend image: `ghcr.io/build000r/dogswipe:1e318946f282c86257ae7ac397376542744a6031`
+- Recent audited commit: `0bac354`
+- Recent published backend image evidence: `ghcr.io/build000r/dogswipe:0bac35454c3861b5f31a52ce0c65edd9844d4523`

@@ -17,6 +17,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Checkout quality skills
         run: git clone --depth 1 https://github.com/build000r/skills.git "$RUNNER_TEMP/quality-skills"
       - name: Install quality dependencies
@@ -74,6 +76,21 @@ jobs:
             DOGSWIPE_RELEASE_API_BASE_URL=https://dogswipe-api.example.com \
             DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN=dogswipe-api.example.com \
             DOGSWIPE_RELEASE_SPAPS_PUBLISHABLE_KEY=spaps_pub_example
+      - name: Detect backend image changes
+        id: image-changes
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          set -euo pipefail
+          before="${{ github.event.before }}"
+          if [[ "$before" =~ ^0+$ ]]; then
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if git diff --quiet "$before" "$GITHUB_SHA" -- backend .github/workflows/ci.yml; then
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          fi
       - name: Docker image build
         run: |
           docker build \
@@ -82,10 +99,10 @@ jobs:
             -t ghcr.io/build000r/dogswipe:latest \
             backend
       - name: Log in to GHCR
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && steps.image-changes.outputs.publish == 'true'
         run: echo "${{ github.token }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
       - name: Publish Docker image
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && steps.image-changes.outputs.publish == 'true'
         run: |
           docker push ghcr.io/build000r/dogswipe:${GITHUB_SHA}
           docker push ghcr.io/build000r/dogswipe:latest
