@@ -68,6 +68,18 @@ final class DogSwipeScreenshotUITests: XCTestCase {
         )
     }
 
+    func test06DiscoverCardSwipesAdvanceDeck() {
+        launch(tab: "discover")
+        waitFor(identifier: "dogswipe.discover.screen", timeout: 20, screenshotName: "06-discover-swipe")
+        waitFor(.staticText("Chicago Classic"), timeout: 20, screenshotName: "06-discover-swipe")
+
+        swipe(from: CGVector(dx: 0.25, dy: 0.48), to: CGVector(dx: 0.90, dy: 0.44))
+        waitFor(.staticText("Kimchi Crunch"), timeout: 8, screenshotName: "06-discover-swipe-right")
+
+        swipe(from: CGVector(dx: 0.75, dy: 0.48), to: CGVector(dx: 0.10, dy: 0.44))
+        waitFor(.staticText("Garden Snap"), timeout: 8, screenshotName: "06-discover-swipe-left")
+    }
+
     private func captureScreenshot(
         tab: String,
         screenIdentifier: String,
@@ -130,6 +142,12 @@ final class DogSwipeScreenshotUITests: XCTestCase {
         attachment.name = name
         attachment.lifetime = .keepAlways
         add(attachment)
+    }
+
+    private func swipe(from start: CGVector, to end: CGVector) {
+        let startCoordinate = app.coordinate(withNormalizedOffset: start)
+        let endCoordinate = app.coordinate(withNormalizedOffset: end)
+        startCoordinate.press(forDuration: 0.05, thenDragTo: endCoordinate)
     }
 }
 
