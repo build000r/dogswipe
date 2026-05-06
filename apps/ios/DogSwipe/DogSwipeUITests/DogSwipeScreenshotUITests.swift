@@ -82,6 +82,15 @@ final class DogSwipeScreenshotUITests: XCTestCase {
         waitFor(.staticText("Garden Snap"), timeout: 8, screenshotName: "06-discover-swipe-left")
     }
 
+    func test07MatchAddToOrderUpdatesCTA() {
+        launch(tab: "matches")
+        waitFor(identifier: "dogswipe.matches.screen", timeout: 20, screenshotName: "07-match-order")
+        waitFor(.button("Bacon"), timeout: 20, screenshotName: "07-match-order").tap()
+        waitFor(.button("Add to Order"), timeout: 20, screenshotName: "07-match-order").tap()
+        waitFor(.button("Added to Order"), timeout: 8, screenshotName: "07-match-order")
+        waitFor(identifier: "dogswipe.order.confirmation", timeout: 8, screenshotName: "07-match-order")
+    }
+
     private func captureScreenshot(
         tab: String,
         screenIdentifier: String,
@@ -110,16 +119,18 @@ final class DogSwipeScreenshotUITests: XCTestCase {
         return element
     }
 
+    @discardableResult
     private func waitFor(
         _ requiredElement: RequiredElement,
         timeout: TimeInterval,
         screenshotName: String
-    ) {
+    ) -> XCUIElement {
         let element = requiredElement.resolve(in: app)
         if !element.waitForExistence(timeout: timeout) {
             attachScreenshot(named: "\(screenshotName)-failure")
             XCTFail("\(requiredElement.name) did not appear")
         }
+        return element
     }
 
     private func launch(tab: String) {

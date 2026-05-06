@@ -13,7 +13,7 @@ enum DogSwipeHeaderTab: String, CaseIterable {
 
 struct DogSwipeBrandHeader: View {
     let activeTab: DogSwipeHeaderTab
-    var cartCount: Int = 2
+    var cartCount: Int = 0
 
     var body: some View {
         VStack(spacing: .dsSpace3) {
@@ -43,13 +43,17 @@ struct DogSwipeBrandHeader: View {
                         .foregroundStyle(Color.dsInk)
                         .frame(width: .dsBrandIconFrame, height: .dsBrandIconFrame)
 
-                    Text("\(cartCount)")
-                        .font(.caption2.weight(.bold))
-                        .foregroundStyle(Color.dsSurface)
-                        .frame(width: .dsBrandBadgeSize, height: .dsBrandBadgeSize)
-                        .background(Color.dsAccent, in: Circle())
-                        .offset(x: .dsBrandBadgeOffsetX, y: .dsBrandBadgeOffsetY)
+                    if cartCount > 0 {
+                        Text("\(min(cartCount, 9))")
+                            .font(.caption2.weight(.bold))
+                            .foregroundStyle(Color.dsSurface)
+                            .frame(width: .dsBrandBadgeSize, height: .dsBrandBadgeSize)
+                            .background(Color.dsAccent, in: Circle())
+                            .offset(x: .dsBrandBadgeOffsetX, y: .dsBrandBadgeOffsetY)
+                            .accessibilityLabel("\(cartCount) items in order")
+                    }
                 }
+                .accessibilityLabel(cartCount == 1 ? "1 item in order" : "\(cartCount) items in order")
             }
 
             HStack {
@@ -172,6 +176,8 @@ struct DogSwipePrimaryButton: View {
             .background(Color.dsPrimary, in: Capsule())
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(title)
+        .accessibilityValue(price ?? "")
         .shadow(color: Color.dsPrimary.opacity(0.28), radius: 12, x: 0, y: 8)
     }
 }

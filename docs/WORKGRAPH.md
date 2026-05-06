@@ -43,10 +43,11 @@ Status key: `done`, `active`, `ready`, `blocked`.
 | WG-037 Location-aware matches | done | WG-036 | `backend/**`, `packages/DogSwipeCore/**`, `apps/ios/DogSwipe/**`, `docs/**` | Saved hotdog matches can accept current coordinates, return recomputed distance/walking time, and expose compact MapKit route preview plus Apple Maps handoff from the Matches tab |
 | WG-038 Menu-aware discovery search | done | WG-031, WG-037 | `backend/**`, `packages/DogSwipeCore/**`, `apps/ios/DogSwipe/**`, `docs/**` | Discovery accepts `menu_query`, searches bounded profile/menu fields, the Swift client encodes it, local sample ranking applies it offline, and the iOS Discover screen exposes compact craving search |
 | WG-039 TestFlight handoff scaffolding | done | WG-033, WG-035 | `Makefile`, `apps/ios/DogSwipe/**`, `deploy/**`, `scripts/**`, `docs/**` | Release builds can inject production API/SPAPS/universal-link settings through build settings, signed archives have Make targets, App Store Connect export/upload option plists exist, release verification covers them, and signing secrets remain ignored |
+| WG-040 Local order draft | done | WG-034, WG-037 | `apps/ios/DogSwipe/**`, `docs/**` | The match surface has selectable add-ons, adds the hotdog to a local order draft with visible confirmation, updates the DogSwipe bag count from state, and screenshot UI smoke covers the flow |
 
 ## Ready Frontier
 
-The next ready work is to create a concrete skillbox deploy overlay, run the signed TestFlight handoff with private Apple credentials, or continue deeper product slices: full route persistence or turn-by-turn navigation if lightweight previews prove insufficient, and broader crawler-backed menu indexing if bounded snapshot search proves insufficient.
+The next ready work is to create a concrete skillbox deploy overlay, run the signed TestFlight handoff with private Apple credentials, or continue deeper product slices: durable payment/fulfillment order management, full route persistence or turn-by-turn navigation if lightweight previews prove insufficient, and broader crawler-backed menu indexing if bounded snapshot search proves insufficient.
 
 ## Risks
 

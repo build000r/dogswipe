@@ -23,6 +23,7 @@ struct RootView: View {
     @StateObject private var preferencesStore: CravingPreferencesStore
     @StateObject private var vendorSubmissionStore: VendorSubmissionStore
     @StateObject private var adminReviewStore: AdminReviewStore
+    @StateObject private var orderStore: OrderStore
     private let apiClient: DogSwipeAPIClient
 
     init(
@@ -49,11 +50,13 @@ struct RootView: View {
         _adminReviewStore = StateObject(
             wrappedValue: AdminReviewStore(apiClient: apiClient)
         )
+        _orderStore = StateObject(wrappedValue: OrderStore())
     }
 
     var body: some View {
         TabView(selection: $selectedTab) {
             DiscoverView(
+                orderStore: orderStore,
                 preferencesStore: preferencesStore,
                 viewModel: DiscoverViewModel(
                     apiClient: apiClient,
@@ -66,11 +69,15 @@ struct RootView: View {
                 .tag(RootTab.discover)
 
             MatchesView(
+                orderStore: orderStore,
                 preferencesStore: preferencesStore,
                 viewModel: MatchesViewModel(
                     apiClient: apiClient,
                     preferencesStore: preferencesStore
-                )
+                ),
+                onKeepSwiping: {
+                    selectedTab = .discover
+                }
             )
                 .tabItem {
                     Label("Matches", systemImage: "heart.fill")

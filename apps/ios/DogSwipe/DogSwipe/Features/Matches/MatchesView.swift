@@ -2,13 +2,19 @@ import DogSwipeCore
 import SwiftUI
 
 struct MatchesView: View {
+    @ObservedObject private var orderStore: OrderStore
     @StateObject private var viewModel: MatchesViewModel
+    private let onKeepSwiping: () -> Void
 
     @MainActor
     init(
+        orderStore: OrderStore? = nil,
         preferencesStore: CravingPreferencesStore = CravingPreferencesStore(),
-        viewModel: MatchesViewModel? = nil
+        viewModel: MatchesViewModel? = nil,
+        onKeepSwiping: @escaping () -> Void = {}
     ) {
+        self.orderStore = orderStore ?? OrderStore()
+        self.onKeepSwiping = onKeepSwiping
         _viewModel = StateObject(
             wrappedValue: viewModel ?? MatchesViewModel(preferencesStore: preferencesStore)
         )
@@ -24,7 +30,11 @@ struct MatchesView: View {
                 } else {
                     ScrollView {
                         VStack(spacing: .dsSpace4) {
-                            MatchDetailView(profile: viewModel.matches[0])
+                            MatchDetailView(
+                                profile: viewModel.matches[0],
+                                orderStore: orderStore,
+                                onKeepSwiping: onKeepSwiping
+                            )
                             savedMatches
                         }
                         .padding(.horizontal, .dsSpace5)
@@ -61,7 +71,7 @@ struct MatchesView: View {
 
     private var emptyState: some View {
         VStack(spacing: .dsSpace4) {
-            DogSwipeBrandHeader(activeTab: .favorites)
+            DogSwipeBrandHeader(activeTab: .favorites, cartCount: orderStore.itemCount)
             VStack(spacing: .dsSpace3) {
                 Image(systemName: "heart")
                     .font(.largeTitle)
@@ -109,6 +119,10 @@ struct MatchesView: View {
 
 private struct MatchDetailView: View {
     let profile: HotdogProfile
+    @ObservedObject var orderStore: OrderStore
+    let onKeepSwiping: () -> Void
+    @State private var selectedAddOns: Set<OrderAddOn> = []
+    @State private var confirmedItemID: UUID?
 
     var body: some View {
         VStack(spacing: .dsSpace4) {
@@ -165,20 +179,34 @@ private struct MatchDetailView: View {
 
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: .dsSpace3) {
-                            addOn("Bacon", price: "+ $1.00")
-                            addOn("Jalapenos", price: "+ $0.75")
-                            addOn("Cheese Sauce", price: "+ $1.25")
-                            addOn("Extra Pickle", price: "+ $0.50")
+                            ForEach(OrderAddOn.matchDefaults) { addOn in
+                                addOnButton(addOn)
+                            }
                         }
                     }
                 }
 
-                DogSwipePrimaryButton(title: "Add to Order", price: profile.priceLabel) {
+                DogSwipePrimaryButton(
+                    title: confirmedItemID == nil ? "Add to Order" : "Added to Order",
+                    price: orderTotalLabel
+                ) {
+                    let selected = OrderAddOn.matchDefaults.filter { selectedAddOns.contains($0) }
+                    let item = orderStore.add(profile: profile, addOns: selected)
+                    confirmedItemID = item.id
                     DogSwipeAnalytics.shared.trackOrderCTA(profileID: profile.id)
+                }
+
+                if let confirmationText {
+                    Label(confirmationText, systemImage: "bag.fill")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(Color.dsRelish)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .accessibilityIdentifier("dogswipe.order.confirmation")
                 }
 
                 Button("Keep Swiping") {
                     DogSwipeAnalytics.shared.trackMatchKeepSwiping(profileID: profile.id)
+                    onKeepSwiping()
                 }
                 .font(.subheadline.weight(.bold))
                 .foregroundStyle(Color.dsMuted)
@@ -190,21 +218,51 @@ private struct MatchDetailView: View {
         }
     }
 
-    private func addOn(_ title: String, price: String) -> some View {
-        VStack(spacing: .dsSpace1) {
-            Text(title)
-                .font(.caption.weight(.bold))
-                .foregroundStyle(Color.dsInk)
-                .lineLimit(1)
-            Text(price)
-                .font(.caption2.weight(.semibold).monospacedDigit())
-                .foregroundStyle(Color.dsMuted)
+    private var orderTotalLabel: String {
+        OrderAddOn.priceLabel(
+            for: selectedAddOns.reduce(profile.priceDollars) { total, addOn in
+                total + addOn.priceDollars
+            }
+        )
+    }
+
+    private var confirmationText: String? {
+        guard let confirmedItemID,
+              let item = orderStore.items.first(where: { $0.id == confirmedItemID }) else {
+            return nil
         }
-        .frame(width: .dsMatchAddOnWidth, height: .dsMatchAddOnHeight)
-        .background(Color.dsSurface, in: Capsule())
-        .overlay {
-            Capsule().stroke(Color.dsDivider)
+        return "Added to order: \(item.hotdogName) - \(item.totalLabel)"
+    }
+
+    private func addOnButton(_ addOn: OrderAddOn) -> some View {
+        let isSelected = selectedAddOns.contains(addOn)
+
+        return Button {
+            if isSelected {
+                selectedAddOns.remove(addOn)
+            } else {
+                selectedAddOns.insert(addOn)
+            }
+            confirmedItemID = nil
+        } label: {
+            VStack(spacing: .dsSpace1) {
+                Text(addOn.name)
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(Color.dsInk)
+                    .lineLimit(1)
+                Text("+ \(addOn.priceLabel)")
+                    .font(.caption2.weight(.semibold).monospacedDigit())
+                    .foregroundStyle(Color.dsMuted)
+            }
+            .frame(width: .dsMatchAddOnWidth, height: .dsMatchAddOnHeight)
+            .background(isSelected ? Color.dsPrimarySoft : Color.dsSurface, in: Capsule())
+            .overlay {
+                Capsule().stroke(isSelected ? Color.dsPrimary : Color.dsDivider)
+            }
         }
+        .buttonStyle(.plain)
+        .accessibilityLabel(addOn.name)
+        .accessibilityValue(isSelected ? "Selected" : "Not selected")
     }
 }
 

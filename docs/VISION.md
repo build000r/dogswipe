@@ -23,7 +23,7 @@ The first production slice must prove three things:
 - Cards without remote media still need a product-specific hotdog visual, and craving controls should persist as user-scoped preferences that filter/rank both backend discovery and the local Swift deck.
 - Screenshot and demo fixtures must remain deterministic and hotdog-specific across Discover, Matches, Vendor, Review, and Profile so public app captures do not depend on live auth, location prompts, or localhost state.
 - Positive swipes are intent signals. Matches are high-crave liked hotdogs, not social matches, and they should preserve the same practical context the user needed while swiping: current distance, walking time, a quick route preview, and Apple Maps directions.
-- The match surface should feel like "It's a Match!" for a hotdog: show the hero dog, price, short ingredient notes, add-ons, and an order CTA before deeper account/admin workflows.
+- The match surface should feel like "It's a Match!" for a hotdog: show the hero dog, price, short ingredient notes, selectable add-ons, and a first-slice local order draft with immediate confirmation and a real bag count before deeper account/admin workflows.
 - Vendors can submit hotdog listings with menu/media metadata, optional coordinates, and pickup address text, use the iOS Vendor form to resolve pickup addresses into coordinates, refresh a bounded menu URL snapshot for their own listings, and revise change-requested listings back into review; configured admins can approve/reject/request edits and refresh stale vendor menu snapshots in bounded batches. Production can opt into the same stale-menu refresh as a bounded background worker, and the API can derive short menu highlights plus menu-query discovery from those snapshots without turning DogSwipe into a full crawler.
 - Production identity is backend-owned through SPAPS; the app may use a publishable key for native magic-link auth, handle `dogswipe://auth` and configured HTTPS universal-link returns, store access/refresh JWTs in Keychain, and send only user bearer tokens to the DogSwipe API.
 - Production telemetry must stay narrow and no-PII: screen views, swipes, auth button submissions, and match/order CTAs are enough for the first slice.
@@ -31,7 +31,7 @@ The first production slice must prove three things:
 
 ## Non-Goals For The First Slice
 
-- Payments or booking
+- Payments, booking, or durable fulfillment-backed order management
 - Real-time chat
 - Recommendation ML
 - Live App Store/TestFlight submission without Apple signing and App Store Connect credentials

@@ -2,6 +2,7 @@ import DogSwipeCore
 import SwiftUI
 
 struct DiscoverView: View {
+    @ObservedObject private var orderStore: OrderStore
     @ObservedObject private var preferencesStore: CravingPreferencesStore
     @StateObject private var viewModel: DiscoverViewModel
     @State private var isSearchVisible = false
@@ -14,9 +15,11 @@ struct DiscoverView: View {
 
     @MainActor
     init(
+        orderStore: OrderStore? = nil,
         preferencesStore: CravingPreferencesStore = CravingPreferencesStore(),
         viewModel: DiscoverViewModel? = nil
     ) {
+        self.orderStore = orderStore ?? OrderStore()
         self.preferencesStore = preferencesStore
         _viewModel = StateObject(
             wrappedValue: viewModel ?? DiscoverViewModel(preferencesStore: preferencesStore)
@@ -26,7 +29,7 @@ struct DiscoverView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: .dsSpace3) {
-                DogSwipeBrandHeader(activeTab: .discover)
+                DogSwipeBrandHeader(activeTab: .discover, cartCount: orderStore.itemCount)
                 if isSearchVisible {
                     menuSearchBar
                         .transition(.move(edge: .top).combined(with: .opacity))

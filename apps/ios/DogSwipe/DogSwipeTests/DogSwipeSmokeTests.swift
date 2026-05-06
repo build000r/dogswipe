@@ -153,6 +153,23 @@ final class DogSwipeSmokeTests: XCTestCase {
     }
 
     @MainActor
+    func testOrderStoreAddsLocalDraftWithSelectedAddOns() {
+        let store = OrderStore()
+        let selectedAddOns = [
+            OrderAddOn.matchDefaults[0],
+            OrderAddOn.matchDefaults[3]
+        ]
+
+        let item = store.add(profile: HotdogProfile.samples[0], addOns: selectedAddOns)
+
+        XCTAssertEqual(store.itemCount, 1)
+        XCTAssertEqual(store.latestItem, item)
+        XCTAssertEqual(item.profileID, HotdogProfile.samples[0].id)
+        XCTAssertEqual(item.addOnSummary, "Bacon, Extra Pickle")
+        XCTAssertEqual(item.totalDollars, HotdogProfile.samples[0].priceDollars + 1.50, accuracy: 0.001)
+    }
+
+    @MainActor
     func testCravingPreferencesStoreLoadsAndSavesViaAPI() async throws {
         let http = MockHTTPClient()
         http.responses = [
