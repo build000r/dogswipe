@@ -42,15 +42,16 @@ Status key: `done`, `active`, `ready`, `blocked`.
 | WG-036 Live route preview | done | WG-024, WG-028 | `apps/ios/DogSwipe/**`, `docs/**` | Discovery cards can compute an on-device MapKit walking-route ETA/distance from the current user location to coordinate-backed hotdogs without replacing Apple Maps handoff |
 | WG-037 Location-aware matches | done | WG-036 | `backend/**`, `packages/DogSwipeCore/**`, `apps/ios/DogSwipe/**`, `docs/**` | Saved hotdog matches can accept current coordinates, return recomputed distance/walking time, and expose compact MapKit route preview plus Apple Maps handoff from the Matches tab |
 | WG-038 Menu-aware discovery search | done | WG-031, WG-037 | `backend/**`, `packages/DogSwipeCore/**`, `apps/ios/DogSwipe/**`, `docs/**` | Discovery accepts `menu_query`, searches bounded profile/menu fields, the Swift client encodes it, local sample ranking applies it offline, and the iOS Discover screen exposes compact craving search |
+| WG-039 TestFlight handoff scaffolding | done | WG-033, WG-035 | `Makefile`, `apps/ios/DogSwipe/**`, `deploy/**`, `scripts/**`, `docs/**` | Release builds can inject production API/SPAPS/universal-link settings through build settings, signed archives have Make targets, App Store Connect export/upload option plists exist, release verification covers them, and signing secrets remain ignored |
 
 ## Ready Frontier
 
-The next ready work is to create a concrete skillbox deploy overlay or continue deeper product slices: TestFlight automation, full route persistence or turn-by-turn navigation if lightweight previews prove insufficient, and broader crawler-backed menu indexing if bounded snapshot search proves insufficient.
+The next ready work is to create a concrete skillbox deploy overlay, run the signed TestFlight handoff with private Apple credentials, or continue deeper product slices: full route persistence or turn-by-turn navigation if lightweight previews prove insufficient, and broader crawler-backed menu indexing if bounded snapshot search proves insufficient.
 
 ## Risks
 
 - Live deploy and hosted universal links are blocked until a skillbox overlay names a concrete host, deploy root, env source, production domain, Apple Team ID, and health/AASA check targets.
-- App Store signing and TestFlight automation remain out of scope until signing assets and bundle ownership are known.
+- Live App Store/TestFlight submission remains blocked until signing assets, bundle ownership, and App Store Connect API credentials are known.
 
 ## Remote Checkpoint
 

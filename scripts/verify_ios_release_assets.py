@@ -13,10 +13,13 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 APP_ROOT = ROOT / "apps" / "ios" / "DogSwipe" / "DogSwipe"
 PROJECT_YML = ROOT / "apps" / "ios" / "DogSwipe" / "project.yml"
+INFO_PLIST = APP_ROOT / "Info.plist"
 APP_ICON_SET = APP_ROOT / "Assets.xcassets" / "AppIcon.appiconset"
 PRIVACY_MANIFEST = APP_ROOT / "PrivacyInfo.xcprivacy"
 ENTITLEMENTS = APP_ROOT / "DogSwipe.entitlements"
 AASA_TEMPLATE = ROOT / "deploy" / "apple-app-site-association.template.json"
+EXPORT_OPTIONS = ROOT / "deploy" / "ios-export-options.app-store-connect.plist"
+UPLOAD_OPTIONS = ROOT / "deploy" / "ios-export-options.testflight-upload.plist"
 
 
 def png_info(path: Path) -> tuple[int, int, int]:
@@ -119,6 +122,23 @@ def verify_privacy_manifest() -> list[str]:
 
 def verify_universal_link_surface() -> list[str]:
     failures: list[str] = []
+    if not INFO_PLIST.exists():
+        failures.append("Info.plist is missing")
+    else:
+        with INFO_PLIST.open("rb") as handle:
+            info = plistlib.load(handle)
+        expected_info_values = {
+            "DOGSWIPE_API_BASE_URL": "$(DOGSWIPE_API_BASE_URL)",
+            "DOGSWIPE_SPAPS_API_BASE_URL": "$(DOGSWIPE_SPAPS_API_BASE_URL)",
+            "DOGSWIPE_SPAPS_PUBLISHABLE_KEY": "$(DOGSWIPE_SPAPS_PUBLISHABLE_KEY)",
+            "DOGSWIPE_SPAPS_ORIGIN": "$(DOGSWIPE_SPAPS_ORIGIN)",
+            "DOGSWIPE_AUTH_REDIRECT_URL": "$(DOGSWIPE_AUTH_REDIRECT_URL)",
+            "DOGSWIPE_AUTH_UNIVERSAL_LINK_HOSTS": "$(DOGSWIPE_AUTH_UNIVERSAL_LINK_HOSTS)",
+        }
+        for key, expected in expected_info_values.items():
+            if info.get(key) != expected:
+                failures.append(f"Info.plist {key} must use build setting {expected}")
+
     if not ENTITLEMENTS.exists():
         failures.append("DogSwipe.entitlements is missing")
     else:
@@ -141,6 +161,9 @@ def verify_universal_link_surface() -> list[str]:
             "DOGSWIPE_ASSOCIATED_DOMAIN:",
             "DOGSWIPE_AUTH_REDIRECT_URL:",
             "DOGSWIPE_AUTH_UNIVERSAL_LINK_HOSTS:",
+            "DOGSWIPE_SPAPS_API_BASE_URL:",
+            "DOGSWIPE_SPAPS_PUBLISHABLE_KEY:",
+            "DOGSWIPE_SPAPS_ORIGIN:",
         ]
         for value in required_project_values:
             if value not in project_text:
@@ -175,8 +198,38 @@ def verify_universal_link_surface() -> list[str]:
     return failures
 
 
+def verify_testflight_export_options() -> list[str]:
+    failures: list[str] = []
+    expected = {
+        EXPORT_OPTIONS: "export",
+        UPLOAD_OPTIONS: "upload",
+    }
+    for path, destination in expected.items():
+        if not path.exists():
+            failures.append(f"{path.relative_to(ROOT)} is missing")
+            continue
+        with path.open("rb") as handle:
+            options = plistlib.load(handle)
+        if options.get("method") != "app-store-connect":
+            failures.append(f"{path.relative_to(ROOT)} must use app-store-connect export method")
+        if options.get("destination") != destination:
+            failures.append(f"{path.relative_to(ROOT)} must use destination={destination}")
+        if options.get("signingStyle") != "automatic":
+            failures.append(f"{path.relative_to(ROOT)} must use automatic signing")
+        if options.get("stripSwiftSymbols") is not True:
+            failures.append(f"{path.relative_to(ROOT)} must strip Swift symbols")
+        if options.get("uploadSymbols") is not True:
+            failures.append(f"{path.relative_to(ROOT)} must upload symbols")
+    return failures
+
+
 def main() -> int:
-    failures = verify_app_icons() + verify_privacy_manifest() + verify_universal_link_surface()
+    failures = (
+        verify_app_icons()
+        + verify_privacy_manifest()
+        + verify_universal_link_surface()
+        + verify_testflight_export_options()
+    )
     if failures:
         print("iOS release asset verification failed:", file=sys.stderr)
         for failure in failures:

@@ -17,8 +17,19 @@ IOS_PHONE_DEVELOPMENT_TEAM ?= $(APPLE_DEVELOPMENT_TEAM)
 DOGSWIPE_PHONE_API_BASE_URL ?= http://$(shell ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null || echo localhost):8000
 IOS_PHONE_SIGNING_ARGS ?= CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=YES CODE_SIGN_STYLE=Automatic
 IOS_PHONE_TEAM_ARG := $(if $(IOS_PHONE_DEVELOPMENT_TEAM),DEVELOPMENT_TEAM=$(IOS_PHONE_DEVELOPMENT_TEAM),)
+IOS_RELEASE_BUNDLE_ID ?= com.build000r.dogswipe
+IOS_RELEASE_DEVELOPMENT_TEAM ?= $(APPLE_DEVELOPMENT_TEAM)
+IOS_RELEASE_ARCHIVE_PATH ?= $(CURDIR)/.build/ios-release/DogSwipe.xcarchive
+IOS_RELEASE_EXPORT_PATH ?= $(CURDIR)/.build/ios-release/export
+IOS_RELEASE_EXPORT_OPTIONS ?= deploy/ios-export-options.app-store-connect.plist
+IOS_TESTFLIGHT_UPLOAD_OPTIONS ?= deploy/ios-export-options.testflight-upload.plist
+IOS_RELEASE_SIGNING_ARGS ?= CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=YES CODE_SIGN_STYLE=Automatic
+DOGSWIPE_RELEASE_SPAPS_API_BASE_URL ?= https://api.sweetpotato.dev
+DOGSWIPE_RELEASE_AUTH_REDIRECT_URL ?= $(if $(DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN),https://$(DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN)/auth,)
+DOGSWIPE_RELEASE_AUTH_UNIVERSAL_LINK_HOSTS ?= $(DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN)
+DOGSWIPE_RELEASE_SPAPS_ORIGIN ?= $(if $(DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN),https://$(DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN),)
 
-.PHONY: generate-ios ios-build ios-release-assets ios-ui-test ios-screenshots require-phone-device ios-phone-build ios-phone-reset-app ios-phone-install ios-phone-launch ios-phone-run swift-test backend-install backend-install-local backend-test coverage lint typecheck migrate migration-current test drift crap mmdx-preflight deploy-config deploy-preflight deploy-overlay-template deploy-post-verify
+.PHONY: generate-ios ios-build ios-release-assets ios-ui-test ios-screenshots require-phone-device ios-phone-build ios-phone-reset-app ios-phone-install ios-phone-launch ios-phone-run require-ios-release-env require-ios-archive require-ios-asc-key ios-release-archive ios-testflight-export ios-testflight-upload swift-test backend-install backend-install-local backend-test coverage lint typecheck migrate migration-current test drift crap mmdx-preflight deploy-config deploy-preflight deploy-overlay-template deploy-post-verify
 
 generate-ios:
 	cd apps/ios/DogSwipe && xcodegen generate
@@ -80,6 +91,91 @@ ios-phone-launch: require-phone-device
 	rm -f "$$TMP_LOG"
 
 ios-phone-run: ios-phone-install ios-phone-launch
+
+require-ios-release-env:
+	@missing=""; \
+	for assignment in \
+		"IOS_RELEASE_DEVELOPMENT_TEAM=$(IOS_RELEASE_DEVELOPMENT_TEAM)" \
+		"DOGSWIPE_RELEASE_API_BASE_URL=$(DOGSWIPE_RELEASE_API_BASE_URL)" \
+		"DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN=$(DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN)" \
+		"DOGSWIPE_RELEASE_SPAPS_API_BASE_URL=$(DOGSWIPE_RELEASE_SPAPS_API_BASE_URL)" \
+		"DOGSWIPE_RELEASE_SPAPS_PUBLISHABLE_KEY=$(DOGSWIPE_RELEASE_SPAPS_PUBLISHABLE_KEY)" \
+		"DOGSWIPE_RELEASE_SPAPS_ORIGIN=$(DOGSWIPE_RELEASE_SPAPS_ORIGIN)" \
+		"DOGSWIPE_RELEASE_AUTH_REDIRECT_URL=$(DOGSWIPE_RELEASE_AUTH_REDIRECT_URL)" \
+		"DOGSWIPE_RELEASE_AUTH_UNIVERSAL_LINK_HOSTS=$(DOGSWIPE_RELEASE_AUTH_UNIVERSAL_LINK_HOSTS)"; do \
+		name="$${assignment%%=*}"; \
+		value="$${assignment#*=}"; \
+		if [ -z "$$value" ]; then missing="$$missing $$name"; fi; \
+	done; \
+	if [ -n "$$missing" ]; then \
+		echo "Missing iOS release settings:$$missing"; \
+		echo "Set these from the private deploy/signing environment before archiving."; \
+		exit 1; \
+	fi
+
+require-ios-archive:
+	@test -d "$(IOS_RELEASE_ARCHIVE_PATH)" || { \
+		echo "Missing archive: $(IOS_RELEASE_ARCHIVE_PATH)"; \
+		echo "Run 'make ios-release-archive' after configuring Apple signing and production app settings."; \
+		exit 1; \
+	}
+
+require-ios-asc-key:
+	@missing=""; \
+	for assignment in \
+		"ASC_KEY_PATH=$(ASC_KEY_PATH)" \
+		"ASC_KEY_ID=$(ASC_KEY_ID)" \
+		"ASC_ISSUER_ID=$(ASC_ISSUER_ID)"; do \
+		name="$${assignment%%=*}"; \
+		value="$${assignment#*=}"; \
+		if [ -z "$$value" ]; then missing="$$missing $$name"; fi; \
+	done; \
+	if [ -n "$$missing" ]; then \
+		echo "Missing App Store Connect API key settings:$$missing"; \
+		echo "Keep the .p8 key outside git; .gitignore blocks common Apple signing artifacts."; \
+		exit 1; \
+	fi; \
+	test -f "$(ASC_KEY_PATH)" || { echo "ASC_KEY_PATH does not exist: $(ASC_KEY_PATH)"; exit 1; }
+
+ios-release-archive: require-ios-release-env generate-ios
+	@mkdir -p "$(dir $(IOS_RELEASE_ARCHIVE_PATH))"
+	@xcodebuild \
+		-project "$(IOS_PROJECT)" \
+		-scheme "$(IOS_SCHEME)" \
+		-destination 'generic/platform=iOS' \
+		-configuration Release \
+		-archivePath "$(IOS_RELEASE_ARCHIVE_PATH)" \
+		-allowProvisioningUpdates \
+		archive \
+		PRODUCT_BUNDLE_IDENTIFIER="$(IOS_RELEASE_BUNDLE_ID)" \
+		DEVELOPMENT_TEAM="$(IOS_RELEASE_DEVELOPMENT_TEAM)" \
+		DOGSWIPE_API_BASE_URL="$(DOGSWIPE_RELEASE_API_BASE_URL)" \
+		DOGSWIPE_ASSOCIATED_DOMAIN="$(DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN)" \
+		DOGSWIPE_SPAPS_API_BASE_URL="$(DOGSWIPE_RELEASE_SPAPS_API_BASE_URL)" \
+		DOGSWIPE_SPAPS_PUBLISHABLE_KEY="$(DOGSWIPE_RELEASE_SPAPS_PUBLISHABLE_KEY)" \
+		DOGSWIPE_SPAPS_ORIGIN="$(DOGSWIPE_RELEASE_SPAPS_ORIGIN)" \
+		DOGSWIPE_AUTH_REDIRECT_URL="$(DOGSWIPE_RELEASE_AUTH_REDIRECT_URL)" \
+		DOGSWIPE_AUTH_UNIVERSAL_LINK_HOSTS="$(DOGSWIPE_RELEASE_AUTH_UNIVERSAL_LINK_HOSTS)" \
+		$(IOS_RELEASE_SIGNING_ARGS)
+
+ios-testflight-export: require-ios-archive
+	@mkdir -p "$(IOS_RELEASE_EXPORT_PATH)"
+	@xcodebuild \
+		-exportArchive \
+		-archivePath "$(IOS_RELEASE_ARCHIVE_PATH)" \
+		-exportPath "$(IOS_RELEASE_EXPORT_PATH)" \
+		-exportOptionsPlist "$(IOS_RELEASE_EXPORT_OPTIONS)"
+
+ios-testflight-upload: require-ios-archive require-ios-asc-key
+	@xcodebuild \
+		-exportArchive \
+		-archivePath "$(IOS_RELEASE_ARCHIVE_PATH)" \
+		-exportPath "$(IOS_RELEASE_EXPORT_PATH)" \
+		-exportOptionsPlist "$(IOS_TESTFLIGHT_UPLOAD_OPTIONS)" \
+		-allowProvisioningUpdates \
+		-authenticationKeyPath "$(ASC_KEY_PATH)" \
+		-authenticationKeyID "$(ASC_KEY_ID)" \
+		-authenticationKeyIssuerID "$(ASC_ISSUER_ID)"
 
 ios-release-assets:
 	python3 scripts/verify_ios_release_assets.py

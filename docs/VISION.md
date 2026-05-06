@@ -34,7 +34,7 @@ The first production slice must prove three things:
 - Payments or booking
 - Real-time chat
 - Recommendation ML
-- App Store signing and TestFlight automation
+- Live App Store/TestFlight submission without Apple signing and App Store Connect credentials
 - Full turn-by-turn navigation or route persistence beyond lightweight MapKit previews
 - Broad crawler-based menu indexing beyond bounded snapshot search
 
@@ -46,7 +46,7 @@ These are valuable later, but they would dilute the core loop before the app has
 - Core matching logic lives in a Swift package with unit tests.
 - Backend routes are covered by API and service tests with coverage above 80%.
 - Auth integration follows Sweet Potato contracts: JWTs for user-scoped routes, app keys for service calls, no local fake auth contract in production.
-- iOS release-facing metadata includes a hotdog-specific app icon, accent color, privacy manifest for auth email and precise location use, associated-domains entitlement plumbing, and an Apple app-site association deploy template.
+- iOS release-facing metadata includes a hotdog-specific app icon, accent color, privacy manifest for auth email and precise location use, associated-domains entitlement plumbing, an Apple app-site association deploy template, and non-secret signed-archive/TestFlight handoff targets.
 - SwiftUI should preserve the street-vendor visual language from the DogSwipe reference surface: cream card stacks, mustard/red/pickle accents, compact chips, clear swipe controls, and no generic restaurant-directory chrome.
 - CI blocks regressions in backend coverage, scoped CRAP score, SwiftUI drift, architecture-diagram preflight, deploy preflight, iOS release assets, iOS build/test gates, and screenshot UI smoke.
 - Public docs distinguish implemented behavior from roadmap.

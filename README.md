@@ -99,6 +99,20 @@ make ios-phone-run
 
 `ios-phone-run` signs a Debug build, installs it with `devicectl`, and launches it on the first available iPhone. It points the app at this Mac's LAN API URL, for example `http://192.168.x.x:8000`, so the phone must be on the same network unless you override `DOGSWIPE_PHONE_API_BASE_URL`. If Xcode cannot infer a signing team, set `IOS_PHONE_DEVELOPMENT_TEAM` or `APPLE_DEVELOPMENT_TEAM` to your Apple Developer Team ID. Local auth is disabled by default, so the backend uses the dummy `local-user` identity without a real SPAPS account.
 
+For a signed release archive and TestFlight handoff, configure the production app values from a private environment and keep Apple signing material out of git:
+
+```bash
+export IOS_RELEASE_DEVELOPMENT_TEAM=<apple-team-id>
+export DOGSWIPE_RELEASE_API_BASE_URL=https://<dogswipe-api-domain>
+export DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN=<dogswipe-api-domain>
+export DOGSWIPE_RELEASE_SPAPS_PUBLISHABLE_KEY=spaps_pub_...
+
+make ios-release-archive
+make ios-testflight-export
+```
+
+`ios-release-archive` also accepts `DOGSWIPE_RELEASE_SPAPS_API_BASE_URL`, `DOGSWIPE_RELEASE_SPAPS_ORIGIN`, `DOGSWIPE_RELEASE_AUTH_REDIRECT_URL`, and `DOGSWIPE_RELEASE_AUTH_UNIVERSAL_LINK_HOSTS`; the latter three default from `DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN`. `ios-testflight-upload` can upload the archive through an App Store Connect API key when `ASC_KEY_PATH`, `ASC_KEY_ID`, and `ASC_ISSUER_ID` are set. `.gitignore` blocks common Apple signing artifacts such as `.p8`, `.p12`, and `.mobileprovision` files.
+
 For local Docker development, `DOGSWIPE_AUTO_CREATE_SCHEMA=true` and `DOGSWIPE_SEED_SAMPLE_PROFILES=true` create the starter tables and seed sample profiles at API startup. Keep those flags off in production and run managed migrations instead:
 
 ```bash
@@ -108,7 +122,7 @@ DATABASE_URL=postgresql+asyncpg://... make migration-current
 
 Production deploy artifacts live in [deploy/README.md](deploy/README.md). The repo now includes a production Compose file, env template, pre/post deploy verification scripts, and a reverse-proxy site template. A live rollout still requires a skillbox overlay with the concrete host, deploy root, env source, domain, Apple Team ID, health URL, and AASA URL.
 
-The iOS target reads `DOGSWIPE_API_BASE_URL` from its Info.plist and defaults to `http://localhost:8000`, which works for simulator-local backend development. It also reads `DOGSWIPE_SPAPS_API_BASE_URL`, `DOGSWIPE_SPAPS_PUBLISHABLE_KEY`, `DOGSWIPE_SPAPS_ORIGIN`, `DOGSWIPE_AUTH_REDIRECT_URL`, and `DOGSWIPE_AUTH_UNIVERSAL_LINK_HOSTS` for native magic-link sign-in. For auth-enabled environments, configure a `spaps_pub_...` publishable key and matching origin; the app requests/verifies magic links through SPAPS, registers the `dogswipe://auth` URL scheme, can verify configured HTTPS universal-link callbacks from allowed hosts, stores access/refresh JWTs in Keychain, and injects only the access bearer through `DogSwipeAPIClient`. Release builds should override `DOGSWIPE_ASSOCIATED_DOMAIN` with the production link domain and host the Apple app-site association payload from `deploy/apple-app-site-association.template.json`. Discovery and Matches can request iOS when-in-use location permission, pass current coordinates to the backend so response distances reflect the user position, and preview an on-device MapKit walking route for coordinate-backed hotdogs before handing off to Apple Maps. Discovery also exposes a compact menu search field behind the filter control that sends `menu_query` to the backend and applies the same query locally when offline. The Vendor form can resolve pickup address text through CoreLocation geocoding and prefill latitude/longitude before submission. Secret SPAPS API keys remain server-only.
+The iOS target reads `DOGSWIPE_API_BASE_URL` from its Info.plist and defaults to `http://localhost:8000`, which works for simulator-local backend development. It also reads build-setting-backed `DOGSWIPE_SPAPS_API_BASE_URL`, `DOGSWIPE_SPAPS_PUBLISHABLE_KEY`, `DOGSWIPE_SPAPS_ORIGIN`, `DOGSWIPE_AUTH_REDIRECT_URL`, and `DOGSWIPE_AUTH_UNIVERSAL_LINK_HOSTS` for native magic-link sign-in. For auth-enabled environments, configure a `spaps_pub_...` publishable key and matching origin; the app requests/verifies magic links through SPAPS, registers the `dogswipe://auth` URL scheme, can verify configured HTTPS universal-link callbacks from allowed hosts, stores access/refresh JWTs in Keychain, and injects only the access bearer through `DogSwipeAPIClient`. Release builds should override `DOGSWIPE_ASSOCIATED_DOMAIN` with the production link domain and host the Apple app-site association payload from `deploy/apple-app-site-association.template.json`. Discovery and Matches can request iOS when-in-use location permission, pass current coordinates to the backend so response distances reflect the user position, and preview an on-device MapKit walking route for coordinate-backed hotdogs before handing off to Apple Maps. Discovery also exposes a compact menu search field behind the filter control that sends `menu_query` to the backend and applies the same query locally when offline. The Vendor form can resolve pickup address text through CoreLocation geocoding and prefill latitude/longitude before submission. Secret SPAPS API keys remain server-only.
 
 Menu snapshots are intentionally bounded. Vendors and admins can refresh menu URLs on demand, and production can optionally enable `DOGSWIPE_MENU_REFRESH_ENABLED=true` to run the same stale-menu refresh in the API process with `DOGSWIPE_MENU_REFRESH_INTERVAL_SECONDS`, `DOGSWIPE_MENU_REFRESH_BATCH_SIZE`, and `DOGSWIPE_MENU_REFRESH_MAX_AGE_HOURS`. Discovery responses derive short `menu_highlights` from the latest snapshot excerpt so cards can surface menu signals without storing a separate crawler index. `GET /v1/discovery?menu_query=kimchi%20sesame` searches those bounded profile/menu fields for craving terms.
 
@@ -134,7 +148,7 @@ Target gates for this repo:
 - MMDX: architecture stack preflights cleanly
 - Deploy preflight: production Compose config and env contract resolve without secrets
 - iOS release assets: AppIcon catalog, accent color, privacy manifest, associated-domains entitlement, and Apple app-site association template pass manifest verification
-- iOS UI smoke: deterministic screenshot-mode launch covers Discover, Matches, Vendor, Review, and Profile
+- iOS UI smoke: deterministic screenshot-mode launch covers Discover, draggable card advancement, Matches, Vendor, Review, and Profile
 - iOS screenshots: exported XCTest attachments produce five local PNGs under `.build/ios-screenshots/attachments`
 
 GitHub Actions enforces the same blocking gates for backend coverage, CRAP, MMDX architecture syntax, SwiftUI drift, deploy preflight, iOS release asset verification, iOS build/tests, and screenshot UI smoke.
@@ -154,7 +168,8 @@ The current app can load local hotdog profiles, render cream/red/mustard swipe c
 ## Known Limits
 
 - Live deployment and hosted universal-link activation are blocked until a skillbox deploy overlay names a host, service, production origin, env source, deploy root, Apple Team ID, and health/AASA URLs.
-- Broad crawler-based menu indexing beyond bounded snapshot search, full turn-by-turn navigation or route persistence beyond lightweight MapKit previews, App Store signing, and TestFlight automation are future slices.
+- Live TestFlight submission is blocked until Apple signing assets, bundle ownership, and App Store Connect credentials are available; archive/export/upload handoff targets are present.
+- Broad crawler-based menu indexing beyond bounded snapshot search and full turn-by-turn navigation or route persistence beyond lightweight MapKit previews are future slices.
 
 ## About Contributions
 

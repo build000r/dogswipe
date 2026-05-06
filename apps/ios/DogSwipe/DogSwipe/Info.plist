@@ -32,15 +32,15 @@
 	<key>DOGSWIPE_API_BASE_URL</key>
 	<string>$(DOGSWIPE_API_BASE_URL)</string>
 	<key>DOGSWIPE_AUTH_REDIRECT_URL</key>
-	<string>dogswipe://auth</string>
+	<string>$(DOGSWIPE_AUTH_REDIRECT_URL)</string>
 	<key>DOGSWIPE_AUTH_UNIVERSAL_LINK_HOSTS</key>
-	<string></string>
+	<string>$(DOGSWIPE_AUTH_UNIVERSAL_LINK_HOSTS)</string>
 	<key>DOGSWIPE_SPAPS_API_BASE_URL</key>
-	<string>https://api.sweetpotato.dev</string>
+	<string>$(DOGSWIPE_SPAPS_API_BASE_URL)</string>
 	<key>DOGSWIPE_SPAPS_ORIGIN</key>
-	<string></string>
+	<string>$(DOGSWIPE_SPAPS_ORIGIN)</string>
 	<key>DOGSWIPE_SPAPS_PUBLISHABLE_KEY</key>
-	<string></string>
+	<string>$(DOGSWIPE_SPAPS_PUBLISHABLE_KEY)</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsLocalNetworking</key>

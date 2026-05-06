@@ -80,6 +80,28 @@ proxy template serves the rendered file from both:
 - `https://<domain>/.well-known/apple-app-site-association`
 - `https://<domain>/apple-app-site-association`
 
+## iOS Archive And TestFlight Handoff
+
+The public repo carries non-secret archive/export scaffolding only. Signed
+archive creation requires the private Apple Developer Team ID plus the production
+DogSwipe API and SPAPS publishable-key values:
+
+```bash
+IOS_RELEASE_DEVELOPMENT_TEAM=<apple-team-id> \
+DOGSWIPE_RELEASE_API_BASE_URL=https://<domain> \
+DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN=<domain> \
+DOGSWIPE_RELEASE_SPAPS_PUBLISHABLE_KEY=spaps_pub_... \
+make ios-release-archive
+```
+
+`make ios-testflight-export` exports the archive with
+[`ios-export-options.app-store-connect.plist`](ios-export-options.app-store-connect.plist).
+`make ios-testflight-upload` uploads the archive with
+[`ios-export-options.testflight-upload.plist`](ios-export-options.testflight-upload.plist)
+when `ASC_KEY_PATH`, `ASC_KEY_ID`, and `ASC_ISSUER_ID` are provided from a
+private App Store Connect API key source. Apple `.p8`, `.p12`, and
+`.mobileprovision` files are ignored by git.
+
 ## Preflight
 
 ```bash

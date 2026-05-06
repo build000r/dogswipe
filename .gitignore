@@ -19,6 +19,9 @@ DerivedData/
 *.xcworkspace
 *.xcodeproj
 apps/ios/DogSwipe/DogSwipe.xcodeproj/
+*.p8
+*.p12
+*.mobileprovision
 .drift/scan*.json
 .crap/
 dist/

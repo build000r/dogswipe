@@ -24,11 +24,11 @@ targets:
         UIRequiresFullScreen: true
         NSLocationWhenInUseUsageDescription: DogSwipe uses your location to sort nearby hotdogs by distance.
         DOGSWIPE_API_BASE_URL: $(DOGSWIPE_API_BASE_URL)
-        DOGSWIPE_SPAPS_API_BASE_URL: https://api.sweetpotato.dev
-        DOGSWIPE_SPAPS_PUBLISHABLE_KEY: ""
-        DOGSWIPE_SPAPS_ORIGIN: ""
-        DOGSWIPE_AUTH_REDIRECT_URL: dogswipe://auth
-        DOGSWIPE_AUTH_UNIVERSAL_LINK_HOSTS: ""
+        DOGSWIPE_SPAPS_API_BASE_URL: $(DOGSWIPE_SPAPS_API_BASE_URL)
+        DOGSWIPE_SPAPS_PUBLISHABLE_KEY: $(DOGSWIPE_SPAPS_PUBLISHABLE_KEY)
+        DOGSWIPE_SPAPS_ORIGIN: $(DOGSWIPE_SPAPS_ORIGIN)
+        DOGSWIPE_AUTH_REDIRECT_URL: $(DOGSWIPE_AUTH_REDIRECT_URL)
+        DOGSWIPE_AUTH_UNIVERSAL_LINK_HOSTS: $(DOGSWIPE_AUTH_UNIVERSAL_LINK_HOSTS)
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
         CFBundleURLTypes:
@@ -46,6 +46,11 @@ targets:
         CURRENT_PROJECT_VERSION: 1
         DOGSWIPE_API_BASE_URL: http://localhost:8000
         DOGSWIPE_ASSOCIATED_DOMAIN: dogswipe.example.com
+        DOGSWIPE_SPAPS_API_BASE_URL: https://api.sweetpotato.dev
+        DOGSWIPE_SPAPS_PUBLISHABLE_KEY: ""
+        DOGSWIPE_SPAPS_ORIGIN: ""
+        DOGSWIPE_AUTH_REDIRECT_URL: dogswipe://auth
+        DOGSWIPE_AUTH_UNIVERSAL_LINK_HOSTS: ""
         MARKETING_VERSION: 0.1.0
   DogSwipeTests:
     type: bundle.unit-test
