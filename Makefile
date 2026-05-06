@@ -288,9 +288,18 @@ deploy-dns-handoff:
 	bash deploy/render-dns-handoff.sh "$(DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN)"
 
 deploy-dns-handoff-template:
-	@$(MAKE) --no-print-directory deploy-dns-handoff \
+	@tmp="$$(mktemp)"; \
+	set -euo pipefail; \
+	trap 'rm -f "$$tmp"' EXIT; \
+	$(MAKE) --no-print-directory deploy-dns-handoff \
 		DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN=dogswipe.example.com \
-		DOGSWIPE_EXPECTED_A_RECORD=192.0.2.10
+		DOGSWIPE_EXPECTED_A_RECORD=192.0.2.10 >"$$tmp"; \
+	grep -q "Zone:  example.com" "$$tmp"; \
+	grep -q "Name:  dogswipe" "$$tmp"; \
+	grep -q "Value: 192.0.2.10" "$$tmp"; \
+	grep -q "DOGSWIPE_RELEASE_API_BASE_URL=https://dogswipe.example.com" "$$tmp"; \
+	grep -q "make deploy-dns-preflight" "$$tmp"; \
+	cat "$$tmp"
 
 deploy-dns-preflight:
 	@CHECK_PUBLIC_URLS="$(CHECK_PUBLIC_URLS)" \
