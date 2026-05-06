@@ -1,7 +1,7 @@
 # Completion Audit
 
 Date: 2026-05-06
-Implementation audited: hotdog swipe deck, visible Discover route controls, durable backend-backed order drafts with My Orders, signed release/TestFlight handoff scaffolding, bundle-aware AASA render path, release-readiness gate, public SPAPS app descriptor, and SPAPS operator handoff as of commit `281c465`.
+Implementation audited: hotdog swipe deck, visible Discover route controls, durable backend-backed order drafts with My Orders, signed release/TestFlight handoff scaffolding, bundle-aware AASA render path, release-readiness gate, public SPAPS app descriptor, SPAPS operator handoff, and private release-readiness probe as of commit `d2bb097`.
 Latest executable-code CI run audited: GitHub Actions `25424553583` for `281c4655e4c4e36d68f48630645e50829d158c57` passed `backend`, `swift-package`, and `ios` jobs.
 
 ## Objective Restated
@@ -23,6 +23,7 @@ SwiftUI drift clean, CRAP below 20, and meaningful backend coverage above 80%.
 | Sweet Potato Python starter exists | `backend/pyproject.toml` depends on `spaps-server-quickstart~=0.5.1`; FastAPI app lives under `backend/src/dogswipe_backend`. | Done |
 | SPAPS auth alignment | iOS `SPAPSAuthClient`, Keychain-backed `AuthSessionStore`, backend SPAPS/local identity boundary, and Sweet Potato usage audit with 0 findings. | Done |
 | SPAPS app public contract | `spaps.app.json` declares the `dogswipe` application slug, native/universal auth handoff env names, and no raw app ID or SPAPS keys; `make spaps-app-contract` verifies the descriptor and renderable `browser_auth` self-service registration payload. | Done |
+| Private SPAPS registration values | Ignored `.env.dogswipe.spaps` exists in this workspace with non-placeholder application ID, server key, publishable key, SPAPS API URL, and DogSwipe origin values; variable names were inspected without printing values. | Done locally |
 | Product corrected to local hotdogs | `README.md`, `docs/VISION.md`, backend seed/contracts, Swift models, iOS Discover/Matches/Orders/Vendor/Review/Profile copy and fixtures. | Done |
 | Swipe-first discovery loop | Discovery cards, drag-to-like/pass/superlike gestures, swipe action buttons, undo, matches, selectable match add-ons, durable order draft confirmation, My Orders, menu search, preferences, location-aware distance/walk estimates, visible directions/route-preview controls, and route previews are implemented and tested. | Done |
 | Vendor/admin workflow | Vendor submissions, menu snapshots, admin approval/reject/change-request flow, stale menu refresh, and iOS surfaces are implemented and documented. | Done |
@@ -38,6 +39,9 @@ SwiftUI drift clean, CRAP below 20, and meaningful backend coverage above 80%.
 | Deploy artifacts exist | `deploy/docker-compose.prod.yml`, env template, pre/post deploy scripts, release-readiness script, reverse-proxy template, bundle-aware AASA template/render script, and `deploy/README.md`. | Done |
 | Deploy preflight passes | Fresh `make deploy-preflight` reported 19 passed, 0 warnings, 0 failed. | Done |
 | Skillbox overlay template exists | Fresh `make deploy-overlay-template` reported 15 passed, 0 failed for the placeholder template. | Done |
+| Private release-readiness probe | A non-repo overlay using `dogswipe.build000r.com`, the ignored SPAPS publishable key, `IOS_RELEASE_DEVELOPMENT_TEAM=84GGQ3RBDZ`, and HTTPS universal-link auth values passed `make deploy-release-readiness` with 21 passed, 1 skipped, 0 failed. | Done locally |
+| Production host readiness | Read-only SSH probe resolved `aiops@sweet-potato-prod` and showed SPAPS healthy, but `/opt/envs/dogswipe`, `/opt/envs/dogswipe/prod.env`, `/opt/dogswipe`, and `/mnt/volume_nyc3_cfo_v1/dogswipe` do not exist yet. | Blocked |
+| Production DNS readiness | `dogswipe.build000r.com` did not resolve and `https://dogswipe.build000r.com/health` returned HTTP `000` during the probe. | Blocked |
 | CI enforces gates | `.github/workflows/ci.yml` runs backend tests/coverage/CRAP/MMDX/SPAPS-contract/drift/lint/typecheck/migration/deploy/AASA-render/release-readiness/Docker, Swift package tests, and iOS release/build/unit/screenshot gates. Audited executable-code run `25424553583` passed with the SPAPS app contract, registration-payload render, release-readiness, durable-order backend/API changes, and My Orders UI smoke included. | Done |
 | Original reference-image visual parity | The supplied DogSwipe reference image is now the visual source of truth for the iOS Discover/Matches/Orders surfaces: cream/red/mustard vendor-pack chrome, Chicago Classic cards, hotdog-first art, swipe controls, match/order CTA, and My Orders cards. | Done |
 | Live production deployment | Deploy contract and preflight are ready, but `deploy/README.md` states live rollout needs a concrete skillbox overlay: host, deploy root, env source, domain, Apple Team ID, health URL, and AASA URL. | Blocked |
@@ -63,6 +67,9 @@ SwiftUI drift clean, CRAP below 20, and meaningful backend coverage above 80%.
 - `make deploy-render-aasa AASA_APPLE_TEAM_ID=ABCDE12345`: rendered the bundle-aware Apple app-site association payload.
 - `make deploy-release-readiness ALLOW_PLACEHOLDERS=true ...`: release handoff gate passed in placeholder mode without secrets; 21 passed, 1 skipped, 0 failed, including SPAPS app contract and registration-payload verification.
 - `make deploy-overlay-template`: 15 passed, 0 failed.
+- Private release-readiness probe with a non-repo overlay for `dogswipe.build000r.com`, ignored SPAPS values, `IOS_RELEASE_DEVELOPMENT_TEAM=84GGQ3RBDZ`, and HTTPS auth/universal-link settings: 21 passed, 1 skipped, 0 failed.
+- `ssh-info` read-only production status: `spaps-python` was healthy; DogSwipe deploy root/env paths were absent.
+- DNS/health probe: `dogswipe.build000r.com` did not resolve; public health check returned HTTP `000`.
 - `make ios-release-assets`: iOS release assets verified, including build-setting-backed auth/link configuration and App Store Connect export/upload option plists.
 - `make -n ios-release-archive ...`: dry-run showed the signed archive command receives production API/SPAPS/universal-link settings without running Apple signing.
 - `make -n ios-testflight-upload ...`: dry-run showed the upload target requires archive and App Store Connect API key inputs before invoking `xcodebuild -exportArchive`.
@@ -72,20 +79,23 @@ SwiftUI drift clean, CRAP below 20, and meaningful backend coverage above 80%.
 ## Verdict
 
 The repo is production-quality and deploy-ready within the information available
-locally. The full objective is not complete because two requirements need
-external inputs before they can be proven: live deployment with hosted universal
-links and live App Store/TestFlight signing/upload.
+locally. Private SPAPS application values are now present in an ignored local
+env file and the private release-readiness gate passes without printing
+secrets. The full objective is not complete because live deployment still needs
+DNS, host directories, the production env source, and reverse-proxy activation,
+and live App Store/TestFlight signing/upload still needs Apple/App Store Connect
+inputs.
 
 ## Required Inputs To Finish
 
-1. DogSwipe private SPAPS application values for the public `dogswipe` slug:
-   an operator must submit the rendered self-service payload from
-   `docs/SPAPS_APP_HANDOFF.md`, then store the raw application ID, server secret
-   key, publishable key, and matching redirect/origin values in the private env
-   source.
-2. DogSwipe skillbox deploy overlay values, validated by
-   `make deploy-release-readiness`: host, deploy root, env source, production
-   domain, Apple Team ID, public health URL, and AASA URL.
-3. Apple signing/TestFlight credentials to run `make ios-release-archive` and
+1. DogSwipe production DNS and reverse-proxy routing for
+   `dogswipe.build000r.com`.
+2. DogSwipe host setup on `sweet-potato-prod`: deploy root, private
+   `/opt/envs/dogswipe/prod.env`, PostgreSQL/Redis storage paths, and copied
+   release artifacts.
+3. A private, durable skillbox overlay file checked into the private
+   `skillbox-config` overlay source, not this public repo. The temporary
+   non-repo overlay validates, but it is not a persistent production contract.
+4. Apple signing/TestFlight credentials to run `make ios-release-archive` and
    `make ios-testflight-upload`, or an explicit decision to keep live TestFlight
    proof out of scope.

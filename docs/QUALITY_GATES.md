@@ -20,6 +20,8 @@ Last verified: 2026-05-06
 | Deploy preflight | `make deploy-preflight` | 19 passed, 0 warnings, 0 failed |
 | AASA render smoke | `make deploy-render-aasa AASA_APPLE_TEAM_ID=ABCDE12345` | rendered bundle-aware Apple app-site association payload |
 | Release readiness | `make deploy-release-readiness ALLOW_PLACEHOLDERS=true ...` | 21 passed, 1 skipped, 0 failed, including SPAPS app contract and registration-payload verification |
+| Private release-readiness probe | non-repo overlay for `dogswipe.build000r.com` plus ignored SPAPS env values and `IOS_RELEASE_DEVELOPMENT_TEAM=84GGQ3RBDZ` | 21 passed, 1 skipped, 0 failed; no secrets printed |
+| Production host/DNS probe | `ssh-info` read-only status plus DNS/health checks for `dogswipe.build000r.com` | SPAPS host reachable and healthy; DogSwipe deploy root/env paths absent; `dogswipe.build000r.com` unresolved |
 | Skillbox overlay template | `make deploy-overlay-template` | 15 passed, 0 failed |
 | SwiftUI drift scan | `make drift` | 0 Swift findings |
 | iOS release assets | `make ios-release-assets` | AppIcon, accent color, privacy manifest, associated-domains entitlement, bundle-aware Apple app-site association template, build-setting-backed auth config, and App Store Connect export option plists passed |
@@ -72,8 +74,9 @@ Last verified: 2026-05-06
 - Signed iOS release handoff artifacts define `ios-release-archive`, `ios-testflight-export`, and `ios-testflight-upload` Make targets with build-setting-backed production API/SPAPS/universal-link inputs and App Store Connect export/upload option plists; Apple `.p8`, `.p12`, and `.mobileprovision` files are ignored.
 - GitHub Actions enforces backend coverage XML generation, scoped CRAP threshold, MMDX architecture preflight, SPAPS app contract and registration-payload validation, SwiftUI drift, deploy preflight/readiness including AASA template/render validation, iOS build/test gates, and screenshot UI smoke.
 - A DogSwipe skillbox overlay template and validator exist so live deploy setup, including the AASA URL and Apple Team ID contract, can be checked without committing host secrets.
+- The ignored local SPAPS handoff file contains non-placeholder private app values in this workspace, and a private release-readiness probe validates the app-side release contract for `dogswipe.build000r.com`; live DNS, host env setup, and reverse-proxy activation remain separate infrastructure work.
 
 ## Known Blocks
 
-- Live deployment, production SPAPS auth proof, and hosted universal-link activation are blocked until a skillbox deploy overlay and private env source name a host, service, production origin, Apple Team ID, SPAPS application ID/key values, health URL, and AASA URL; the public repo now renders the SPAPS self-service payload, but an operator still has to submit it with private credentials and store the one-time keys.
+- Live deployment, production SPAPS auth proof, and hosted universal-link activation are blocked until `dogswipe.build000r.com` resolves, the production host has a DogSwipe deploy root and private env source, and the shared reverse proxy serves the API plus Apple app-site association payload.
 - Live App Store signing and TestFlight upload remain blocked because bundle ownership, signing assets, and App Store Connect credentials are not available in this workspace.

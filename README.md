@@ -174,7 +174,7 @@ The current app can load local hotdog profiles, render cream/red/mustard swipe c
 ## Known Limits
 
 - Live deployment and hosted universal-link activation are blocked until a skillbox deploy overlay names a host, service, production origin, env source, deploy root, Apple Team ID, and health/AASA URLs.
-- Production SPAPS auth proof is blocked until an operator creates the private `dogswipe` SPAPS application from [docs/SPAPS_APP_HANDOFF.md](docs/SPAPS_APP_HANDOFF.md) and stores its application ID, server secret key, publishable key, and matching redirect/origin values in the private env source.
+- Production SPAPS auth proof is blocked on live infrastructure, not the public app contract: this workspace has ignored private SPAPS values that pass release-readiness, but the production host still needs a DogSwipe env source and the public `dogswipe.build000r.com` DNS/reverse-proxy path before hosted auth and universal links can be proven.
 - Live TestFlight submission is blocked until Apple signing assets, bundle ownership, and App Store Connect credentials are available; archive/export/upload handoff targets are present.
 - Broad crawler-based menu indexing beyond bounded snapshot search, full turn-by-turn navigation or route persistence beyond lightweight MapKit previews, and payment/fulfillment order management beyond durable draft capture are future slices.
 
