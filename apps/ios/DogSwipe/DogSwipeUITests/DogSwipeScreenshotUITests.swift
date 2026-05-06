@@ -14,7 +14,9 @@ final class DogSwipeScreenshotUITests: XCTestCase {
             screenIdentifier: "dogswipe.discover.screen",
             requiredElements: [
                 .staticText("DogSwipe"),
-                .staticText("Chicago Classic")
+                .staticText("Chicago Classic"),
+                .button("Live walk"),
+                .button("Directions")
             ],
             screenshotName: "01-discover"
         )

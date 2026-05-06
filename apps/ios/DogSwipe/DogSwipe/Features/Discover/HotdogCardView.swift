@@ -57,6 +57,8 @@ struct HotdogCardView: View {
                         .foregroundStyle(Color.dsMuted)
                         .lineLimit(1)
                 }
+
+                routeControls
             }
             .padding(.horizontal, .dsSpace4)
             .padding(.bottom, .dsSpace4)
@@ -105,7 +107,7 @@ struct HotdogCardView: View {
             }
             .frame(width: proxy.size.width, height: proxy.size.height)
         }
-        .aspectRatio(1.68, contentMode: .fit)
+        .aspectRatio(.dsCardHeroAspectRatio, contentMode: .fit)
         .clipped()
         .clipShape(RoundedRectangle(cornerRadius: .dsRadius5, style: .continuous))
     }
@@ -142,35 +144,43 @@ struct HotdogCardView: View {
     }
 
     @ViewBuilder
-    private var routeActions: some View {
+    private var routeControls: some View {
         if routePreviewStore.canPreview(profile: profile, origin: originLocation)
             || profile.directionsURL != nil {
-            HStack(spacing: .dsSpace3) {
-                if routePreviewStore.canPreview(profile: profile, origin: originLocation) {
-                    Button {
-                        Task {
-                            await routePreviewStore.preview(
-                                profile: profile,
-                                origin: originLocation
-                            )
-                        }
-                    } label: {
-                        Label("Live walk", systemImage: "figure.walk")
-                    }
-                    .buttonStyle(.bordered)
-                    .tint(.dsPrimary)
-                    .disabled(routePreviewStore.state == .loading)
-                }
+            VStack(alignment: .leading, spacing: .dsSpace2) {
+                RoutePreviewStatusView(state: routePreviewStore.state)
+                routeActions
+            }
+            .padding(.top, .dsSpace1)
+        }
+    }
 
-                if let directionsURL = profile.directionsURL {
-                    Button {
-                        openURL(directionsURL)
-                    } label: {
-                        Label("Directions", systemImage: "map")
+    private var routeActions: some View {
+        HStack(spacing: .dsSpace3) {
+            if routePreviewStore.canPreview(profile: profile, origin: originLocation) {
+                Button {
+                    Task {
+                        await routePreviewStore.preview(
+                            profile: profile,
+                            origin: originLocation
+                        )
                     }
-                    .buttonStyle(.bordered)
-                    .tint(.dsPrimary)
+                } label: {
+                    Label("Live walk", systemImage: "figure.walk")
                 }
+                .buttonStyle(.bordered)
+                .tint(.dsPrimary)
+                .disabled(routePreviewStore.state == .loading)
+            }
+
+            if let directionsURL = profile.directionsURL {
+                Button {
+                    openURL(directionsURL)
+                } label: {
+                    Label("Directions", systemImage: "map")
+                }
+                .buttonStyle(.bordered)
+                .tint(.dsPrimary)
             }
         }
     }
