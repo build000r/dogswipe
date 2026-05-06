@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: read
+  packages: write
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
@@ -74,7 +75,20 @@ jobs:
             DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN=dogswipe-api.example.com \
             DOGSWIPE_RELEASE_SPAPS_PUBLISHABLE_KEY=spaps_pub_example
       - name: Docker image build
-        run: docker build -q backend
+        run: |
+          docker build \
+            -t dogswipe-api:ci \
+            -t ghcr.io/build000r/dogswipe:${GITHUB_SHA} \
+            -t ghcr.io/build000r/dogswipe:latest \
+            backend
+      - name: Log in to GHCR
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: echo "${{ github.token }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+      - name: Publish Docker image
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          docker push ghcr.io/build000r/dogswipe:${GITHUB_SHA}
+          docker push ghcr.io/build000r/dogswipe:latest
 
   swift-package:
     runs-on: macos-latest

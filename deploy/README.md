@@ -200,7 +200,10 @@ the private overlay/env render path without committing or printing secrets.
 
 ## Rollout Shape
 
-1. Build and publish `backend/Dockerfile` as `DOGSWIPE_IMAGE`.
+1. Build and publish `backend/Dockerfile` as `DOGSWIPE_IMAGE`. CI publishes
+   `ghcr.io/build000r/dogswipe:<full-git-sha>` and
+   `ghcr.io/build000r/dogswipe:latest` on pushes to `main`; production env
+   should pin the full SHA tag for a deterministic rollout.
 2. Copy `deploy/docker-compose.prod.yml` and `deploy/prod.env` to the deploy root.
 3. Start database and Redis.
 4. Run migrations:
