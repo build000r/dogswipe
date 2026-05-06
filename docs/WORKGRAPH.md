@@ -49,7 +49,6 @@ The next ready work is to create a concrete skillbox deploy overlay or continue 
 
 ## Risks
 
-- The original visual reference image is unavailable in this context; final visual parity is blocked on reacquiring that asset or a written design brief.
 - Live deploy and hosted universal links are blocked until a skillbox overlay names a concrete host, deploy root, env source, production domain, Apple Team ID, and health/AASA check targets.
 - App Store signing and TestFlight automation remain out of scope until signing assets and bundle ownership are known.
 

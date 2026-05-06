@@ -106,9 +106,10 @@ final class DiscoverViewModel: ObservableObject {
         deck = SwipeDeckState(profiles: allProfiles)
     }
 
-    func record(_ decision: SwipeDecision) {
+    @discardableResult
+    func record(_ decision: SwipeDecision) -> HotdogProfile? {
         guard let profile = deck.currentProfile else {
-            return
+            return nil
         }
         _ = deck.record(decision)
         Task {
@@ -121,6 +122,7 @@ final class DiscoverViewModel: ObservableObject {
                 lastMatch = nil
             }
         }
+        return profile
     }
 
     private func rank(_ profiles: [HotdogProfile]) -> [HotdogProfile] {

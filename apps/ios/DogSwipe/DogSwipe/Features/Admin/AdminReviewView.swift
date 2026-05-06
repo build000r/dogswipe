@@ -36,6 +36,9 @@ struct AdminReviewView: View {
                     await store.load()
                 }
             }
+            .onAppear {
+                DogSwipeAnalytics.shared.trackScreenViewed(.review)
+            }
             .dsPageBackground()
             .accessibilityIdentifier("dogswipe.review.screen")
         }
@@ -58,12 +61,11 @@ struct AdminReviewView: View {
 
     private var headerText: some View {
         VStack(alignment: .leading, spacing: .dsSpace2) {
-            Text("Pending vendor hotdogs")
-                .font(.title2.weight(.semibold))
-                .foregroundStyle(Color.dsInk)
-            Text("Approve, reject, refresh stale menus, or send submissions back with review notes.")
-                .font(.subheadline)
-                .foregroundStyle(Color.dsMuted)
+            DogSwipeSectionHeader(
+                title: "Pending vendor hotdogs",
+                subtitle: "Approve, reject, refresh stale menus, or send submissions back with review notes.",
+                systemImage: "checkmark.seal.fill"
+            )
         }
     }
 

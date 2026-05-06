@@ -35,6 +35,14 @@ private final class InMemoryBearerTokenStore: BearerTokenStoring, @unchecked Sen
     }
 }
 
+private final class RecordingAnalyticsSink: DogSwipeAnalyticsSink {
+    private(set) var events: [DogSwipeAnalyticsEvent] = []
+
+    func record(_ event: DogSwipeAnalyticsEvent) {
+        events.append(event)
+    }
+}
+
 private struct StaticLocationProvider: UserLocationProviding {
     let location: DiscoveryLocation?
 
@@ -107,6 +115,27 @@ final class DogSwipeSmokeTests: XCTestCase {
             refreshTokenStore: InMemoryBearerTokenStore(),
             authClient: makeAuthClient(http: MockHTTPClient())
         )
+    }
+
+    @MainActor
+    func testAnalyticsContractRecordsCanonicalEventsWithoutPII() {
+        let sink = RecordingAnalyticsSink()
+        let analytics = DogSwipeAnalytics(sink: sink)
+
+        analytics.trackScreenViewed(.discover)
+        analytics.trackDiscoverySwipe(decision: "like", profileID: "hotdog-chicago")
+        analytics.trackAuthMagicLinkRequested()
+
+        XCTAssertEqual(sink.events.map(\.name), [
+            "ios_screen_viewed",
+            "ios_discovery_swipe",
+            "ios_auth_magic_link_requested"
+        ])
+        XCTAssertEqual(sink.events[0].parameters, ["screen": "discover"])
+        XCTAssertEqual(sink.events[1].parameters["decision"], "like")
+        XCTAssertEqual(sink.events[1].parameters["profile_id"], "hotdog-chicago")
+        XCTAssertNil(sink.events[2].parameters["email"])
+        XCTAssertNil(sink.events[2].parameters["name"])
     }
 
     func testCravingPreferencesStoreBuildsDiscoveryPreferences() {

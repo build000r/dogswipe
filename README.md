@@ -6,7 +6,7 @@ Public repo: <https://github.com/build000r/dogswipe>
 
 ## What It Does
 
-DogSwipe turns "where should I get a hotdog right now?" into a fast swipe loop. The app presents nearby hotdog cards with the item style, price, vendor, distance, menu signals, and crave score; users can search bounded menu snapshots for craving terms, and high-signal likes become saved matches.
+DogSwipe turns "where should I get a hotdog right now?" into a fast swipe loop. The app presents nearby hotdog cards with the item style, price, vendor, distance, menu signals, and crave score; users can search bounded menu snapshots for craving terms, and high-signal likes become saved matches. The iOS surface is intentionally a Tinder-style street-vendor pack: cream cards, mustard/red controls, product-first hotdog art, and a match/order detail instead of a venue directory.
 
 The repo is intentionally split into three testable surfaces:
 
@@ -28,30 +28,31 @@ The repo is intentionally split into three testable surfaces:
 | Admin review | Configured admins can list `GET /v1/admin/vendor/submissions`, approve reviewed hotdogs into discovery, reject bad listings, request vendor edits with review notes, or refresh stale vendor menu snapshots in bounded batches with `POST /v1/admin/vendor/menus/refresh`. |
 | Auth boundary | User-scoped backend routes derive identity from SPAPS auth when enabled, with a local-only header fallback while auth is disabled. |
 | iOS transport | The Profile tab can request SPAPS magic links with a publishable key, handle `dogswipe://auth` or configured HTTPS universal-link returns, store access/refresh JWTs in Keychain, and send only the access bearer to the DogSwipe API. |
+| iOS analytics | SwiftUI surfaces emit a small no-PII event contract for screen views, discovery swipes, auth actions, and match/order CTAs. |
 
 Hotdog profile payloads use this snake_case backend contract:
 
 ```json
 {
-  "id": "hotdog-coney",
-  "name": "Coney Classic",
-  "style": "Chili dog",
-  "price_dollars": 6.5,
-  "signature_notes": "Beef frank, snap casing, chili, onion, and yellow mustard.",
-  "distance_miles": 1.2,
-  "latitude": 43.6539,
-  "longitude": -79.3843,
-  "walking_time_minutes": 24,
-  "vendor_name": "Franklin Cart",
-  "address_text": "100 Queen St W, Toronto, ON",
+  "id": "hotdog-chicago",
+  "name": "Chicago Classic",
+  "style": "Chicago style",
+  "price_dollars": 6.49,
+  "signature_notes": "All-beef dog, mustard, relish, onions, tomato, sport peppers, pickle spear, celery salt.",
+  "distance_miles": 0.3,
+  "latitude": 41.8837,
+  "longitude": -87.6248,
+  "walking_time_minutes": 6,
+  "vendor_name": "Street Vendor Pack",
+  "address_text": "35 E Randolph St, Chicago, IL",
   "image_url": null,
-  "menu_url": "https://franklin.example.com/menu",
+  "menu_url": "https://streetvendor.example.com/menu",
   "menu_status": "ok",
-  "menu_excerpt": "Coney Classic with chili, onion, and mustard.",
-  "menu_highlights": ["Chili", "Mustard", "Onion"],
+  "menu_excerpt": "Chicago Classic with mustard, relish, onions, tomato, sport peppers, pickle spear, and celery salt.",
+  "menu_highlights": ["Mild", "All-Beef", "Crunchy", "Popular"],
   "menu_checked_at": null,
-  "media_alt_text": null,
-  "crave_score": 0.91,
+  "media_alt_text": "Chicago-style hotdog with mustard, relish, onions, tomato, sport peppers, pickle spear, and celery salt.",
+  "crave_score": 0.94,
   "availability_status": "available",
   "review_note": null,
   "last_verified_at": null,
@@ -87,7 +88,7 @@ docker compose up --build
 curl http://localhost:8000/health
 ```
 
-The backend defaults to local development mode with auth disabled. Production deployments should set `SPAPS_AUTH_ENABLED=true`, `SPAPS_API_KEY`, `SPAPS_APPLICATION_ID`, `DOGSWIPE_ADMIN_USER_IDS`, and a managed PostgreSQL `DATABASE_URL`.
+The backend defaults to local development mode with auth disabled. Production deployments should set `SPAPS_AUTH_ENABLED=true`, `SPAPS_API_KEY`, `SPAPS_APPLICATION_ID`, `DOGSWIPE_ADMIN_USER_IDS`, and a managed PostgreSQL `DATABASE_URL`. A production SPAPS application slugged `dogswipe` is registered; keep its raw app ID, publishable key, and secret key in a private env manager or the ignored local `.env.dogswipe.spaps` file, never in git.
 
 For local Docker development, `DOGSWIPE_AUTO_CREATE_SCHEMA=true` and `DOGSWIPE_SEED_SAMPLE_PROFILES=true` create the starter tables and seed sample profiles at API startup. Keep those flags off in production and run managed migrations instead:
 
@@ -98,7 +99,7 @@ DATABASE_URL=postgresql+asyncpg://... make migration-current
 
 Production deploy artifacts live in [deploy/README.md](deploy/README.md). The repo now includes a production Compose file, env template, pre/post deploy verification scripts, and a reverse-proxy site template. A live rollout still requires a skillbox overlay with the concrete host, deploy root, env source, domain, Apple Team ID, health URL, and AASA URL.
 
-The iOS target reads `DOGSWIPE_API_BASE_URL` from its Info.plist and defaults to `http://localhost:8000`, which works for simulator-local backend development. It also reads `DOGSWIPE_SPAPS_API_BASE_URL`, `DOGSWIPE_SPAPS_PUBLISHABLE_KEY`, `DOGSWIPE_SPAPS_ORIGIN`, `DOGSWIPE_AUTH_REDIRECT_URL`, and `DOGSWIPE_AUTH_UNIVERSAL_LINK_HOSTS` for native magic-link sign-in. For auth-enabled environments, configure a `spaps_pub_...` publishable key and matching origin; the app requests/verifies magic links through SPAPS, registers the `dogswipe://auth` URL scheme, can verify configured HTTPS universal-link callbacks from allowed hosts, stores access/refresh JWTs in Keychain, and injects only the access bearer through `DogSwipeAPIClient`. Release builds should override `DOGSWIPE_ASSOCIATED_DOMAIN` with the production link domain and host the Apple app-site association payload from `deploy/apple-app-site-association.template.json`. Discovery and Matches can request iOS when-in-use location permission, pass current coordinates to the backend so response distances reflect the user position, and preview an on-device MapKit walking route for coordinate-backed hotdogs before handing off to Apple Maps. Discovery also exposes a compact menu search field that sends `menu_query` to the backend and applies the same query locally when offline. The Vendor form can resolve pickup address text through CoreLocation geocoding and prefill latitude/longitude before submission. Secret SPAPS API keys remain server-only.
+The iOS target reads `DOGSWIPE_API_BASE_URL` from its Info.plist and defaults to `http://localhost:8000`, which works for simulator-local backend development. It also reads `DOGSWIPE_SPAPS_API_BASE_URL`, `DOGSWIPE_SPAPS_PUBLISHABLE_KEY`, `DOGSWIPE_SPAPS_ORIGIN`, `DOGSWIPE_AUTH_REDIRECT_URL`, and `DOGSWIPE_AUTH_UNIVERSAL_LINK_HOSTS` for native magic-link sign-in. For auth-enabled environments, configure a `spaps_pub_...` publishable key and matching origin; the app requests/verifies magic links through SPAPS, registers the `dogswipe://auth` URL scheme, can verify configured HTTPS universal-link callbacks from allowed hosts, stores access/refresh JWTs in Keychain, and injects only the access bearer through `DogSwipeAPIClient`. Release builds should override `DOGSWIPE_ASSOCIATED_DOMAIN` with the production link domain and host the Apple app-site association payload from `deploy/apple-app-site-association.template.json`. Discovery and Matches can request iOS when-in-use location permission, pass current coordinates to the backend so response distances reflect the user position, and preview an on-device MapKit walking route for coordinate-backed hotdogs before handing off to Apple Maps. Discovery also exposes a compact menu search field behind the filter control that sends `menu_query` to the backend and applies the same query locally when offline. The Vendor form can resolve pickup address text through CoreLocation geocoding and prefill latitude/longitude before submission. Secret SPAPS API keys remain server-only.
 
 Menu snapshots are intentionally bounded. Vendors and admins can refresh menu URLs on demand, and production can optionally enable `DOGSWIPE_MENU_REFRESH_ENABLED=true` to run the same stale-menu refresh in the API process with `DOGSWIPE_MENU_REFRESH_INTERVAL_SECONDS`, `DOGSWIPE_MENU_REFRESH_BATCH_SIZE`, and `DOGSWIPE_MENU_REFRESH_MAX_AGE_HOURS`. Discovery responses derive short `menu_highlights` from the latest snapshot excerpt so cards can surface menu signals without storing a separate crawler index. `GET /v1/discovery?menu_query=kimchi%20sesame` searches those bounded profile/menu fields for craving terms.
 
@@ -131,6 +132,7 @@ GitHub Actions enforces the same blocking gates for backend coverage, CRAP, MMDX
 
 Latest recorded gate results live in [docs/QUALITY_GATES.md](docs/QUALITY_GATES.md).
 The current prompt-to-artifact completion audit lives in [docs/COMPLETION_AUDIT.md](docs/COMPLETION_AUDIT.md).
+The current iOS analytics contract lives in [docs/IOS_ANALYTICS.md](docs/IOS_ANALYTICS.md).
 
 ## Build Vs Clone Decision
 
@@ -138,12 +140,11 @@ The placement decision is `NEW REPO`: this app owns a durable product boundary r
 
 ## Current Scope
 
-The current app can load local hotdog profiles, render cards with a local product visual when no image URL is available, request and verify SPAPS magic links including native `dogswipe://auth` and configured HTTPS universal-link returns, store access/refresh JWTs in Keychain, record swipes, persist shared craving controls that filter/rank discovery, use CoreLocation-backed coordinates for live distance ranking across discovery and saved matches, search bounded menu snapshots from the Discover screen, show deterministic walking-time estimates, preview live MapKit walking routes on discovery cards and match rows, surface menu highlights from bounded snapshots, open Apple Maps directions from coordinates or pickup address text, resolve vendor pickup addresses into coordinates, submit and revise vendor-owned hotdog listings, refresh bounded menu URL snapshots as a vendor, refresh stale vendor menu snapshots as an admin or optional background worker, approve/reject/request edits as an admin, and fetch matches through the shared Swift API client. The iOS target includes a hotdog-specific AppIcon catalog, accent color, `PrivacyInfo.xcprivacy` declaration for auth email and precise location use, associated-domains entitlement plumbing, a deployable Apple app-site association template, and deterministic screenshot-mode fixtures for UI smoke/screenshots. Backend migrations are managed through Alembic up to `0008`, local Docker development can auto-create and seed the starter data with explicit local-only flags, CI enforces the core quality gates, and production deploy artifacts are ready for a concrete skillbox target.
+The current app can load local hotdog profiles, render cream/red/mustard swipe cards with a local Chicago-style product visual when no image URL is available, request and verify SPAPS magic links including native `dogswipe://auth` and configured HTTPS universal-link returns, store access/refresh JWTs in Keychain, record swipes, persist shared craving controls that filter/rank discovery, use CoreLocation-backed coordinates for live distance ranking across discovery and saved matches, search bounded menu snapshots from the Discover screen, show deterministic walking-time estimates, preview live MapKit walking routes on discovery cards and match rows, surface menu highlights from bounded snapshots, open Apple Maps directions from coordinates or pickup address text, resolve vendor pickup addresses into coordinates, submit and revise vendor-owned hotdog listings, refresh bounded menu URL snapshots as a vendor, refresh stale vendor menu snapshots as an admin or optional background worker, approve/reject/request edits as an admin, fetch matches through the shared Swift API client, and emit a no-PII iOS analytics contract for screen/swipe/auth/match/order events. The iOS target includes a hotdog-specific AppIcon catalog, accent color, `PrivacyInfo.xcprivacy` declaration for auth email and precise location use, associated-domains entitlement plumbing, a deployable Apple app-site association template, and deterministic screenshot-mode fixtures for UI smoke/screenshots. Backend migrations are managed through Alembic up to `0008`, local Docker development can auto-create and seed the starter data with explicit local-only flags, CI enforces the core quality gates, and production deploy artifacts are ready for a concrete skillbox target.
 
 ## Known Limits
 
 - Live deployment and hosted universal-link activation are blocked until a skillbox deploy overlay names a host, service, production origin, env source, deploy root, Apple Team ID, and health/AASA URLs.
-- Final visual parity with the original reference image remains blocked because the image is not available in this context.
 - Broad crawler-based menu indexing beyond bounded snapshot search, full turn-by-turn navigation or route persistence beyond lightweight MapKit previews, App Store signing, and TestFlight automation are future slices.
 
 ## About Contributions

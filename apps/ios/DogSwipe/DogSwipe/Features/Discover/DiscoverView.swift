@@ -4,6 +4,7 @@ import SwiftUI
 struct DiscoverView: View {
     @ObservedObject private var preferencesStore: CravingPreferencesStore
     @StateObject private var viewModel: DiscoverViewModel
+    @State private var isSearchVisible = false
 
     @MainActor
     init(
@@ -18,28 +19,30 @@ struct DiscoverView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: .dsSpace5) {
-                header
-                menuSearchBar
+            VStack(spacing: .dsSpace3) {
+                DogSwipeBrandHeader(activeTab: .discover)
+                if isSearchVisible {
+                    menuSearchBar
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                }
 
                 if case .loading = viewModel.state {
                     loadingState
                 } else if let profile = viewModel.currentProfile {
-                    HotdogCardView(
-                        profile: profile,
-                        originLocation: viewModel.currentLocation
-                    )
-                        .transition(.scale.combined(with: .opacity))
+                    deck(profile)
                 } else {
                     emptyState
                 }
 
+                Text("Swipe right for dogs")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(Color.dsMuted)
                 controls
             }
             .padding(.horizontal, .dsSpace5)
-            .padding(.vertical, .dsSpace4)
-            .navigationTitle("DogSwipe")
-            .toolbarTitleDisplayMode(.inline)
+            .padding(.top, .dsSpace2)
+            .padding(.bottom, .dsSpace4)
+            .toolbar(.hidden, for: .navigationBar)
             .dsPageBackground()
             .accessibilityIdentifier("dogswipe.discover.screen")
             .task {
@@ -47,23 +50,13 @@ struct DiscoverView: View {
                     await viewModel.load()
                 }
             }
+            .onAppear {
+                DogSwipeAnalytics.shared.trackScreenViewed(.discover)
+            }
             .onChange(of: preferencesStore.preferences) {
                 viewModel.applyPreferences()
             }
         }
-    }
-
-    private var header: some View {
-        VStack(alignment: .leading, spacing: .dsSpace2) {
-            Text("Best nearby bite")
-                .font(.title2.weight(.semibold))
-                .foregroundStyle(Color.dsInk)
-
-            Text(statusText)
-                .font(.subheadline)
-                .foregroundStyle(Color.dsMuted)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var statusText: String {
@@ -79,8 +72,32 @@ struct DiscoverView: View {
         }
     }
 
+    private var statusPill: some View {
+        HStack(spacing: .dsSpace2) {
+            Image(systemName: "location.fill")
+                .foregroundStyle(Color.dsAccent)
+            Text(statusText)
+                .lineLimit(1)
+                .minimumScaleFactor(0.82)
+            Spacer(minLength: .dsSpace2)
+            Text("Best nearby bite")
+                .foregroundStyle(Color.dsInk)
+        }
+        .font(.caption.weight(.bold))
+        .foregroundStyle(Color.dsMuted)
+        .padding(.horizontal, .dsSpace3)
+        .padding(.vertical, .dsSpace2)
+        .background(Color.dsSurface, in: Capsule())
+        .overlay {
+            Capsule().stroke(Color.dsDivider)
+        }
+    }
+
     private var controls: some View {
-        HStack(spacing: .dsSpace5) {
+        HStack(spacing: .dsSpace4) {
+            SwipeActionButton(role: .rewind) {
+                viewModel.resetToSamples()
+            }
             SwipeActionButton(role: .pass) {
                 advance(.pass)
             }
@@ -89,6 +106,11 @@ struct DiscoverView: View {
             }
             SwipeActionButton(role: .like) {
                 advance(.like)
+            }
+            SwipeActionButton(role: .filter) {
+                withAnimation(.spring(response: 0.24, dampingFraction: 0.88)) {
+                    isSearchVisible.toggle()
+                }
             }
         }
         .frame(maxWidth: .infinity)
@@ -142,11 +164,12 @@ struct DiscoverView: View {
         .font(.subheadline)
         .padding(.horizontal, .dsSpace3)
         .padding(.vertical, .dsSpace2)
-        .background(Color.dsSurface, in: RoundedRectangle(cornerRadius: .dsRadius3, style: .continuous))
+        .background(Color.dsSurface, in: RoundedRectangle(cornerRadius: .dsRadius4, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: .dsRadius3, style: .continuous)
+            RoundedRectangle(cornerRadius: .dsRadius4, style: .continuous)
                 .stroke(Color.dsDivider)
         }
+        .shadow(color: Color.dsShadow.opacity(0.65), radius: 8, x: 0, y: 4)
     }
 
     private var loadingState: some View {
@@ -179,9 +202,36 @@ struct DiscoverView: View {
         .dsCardSurface()
     }
 
+    private func deck(_ profile: HotdogProfile) -> some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: .dsRadius5, style: .continuous)
+                .fill(Color.dsSurface.opacity(0.76))
+                .overlay {
+                    RoundedRectangle(cornerRadius: .dsRadius5, style: .continuous)
+                        .stroke(Color.dsDivider)
+                }
+                .offset(x: .dsDeckBackOffsetX, y: .dsDeckBackOffsetY)
+                .rotationEffect(.degrees(2.5))
+
+            HotdogCardView(
+                profile: profile,
+                originLocation: viewModel.currentLocation
+            )
+            .rotationEffect(.degrees(-1.5))
+            .transition(.scale.combined(with: .opacity))
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .frame(height: .dsDiscoverDeckHeight)
+    }
+
     private func advance(_ decision: SwipeDecision) {
         withAnimation(.spring(response: 0.28, dampingFraction: 0.86)) {
-            viewModel.record(decision)
+            if let profile = viewModel.record(decision) {
+                DogSwipeAnalytics.shared.trackDiscoverySwipe(
+                    decision: decision.rawValue,
+                    profileID: profile.id
+                )
+            }
         }
     }
 }

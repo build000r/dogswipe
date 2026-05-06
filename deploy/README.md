@@ -52,6 +52,10 @@ Required runtime values:
 - `SPAPS_APPLICATION_ID`
 - `DOGSWIPE_ADMIN_USER_IDS`
 
+The production SPAPS application slug is `dogswipe`. Its raw application ID,
+publishable key, and secret key should come from the private deployment env
+source; this public repo must only carry env variable names and templates.
+
 Optional bounded menu refresh values:
 
 - `DOGSWIPE_MENU_REFRESH_ENABLED=false` by default

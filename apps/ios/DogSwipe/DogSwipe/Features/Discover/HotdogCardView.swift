@@ -21,51 +21,45 @@ struct HotdogCardView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: .dsSpace4) {
+        VStack(alignment: .leading, spacing: 0) {
             hero
 
-            VStack(alignment: .leading, spacing: .dsSpace3) {
+            VStack(alignment: .leading, spacing: .dsSpace2) {
                 titleRow
                 Text(profile.signatureNotes)
-                    .font(.body)
+                    .font(.subheadline.weight(.medium))
                     .foregroundStyle(Color.dsMuted)
                     .lineLimit(2)
-
-                if let addressText = profile.addressText, !addressText.isEmpty {
-                    Label(addressText, systemImage: "map")
-                        .font(.caption)
-                        .foregroundStyle(Color.dsMuted)
-                        .lineLimit(1)
-                }
 
                 if !profile.menuHighlightLabels.isEmpty {
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: .dsSpace2) {
-                            Image(systemName: "menucard")
-                                .font(.caption.weight(.semibold))
-                                .foregroundStyle(Color.dsPrimary)
-
                             ForEach(profile.menuHighlightLabels.prefix(4), id: \.self) { highlight in
-                                menuHighlightChip(highlight)
+                                DogSwipeChip(text: highlight, systemImage: chipIcon(for: highlight))
                             }
                         }
                     }
                 }
 
-                Divider()
-
                 HStack(spacing: .dsSpace4) {
-                    metric(label: "Price", value: profile.priceLabel)
-                    metric(label: "Distance", value: String(format: "%.1f mi", profile.distanceMiles))
-                    metric(label: "Walk", value: profile.walkingTimeLabel)
-                    metric(label: "Crave", value: "\(Int(profile.craveScore * 100))%")
+                    Label(String(format: "%.1f mi", profile.distanceMiles), systemImage: "mappin.circle.fill")
+                    Label(ratingLabel, systemImage: "star.fill")
+                    Label(profile.walkingTimeLabel, systemImage: "figure.walk")
                 }
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(Color.dsMuted)
+                .lineLimit(1)
+                .minimumScaleFactor(0.82)
 
-                routeActions
-                RoutePreviewStatusView(state: routePreviewStore.state)
+                if let addressText = profile.addressText, !addressText.isEmpty {
+                    Text(addressText)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(Color.dsMuted)
+                        .lineLimit(1)
+                }
             }
-            .padding(.horizontal, .dsSpace5)
-            .padding(.bottom, .dsSpace5)
+            .padding(.horizontal, .dsSpace4)
+            .padding(.bottom, .dsSpace4)
         }
         .dsCardSurface()
         .onChange(of: profile.id) {
@@ -95,31 +89,25 @@ struct HotdogCardView: View {
                     fallbackHero
                 }
 
-                VStack {
-                    Spacer()
-                    HStack {
-                        Label {
-                            Text(profile.vendorName)
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.8)
-                        } icon: {
-                            Image(systemName: "mappin.and.ellipse")
-                        }
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(Color.dsSurface)
-                            .padding(.horizontal, .dsSpace3)
-                            .padding(.vertical, .dsSpace2)
-                            .background(Color.dsInk.opacity(0.62), in: Capsule())
+                VStack(spacing: 0) {
+                    HStack(alignment: .top) {
+                        DogSwipeChip(text: "Popular", systemImage: "flame.fill", tint: Color.dsSurface)
                         Spacer()
+                        Image(systemName: "info.circle.fill")
+                            .font(.title3)
+                            .foregroundStyle(Color.dsInk.opacity(0.62))
+                            .frame(width: .dsInfoButtonSize, height: .dsInfoButtonSize)
+                            .background(Color.dsSurface.opacity(0.92), in: Circle())
                     }
                     .padding(.dsSpace4)
+                    Spacer()
                 }
             }
             .frame(width: proxy.size.width, height: proxy.size.height)
         }
-        .aspectRatio(.dsCardHeroAspectRatio, contentMode: .fit)
+        .aspectRatio(1.68, contentMode: .fit)
         .clipped()
-        .clipShape(RoundedRectangle(cornerRadius: .dsRadius4, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: .dsRadius5, style: .continuous))
     }
 
     private var fallbackHero: some View {
@@ -127,29 +115,30 @@ struct HotdogCardView: View {
     }
 
     private var titleRow: some View {
-        HStack(alignment: .firstTextBaseline) {
+        HStack(alignment: .top, spacing: .dsSpace3) {
             VStack(alignment: .leading, spacing: .dsSpace1) {
                 Text(profile.name)
-                    .font(.title.weight(.semibold))
+                    .font(.title3.weight(.heavy))
                     .foregroundStyle(Color.dsInk)
                 Text(profile.style)
-                    .font(.subheadline)
+                    .font(.callout)
                     .foregroundStyle(Color.dsMuted)
             }
             Spacer()
+            DogSwipeStampView(text: stampText)
         }
     }
 
-    private func metric(label: String, value: String) -> some View {
-        VStack(alignment: .leading, spacing: .dsSpace1) {
-            Text(value)
-                .font(.headline.monospacedDigit())
-                .foregroundStyle(Color.dsInk)
-            Text(label)
-                .font(.caption)
-                .foregroundStyle(Color.dsMuted)
+    private var stampText: String {
+        if profile.style.localizedCaseInsensitiveContains("chicago") {
+            return "Chicago\nStyle"
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        return "Street\nPick"
+    }
+
+    private var ratingLabel: String {
+        let rating = min(4.9, 3.9 + profile.craveScore)
+        return String(format: "%.1f", rating)
     }
 
     @ViewBuilder
@@ -186,14 +175,18 @@ struct HotdogCardView: View {
         }
     }
 
-    private func menuHighlightChip(_ value: String) -> some View {
-        Text(value)
-            .font(.caption.weight(.semibold))
-            .foregroundStyle(Color.dsInk)
-            .lineLimit(1)
-            .padding(.horizontal, .dsSpace2)
-            .padding(.vertical, .dsSpace1)
-            .background(Color.dsPrimarySoft, in: Capsule())
+    private func chipIcon(for value: String) -> String {
+        let lowered = value.lowercased()
+        if lowered.contains("pickle") || lowered.contains("relish") {
+            return "leaf.fill"
+        }
+        if lowered.contains("spicy") || lowered.contains("pepper") || lowered.contains("chili") {
+            return "flame.fill"
+        }
+        if lowered.contains("beef") || lowered.contains("dog") {
+            return "fork.knife"
+        }
+        return "sparkle"
     }
 }
 

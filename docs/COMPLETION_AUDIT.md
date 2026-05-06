@@ -1,8 +1,8 @@
 # Completion Audit
 
 Date: 2026-05-06
-Commit audited: `37c0cf1`
-CI run audited: `25410995961`
+Commit audited: this DogSwipe reference-surface hardening commit
+CI run audited: `25411357013`
 
 ## Objective Restated
 
@@ -38,7 +38,7 @@ SwiftUI drift clean, CRAP below 20, and meaningful backend coverage above 80%.
 | Deploy preflight passes | Fresh `make deploy-preflight` reported 19 passed, 0 warnings, 0 failed. | Done |
 | Skillbox overlay template exists | Fresh `make deploy-overlay-template` reported 15 passed, 0 failed for the placeholder template. | Done |
 | CI enforces gates | `.github/workflows/ci.yml` runs backend tests/coverage/CRAP/MMDX/drift/lint/typecheck/migration/deploy/Docker, Swift package tests, and iOS release/build/unit/screenshot gates. Audited run `25410995961` passed. | Done |
-| Original reference-image visual parity | `README.md`, `docs/QUALITY_GATES.md`, and `docs/WORKGRAPH.md` all record that the original image is unavailable in this context. No current artifact can prove visual parity to that image. | Blocked |
+| Original reference-image visual parity | The supplied DogSwipe reference image is now the visual source of truth for the iOS Discover/Matches surfaces: cream/red/mustard vendor-pack chrome, Chicago Classic cards, hotdog-first art, swipe controls, and match/order CTA. | Done |
 | Live production deployment | Deploy contract and preflight are ready, but `deploy/README.md` states live rollout needs a concrete skillbox overlay: host, deploy root, env source, domain, Apple Team ID, health URL, and AASA URL. | Blocked |
 | Hosted universal-link activation | AASA template and entitlement plumbing exist, but hosted verification needs the production domain and Apple Team ID. | Blocked |
 | App Store signing/TestFlight automation | iOS release assets are verified, but signing assets, Apple account ownership, and TestFlight credentials are not available in the repo. | Blocked |
@@ -47,6 +47,10 @@ SwiftUI drift clean, CRAP below 20, and meaningful backend coverage above 80%.
 ## Fresh Verification Output
 
 - `make swift-test`: 33 tests passed.
+- `make ios-build`: generic iOS build passed.
+- `xcodebuild -quiet -project apps/ios/DogSwipe/DogSwipe.xcodeproj -scheme DogSwipe -destination 'platform=iOS Simulator,id=<iPhone 17 Pro simulator UDID>,arch=arm64' -only-testing:DogSwipeTests test`: iOS unit tests passed.
+- `make ios-ui-test`: 5 isolated screenshot UI tests passed.
+- `make ios-screenshots`: 5 PNG attachments exported and inspected.
 - `make coverage`: 75 tests passed; total coverage 89.61%.
 - `make drift`: 0 Swift findings.
 - `make crap`: `FINAL_SCORE: 9.00`.
@@ -55,19 +59,18 @@ SwiftUI drift clean, CRAP below 20, and meaningful backend coverage above 80%.
 - `make deploy-overlay-template`: 15 passed, 0 failed.
 - `make ios-release-assets`: iOS release assets verified.
 - Sweet Potato usage audit: 0 high, 0 medium, 0 low findings.
-- GitHub Actions `25410995961`: `swift-package`, `backend`, and `ios` jobs succeeded.
+- GitHub Actions `25411357013`: `swift-package`, `backend`, and `ios` jobs succeeded on the pre-hardening baseline.
 
 ## Verdict
 
 The repo is production-quality and deploy-ready within the information available
-locally. The full objective is not complete because three requirements need
-external inputs before they can be proven: visual parity to the original image,
-live deployment with hosted universal links, and App Store/TestFlight signing.
+locally. The full objective is not complete because two requirements need
+external inputs before they can be proven: live deployment with hosted universal
+links and App Store/TestFlight signing.
 
 ## Required Inputs To Finish
 
-1. Original image or a written design brief for final visual parity.
-2. DogSwipe skillbox deploy overlay values: host, deploy root, env source,
+1. DogSwipe skillbox deploy overlay values: host, deploy root, env source,
    production domain, Apple Team ID, public health URL, and AASA URL.
-3. Apple signing/TestFlight credentials or an explicit decision to keep
+2. Apple signing/TestFlight credentials or an explicit decision to keep
    TestFlight automation out of scope.

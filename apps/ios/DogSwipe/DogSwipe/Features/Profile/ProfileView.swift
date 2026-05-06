@@ -77,6 +77,7 @@ struct ProfileView: View {
             .navigationTitle("Profile")
             .onAppear {
                 advancedToken = authSessionStore.bearerToken
+                DogSwipeAnalytics.shared.trackScreenViewed(.profile)
             }
             .onChange(of: authSessionStore.bearerToken) {
                 advancedToken = authSessionStore.bearerToken
@@ -96,13 +97,11 @@ struct ProfileView: View {
 
     private var sessionSection: some View {
         VStack(alignment: .leading, spacing: .dsSpace4) {
-            HStack {
-                preferenceLabel(icon: "key.fill", title: "Session")
-                Spacer()
-                Text(sessionStatus)
-                    .font(.headline)
-                    .foregroundStyle(Color.dsMuted)
-            }
+            DogSwipeSectionHeader(
+                title: "Session",
+                subtitle: sessionStatus,
+                systemImage: "key.fill"
+            )
 
             TextField("Email", text: $email)
                 .textInputAutocapitalization(.never)
@@ -180,6 +179,7 @@ struct ProfileView: View {
 
     private var sendMagicLinkButton: some View {
         Button {
+            DogSwipeAnalytics.shared.trackAuthMagicLinkRequested()
             Task {
                 await authSessionStore.requestMagicLink(email: email)
             }
@@ -192,6 +192,7 @@ struct ProfileView: View {
 
     private var verifyMagicLinkButton: some View {
         Button {
+            DogSwipeAnalytics.shared.trackAuthMagicLinkVerifySubmitted()
             Task {
                 await authSessionStore.verifyMagicLink(token: magicLinkToken)
                 magicLinkToken = ""

@@ -54,6 +54,8 @@ Last verified: 2026-05-06
 - iOS registers `dogswipe://auth`, parses returned magic-link tokens from custom-scheme or configured HTTPS universal-link callbacks, and verifies deep links through `AuthSessionStore`.
 - The iOS target includes a hotdog-specific AppIcon catalog, accent color, and `PrivacyInfo.xcprivacy` declaration for linked auth email and precise location data used only for app functionality; `make ios-release-assets` blocks missing icon slots, alpha-channel icons, and privacy manifest drift.
 - `--dogswipe-screenshot-mode` swaps in deterministic hotdog API fixtures, an in-memory token store, a static location provider, and direct initial-tab launches so isolated UI smoke/screenshots cover Discover, Matches, Vendor, Review, and Profile without live auth, location prompts, localhost state, or tab-tap timing.
+- The deterministic Discover and Matches fixtures now use the supplied DogSwipe reference direction: cream/red/mustard street-vendor chrome, Chicago Classic hero cards, a "Swipe right for dogs" control deck, and a match/order detail.
+- `DogSwipeAnalytics` emits a no-PII iOS contract for screen views, discovery swipes, auth submissions, and match/order CTAs; `docs/IOS_ANALYTICS.md` documents the allowed events.
 - `POST /v1/vendor/submissions` stores authenticated vendor hotdog listings as `pending_review`; `GET`/`PUT /v1/vendor/submissions` are user-scoped and the iOS Vendor tab can revise change-requested listings.
 - `POST /v1/vendor/submissions/{id}/ingest-menu` is owner-scoped, stores bounded menu URL snapshot status/excerpt/timestamp fields, and the iOS Vendor tab can refresh and render the snapshot state.
 - `POST /v1/admin/vendor/menus/refresh` is admin-scoped, refreshes stale vendor menu snapshots in bounded batches, reports checked/refreshed/failed counts, and the iOS Admin tab can trigger the refresh.
@@ -65,5 +67,4 @@ Last verified: 2026-05-06
 ## Known Blocks
 
 - Live deployment and hosted universal-link activation are blocked until a skillbox deploy overlay names a host, service, production origin, Apple Team ID, health URL, and AASA URL.
-- Visual parity with the original reference image is blocked because the image is not available in this compacted context.
 - App Store signing and TestFlight automation remain release-slice work because bundle ownership and signing assets are not available in this workspace.

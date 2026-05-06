@@ -33,6 +33,9 @@ struct VendorView: View {
                     await store.load()
                 }
             }
+            .onAppear {
+                DogSwipeAnalytics.shared.trackScreenViewed(.vendor)
+            }
             .dsPageBackground()
             .accessibilityIdentifier("dogswipe.vendor.screen")
         }
