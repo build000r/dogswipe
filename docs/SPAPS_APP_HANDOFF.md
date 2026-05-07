@@ -33,6 +33,27 @@ For public template validation only:
 ALLOW_PLACEHOLDERS=true make spaps-registration-payload
 ```
 
+## Update An Existing App Origin
+
+If the `dogswipe` app already exists and only needs the final HTTPS origin,
+render an idempotent operator handoff instead of creating a second app:
+
+```bash
+DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN=<dogswipe-api-domain> \
+make spaps-origin-handoff > /tmp/dogswipe-spaps-origin.sql.txt
+```
+
+The output contains a read-only check and a transaction that merges the required
+origin into `applications.allowed_origins` while preserving existing origins.
+It does not contain SPAPS keys or database passwords. Review it, apply it from
+the SPAPS production host, then rerun release readiness with the same origin.
+
+For public template validation only:
+
+```bash
+ALLOW_PLACEHOLDERS=true make spaps-origin-handoff-template
+```
+
 ## Create The SPAPS App
 
 Authenticate to the SPAPS self-service console with the private password, then
@@ -83,6 +104,7 @@ Run the non-secret gates from this repo:
 
 ```bash
 make spaps-app-contract
+make spaps-origin-handoff-template
 make deploy-release-readiness
 ```
 

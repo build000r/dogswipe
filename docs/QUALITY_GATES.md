@@ -36,7 +36,7 @@ Last verified: 2026-05-06
 | iOS signing/TestFlight probe | `xcodebuild archive` with automatic signing; `xcodebuild -exportArchive` with App Store Connect export options | development-signed archive works for team `84GGQ3RBDZ`; App Store export is blocked until a usable Apple Distribution certificate/profile and App Store Connect account/API-key path are available |
 | CRAP score | `make crap` | `FINAL_SCORE: 9.00` |
 | MMDX preflight | `make mmdx-preflight` | 3 charts passed |
-| SPAPS app contract | `make spaps-app-contract` | public descriptor declares the `dogswipe` slug, env-only private key handoff, and renderable `browser_auth` self-service registration payload |
+| SPAPS app contract | `make spaps-app-contract` | public descriptor declares the `dogswipe` slug, env-only private key handoff, renderable `browser_auth` self-service registration payload, and no-secret origin-update handoff check |
 | CI quality enforcement | GitHub Actions `25477024730` for pushed `main` commit `dbd2656` | coverage XML feeds blocking CRAP; MMDX, SPAPS app contract, registration-payload validation, SwiftUI drift, deploy/AASA render, private handoff renderers, host bootstrap, DNS handoff template, DNS preflight template, live-readiness template, release-readiness, Docker build, conditional Docker publish, Swift package, durable order API/client changes, and iOS gates fail on regressions; `backend`, `swift-package`, and `ios` jobs all passed |
 | SPAPS usage audit | `python3 ../sweet-potato/skills/sweet-potato-usage-audit/scripts/audit_sweet_potato_usage.py --sweet-potato-root ../sweet-potato .` | 0 high, 0 medium, 0 low |
 
@@ -47,6 +47,7 @@ Last verified: 2026-05-06
 - `DogSwipeAPIClient` can attach a trimmed user bearer token from an injected provider and omits blank auth values.
 - `spaps.app.json` gives the SPAPS CLI and release handoff a non-secret `dogswipe` application descriptor while requiring private env values for the raw application ID, server secret key, and publishable key.
 - `make spaps-registration-payload` renders the non-secret Sweet Potato self-service application body with the supported `browser_auth` blueprint, HTTPS magic-link redirects, universal-link hosts, and native DogSwipe metadata.
+- `make spaps-origin-handoff` renders an idempotent no-secret operator SQL handoff to merge the release HTTPS origin into the existing `dogswipe` SPAPS app.
 - `SPAPSAuthClient` requests and verifies magic links with a publishable key, optional native origin, and `dogswipe://auth` redirect URL, never a secret SPAPS API key.
 - `AuthSessionStore` can request SPAPS magic links with a configured HTTPS universal-link redirect URL, and `AuthDeepLink` only accepts universal auth callbacks from configured hosts.
 - The iOS target includes `DogSwipe.entitlements` with `applinks:$(DOGSWIPE_ASSOCIATED_DOMAIN)`, and `make ios-release-assets` verifies the entitlement, build settings, Info.plist keys, AASA template, and App Store Connect export/upload option plists together.

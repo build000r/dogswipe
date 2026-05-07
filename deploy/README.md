@@ -132,6 +132,17 @@ DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN=<domain> \
 make spaps-registration-payload > /tmp/dogswipe-spaps-application.json
 ```
 
+If the `dogswipe` SPAPS app already exists and only needs the final production
+origin, render the no-secret origin update handoff instead:
+
+```bash
+DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN=<domain> \
+make spaps-origin-handoff > /tmp/dogswipe-spaps-origin.sql.txt
+```
+
+Review and apply that handoff from the SPAPS production host. It appends the
+required HTTPS origin idempotently and preserves existing allowed origins.
+
 ## Production Env
 
 Create `deploy/prod.env` from `deploy/prod.env.example` on the deployment host,

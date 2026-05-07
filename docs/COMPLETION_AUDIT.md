@@ -22,7 +22,7 @@ SwiftUI drift clean, CRAP below 20, and meaningful backend coverage above 80%.
 | Shared Swift domain package exists | `packages/DogSwipeCore`; fresh `make swift-test` ran 35 tests, all passed. | Done |
 | Sweet Potato Python starter exists | `backend/pyproject.toml` depends on `spaps-server-quickstart~=0.5.1`; FastAPI app lives under `backend/src/dogswipe_backend`. | Done |
 | SPAPS auth alignment | iOS `SPAPSAuthClient`, Keychain-backed `AuthSessionStore`, backend SPAPS/local identity boundary, and Sweet Potato usage audit with 0 findings. | Done |
-| SPAPS app public contract | `spaps.app.json` declares the `dogswipe` application slug, native/universal auth handoff env names, and no raw app ID or SPAPS keys; `make spaps-app-contract` verifies the descriptor and renderable `browser_auth` self-service registration payload. | Done |
+| SPAPS app public contract | `spaps.app.json` declares the `dogswipe` application slug, native/universal auth handoff env names, and no raw app ID or SPAPS keys; `make spaps-app-contract` verifies the descriptor, renderable `browser_auth` self-service registration payload, and no-secret SPAPS origin handoff. | Done |
 | Private SPAPS registration values | Ignored `.env.dogswipe.spaps` exists in this workspace with non-placeholder application ID, server key, publishable key, SPAPS API URL, and DogSwipe origin values; variable names were inspected without printing values. | Done locally |
 | Product corrected to local hotdogs | `README.md`, `docs/VISION.md`, backend seed/contracts, Swift models, iOS Discover/Matches/Orders/Vendor/Review/Profile copy and fixtures. | Done |
 | Swipe-first discovery loop | Discovery cards, drag-to-like/pass/superlike gestures, swipe action buttons, undo, matches, selectable match add-ons, durable order draft confirmation, My Orders, menu search, preferences, location-aware distance/walk estimates, visible directions/route-preview controls, and route previews are implemented and tested. | Done |
@@ -71,6 +71,7 @@ SwiftUI drift clean, CRAP below 20, and meaningful backend coverage above 80%.
 - `make mmdx-preflight`: 3 charts passed.
 - `make spaps-app-contract`: public SPAPS app descriptor and registration-payload renderer verified without raw app ID or keys.
 - `ALLOW_PLACEHOLDERS=true make spaps-registration-payload`: rendered a non-secret Sweet Potato self-service application payload for the `dogswipe` slug.
+- `ALLOW_PLACEHOLDERS=true make spaps-origin-handoff-template`: rendered an idempotent no-secret SQL/psql operator handoff to merge the release HTTPS origin into the existing `dogswipe` SPAPS app.
 - SPAPS blueprint compile smoke: rendered payload compiled against the current `spaps_server_quickstart` application blueprint registry with `browser_auth`.
 - CI `make deploy-preflight`: 18 passed, 1 expected warning for the absent runner-local `reverse-proxy` network, 0 failed.
 - `make deploy-render-aasa AASA_APPLE_TEAM_ID=ABCDE12345`: rendered the bundle-aware Apple app-site association payload.
