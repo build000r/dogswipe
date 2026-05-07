@@ -67,6 +67,6 @@ The next ready work is to add `https://dogswipe.buildooor.com` to the DogSwipe S
 
 - Public repository: https://github.com/build000r/dogswipe
 - First pushed commit: `dbf880b`
-- Recent audited commit: `eac526b`
+- Recent audited commit: `fbc3d94`
 - Recent published backend image evidence: `ghcr.io/build000r/dogswipe:ba9df2bf382fb24597d916e2212ce8522392a016`
-- Latest main CI evidence: GitHub Actions `25477024730` passed `backend`, `swift-package`, and `ios` for `dbd2656`; the current full-SHA backend image remains `ba9df2b` because the latest push did not change backend-image inputs.
+- Latest main CI evidence: GitHub Actions `25480313906` passed `backend`, `swift-package`, and `ios` for `fbc3d94`; the currently running production backend image remains `ba9df2b` until a separate pinned-image rollout changes it.
