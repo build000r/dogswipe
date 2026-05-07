@@ -9,7 +9,7 @@ Status key: `done`, `active`, `ready`, `blocked`.
 | WG-003 iOS shell | done | WG-002 | `apps/ios/DogSwipe/**` | XcodeGen project builds for generic iOS destination |
 | WG-004 Python starter | done | WG-001 | `backend/**`, `docker-compose.yml` | FastAPI discovery/swipe API passes tests with coverage above 80 |
 | WG-005 Quality gates | done | WG-002, WG-003, WG-004 | `.drift/**`, coverage artifacts | drift scan and CRAP score meet target gates |
-| WG-006 Public repo + deploy | blocked | WG-005 | git remote, deployment overlay | public GitHub repo exists and the internal production stack is healthy, but public deploy remains blocked until DNS, SPAPS origin alignment, reverse-proxy routing, and AASA hosting exist |
+| WG-006 Public repo + deploy | done | WG-005 | git remote, deployment overlay | public GitHub repo exists, the internal production stack is healthy, `dogswipe.buildooor.com` serves through the Worker edge, hosted AASA passes, and the live SPAPS app allows the same HTTPS origin |
 | WG-007 iOS API bridge | done | WG-002, WG-003, WG-004 | `packages/DogSwipeCore/**`, `apps/ios/DogSwipe/**` | iOS app has a tested API client and view models that call backend discovery, swipe, and match routes |
 | WG-008 Local backend runtime | done | WG-004 | `backend/**`, `.env.example`, `docker-compose.yml` | Fresh local PostgreSQL can be schema-created and seeded through explicit local-only settings |
 | WG-009 Backend-owned user identity | done | WG-004, WG-007 | `backend/**`, `packages/DogSwipeCore/**`, `apps/ios/DogSwipe/**` | User-scoped routes derive identity from SPAPS/local backend context instead of accepting app-supplied `user_id` payloads |
@@ -56,17 +56,17 @@ Status key: `done`, `active`, `ready`, `blocked`.
 
 ## Ready Frontier
 
-The next ready work is to add `https://dogswipe.buildooor.com` to the DogSwipe SPAPS app allowed origins, rerun release readiness against that origin, and then run the signed TestFlight handoff with private Apple credentials. The production host has the private env rendered, `DOGSWIPE_IMAGE` pinned to the current GHCR full-SHA tag, Alembic migrations applied through `0009`, Postgres, Redis, and the DogSwipe API running healthy internally. The public Worker edge serves health and AASA from `dogswipe.buildooor.com`, and unauthenticated protected API routes return `401` as expected. The current Sweet Potato self-service routes support app create/list/get/rotate/delete but not editing an existing app's origins, so SPAPS origin alignment still needs an operator-side change. Product work can also continue into payment/fulfillment beyond durable drafts, full route persistence or turn-by-turn navigation if lightweight previews prove insufficient, and broader crawler-backed menu indexing if bounded snapshot search proves insufficient.
+The next ready work is the signed TestFlight handoff with private Apple credentials. The production host has the private env rendered, `DOGSWIPE_IMAGE` pinned to the current GHCR full-SHA tag, Alembic migrations applied through `0009`, Postgres, Redis, and the DogSwipe API running healthy internally. The public Worker edge serves health and AASA from `dogswipe.buildooor.com`, unauthenticated protected API routes return `401` as expected, and the live SPAPS app now allows `https://dogswipe.buildooor.com`. Product work can also continue into payment/fulfillment beyond durable drafts, full route persistence or turn-by-turn navigation if lightweight previews prove insufficient, and broader crawler-backed menu indexing if bounded snapshot search proves insufficient.
 
 ## Risks
 
-- Production SPAPS auth proof is blocked until the live `dogswipe` SPAPS app includes `https://dogswipe.buildooor.com` in allowed origins. A read-only production SPAPS metadata check confirms the origin is still missing, and the current Sweet Potato self-service routes do not provide an edit-origin operation for that existing app. The private `skillbox-config` repo has a durable DogSwipe overlay, the production host has the private DogSwipe env rendered, the database migrated, the API running healthy internally, and the public Worker edge serving health/AASA. Native auth remains weak until the operator-side SPAPS origin update is applied.
-- Live App Store/TestFlight submission remains blocked until signing assets, bundle ownership, and App Store Connect API credentials are known.
+- Full native auth proof still depends on a signed TestFlight/App Store build exercising the universal-link return on device, but the production SPAPS origin list is now aligned with the public Worker host.
+- Live App Store/TestFlight submission remains blocked until App Store Connect API issuer/upload access or an interactive Xcode Organizer upload path is completed.
 
 ## Remote Checkpoint
 
 - Public repository: https://github.com/build000r/dogswipe
 - First pushed commit: `dbf880b`
-- Recent audited commit: `fbc3d94`
+- Recent audited commit: `07cac9d`
 - Recent published backend image evidence: `ghcr.io/build000r/dogswipe:ba9df2bf382fb24597d916e2212ce8522392a016`
-- Latest main CI evidence: GitHub Actions `25480313906` passed `backend`, `swift-package`, and `ios` for `fbc3d94`; the currently running production backend image remains `ba9df2b` until a separate pinned-image rollout changes it.
+- Latest main CI evidence: GitHub Actions `25480814180` passed `backend`, `swift-package`, and `ios` for `07cac9d`; the currently running production backend image remains `ba9df2b` until a separate pinned-image rollout changes it.

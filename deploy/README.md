@@ -56,7 +56,8 @@ deploy Workers/custom domains but cannot edit ordinary DNS records. The Worker
 subrequests a scoped DogSwipe origin path on `api.sweetpotato.dev`, avoiding
 bare-IP Worker fetches and keeping the origin behind the existing Cloudflare-only
 firewall posture. The SPAPS app allowed origins and release env must still
-include `https://dogswipe.buildooor.com` before native auth is live-ready.
+stay aligned with `https://dogswipe.buildooor.com`; the 2026-05-07 production
+metadata check confirms the live `dogswipe` SPAPS app now includes that origin.
 
 For a direct A-record rollout, render and prove the DNS handoff before the live
 Compose rollout:
@@ -163,6 +164,9 @@ make spaps-origin-handoff > /tmp/dogswipe-spaps-origin.sql.txt
 
 Review and apply that handoff from the SPAPS production host. It appends the
 required HTTPS origin idempotently and preserves existing allowed origins.
+For the current `dogswipe.buildooor.com` release host, that operator update was
+applied on 2026-05-07; rerun the handoff only if the canonical release origin
+changes.
 
 ## Production Env
 
@@ -363,11 +367,9 @@ without committing or printing secrets.
 
 The internal production Compose rollout and public Worker edge are running:
 `https://dogswipe.buildooor.com/health` and the hosted Apple app-site association
-payload pass public verification. Live readiness should not be marked complete
-until the DogSwipe SPAPS application allows the same HTTPS origin and Apple
-distribution signing/upload is available. The current Sweet Potato self-service
-API does not expose an edit-origin operation for an existing app, so the SPAPS
-origin update remains an operator-side action. The repo can prove the container,
-migration, Worker edge, universal-link asset template/render path, and Compose
-contract; it cannot prove SPAPS database mutation approval, Apple account
-ownership, or production secrets by itself.
+payload pass public verification, and the live DogSwipe SPAPS application allows
+the same HTTPS origin. Live readiness is now blocked on Apple distribution
+upload confirmation, not on backend, edge, DNS, AASA, or SPAPS origin alignment.
+The repo can prove the container, migration, Worker edge, SPAPS origin metadata,
+universal-link asset template/render path, and Compose contract; it cannot prove
+Apple account ownership or production secrets by itself.

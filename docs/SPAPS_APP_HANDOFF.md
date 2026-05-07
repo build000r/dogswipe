@@ -48,6 +48,9 @@ The output contains a read-only check and a transaction that merges the required
 origin into `applications.allowed_origins` while preserving existing origins.
 It does not contain SPAPS keys or database passwords. Review it, apply it from
 the SPAPS production host, then rerun release readiness with the same origin.
+The current production origin, `https://dogswipe.buildooor.com`, was applied to
+the live `dogswipe` SPAPS app on 2026-05-07. Repeat this handoff only when the
+release origin changes.
 
 For public template validation only:
 
