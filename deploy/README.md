@@ -330,7 +330,10 @@ at the canonical production domain, that domain resolves publicly, SPAPS allows
 the same HTTPS origin, and the shared reverse proxy serves both `/health` and
 the Apple app-site association payload over a valid certificate. The current
 `dogswipe.buildooor.com` candidate still has no A record, and the discovered
-Cloudflare credentials can read the active zone but cannot edit DNS. The repo
-can prove the container, migration, universal-link asset template/render path,
-staged proxy config, and Compose contract; it cannot prove DNS, certificates,
-Apple account ownership, or production secrets by itself.
+Cloudflare credentials can read the active zone but cannot edit DNS. The live
+DogSwipe SPAPS app also still needs the same HTTPS origin, and the current
+Sweet Potato self-service API does not expose an edit-origin operation for an
+existing app. The repo can prove the container, migration, universal-link asset
+template/render path, staged proxy config, and Compose contract; it cannot
+prove DNS, certificates, SPAPS operator updates, Apple account ownership, or
+production secrets by itself.
