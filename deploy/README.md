@@ -198,15 +198,16 @@ layout and copy only non-secret deploy artifacts:
 DOGSWIPE_DEPLOY_ROOT=/opt/dogswipe \
 DOGSWIPE_ENV_FILE=/opt/envs/dogswipe/prod.env \
 DOGSWIPE_STORAGE_ROOT=/mnt/volume_nyc3_cfo_v1 \
+DOGSWIPE_REVERSE_PROXY_STATIC_ROOT=/opt/sweet-potato/deploy/reverse-proxy/static/dogswipe \
 bash deploy/bootstrap-host.sh
 ```
 
 Dry-run is the default. Run the same command with `--apply` on the deployment
 host after confirming the resolved paths. The script creates the deploy root,
-env-file parent directory, PostgreSQL data directory, AASA web path, and copies
-the Compose file, env template, pre/post deploy scripts, AASA renderer/template,
-and reverse-proxy template into the deploy root. It never writes secrets and
-warns if the private production env file is still absent.
+env-file parent directory, PostgreSQL data directory, reverse-proxy static AASA
+path, and copies the Compose file, env template, pre/post deploy scripts, AASA
+renderer/template, and reverse-proxy template into the deploy root. It never
+writes secrets and warns if the private production env file is still absent.
 
 `make deploy-host-bootstrap-template` exercises the bootstrap contract against a
 temporary directory and is safe for CI.
@@ -214,7 +215,10 @@ temporary directory and is safe for CI.
 On `sweet-potato-prod`, bootstrap has already installed the non-secret deploy
 artifacts, created the env directory, and prepared the PostgreSQL data path. The
 current API, Postgres, and Redis containers are running healthy internally after
-Alembic migrations.
+Alembic migrations. The DogSwipe site config is staged in the shared proxy's
+`sites-available` directory and the rendered AASA payload is installed under
+the nginx static mount, but the site is not enabled until DNS and certificates
+are ready.
 
 ## Universal Links
 
@@ -237,8 +241,10 @@ make deploy-render-aasa
 ```
 
 The rendered payload is written to `.build/aasa/apple-app-site-association` by
-default. Copy that payload to the web root expected by the reverse-proxy
-template. The reverse proxy serves the rendered file from both:
+default. Copy that payload to the host path mounted by the shared reverse proxy,
+for example `/opt/sweet-potato/deploy/reverse-proxy/static/dogswipe/apple-app-site-association`.
+Inside the nginx container the DogSwipe site reads it from
+`/var/www/static/dogswipe/apple-app-site-association` and serves it from both:
 
 - `https://<domain>/.well-known/apple-app-site-association`
 - `https://<domain>/apple-app-site-association`
@@ -326,5 +332,5 @@ the Apple app-site association payload over a valid certificate. The current
 `dogswipe.buildooor.com` candidate still has no A record, and the discovered
 Cloudflare credentials can read the active zone but cannot edit DNS. The repo
 can prove the container, migration, universal-link asset template/render path,
-and Compose contract; it cannot prove DNS, certificates, Apple account
-ownership, or production secrets by itself.
+staged proxy config, and Compose contract; it cannot prove DNS, certificates,
+Apple account ownership, or production secrets by itself.

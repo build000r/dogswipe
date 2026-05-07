@@ -47,11 +47,11 @@ SwiftUI drift clean, CRAP below 20, and meaningful backend coverage above 80%.
 | Private deploy handoff renderers | `deploy/render-prod-env.py` and `deploy/render-skillbox-overlay.py` write private output paths only, set owner-only permissions, validate required fields, and are covered by `make deploy-private-handoff-template`. | Done |
 | Private release-readiness probe | A non-repo overlay using `dogswipe.build000r.com`, the ignored SPAPS publishable key, `IOS_RELEASE_DEVELOPMENT_TEAM=84GGQ3RBDZ`, and HTTPS universal-link auth values passed `make deploy-release-readiness` before the DNS gate was added. Current release-readiness can include DNS with `CHECK_DNS=true` once the canonical domain is live. | Done locally |
 | SPAPS live app metadata | The ignored DogSwipe SPAPS handoff key can read `/api/admin/apps` with a curl-like user agent. The registered app slug is `dogswipe`, but the live allowed-origin list currently includes the earlier `dogswipe.build000r.com` candidate and does not include `dogswipe.buildooor.com`. | Blocked |
-| Production host readiness | Private `/opt/envs/dogswipe/prod.env` is installed with owner-only permissions; `DOGSWIPE_IMAGE` is pinned to `ghcr.io/build000r/dogswipe:ba9df2bf382fb24597d916e2212ce8522392a016`; Alembic migrations applied through `0009`; Postgres, Redis, and the API container are running healthy internally; unauthenticated discovery returns `401` as expected with SPAPS auth enabled. Reverse-proxy activation, AASA install, certificates, and public DNS are still pending. | Partially done |
+| Production host readiness | Private `/opt/envs/dogswipe/prod.env` is installed with owner-only permissions; `DOGSWIPE_IMAGE` is pinned to `ghcr.io/build000r/dogswipe:ba9df2bf382fb24597d916e2212ce8522392a016`; Alembic migrations applied through `0009`; Postgres, Redis, and the API container are running healthy internally; proxy config is staged in `sites-available`; AASA payload is valid and visible inside the nginx static mount; unauthenticated discovery returns `401` as expected with SPAPS auth enabled. Reverse-proxy enablement, certificates, and public DNS are still pending. | Partially done |
 | Production DNS readiness | `dogswipe.build000r.com` did not resolve and `https://dogswipe.build000r.com/health` returned HTTP `000` during the probe. Fresh DNS checks showed `build000r.com` itself has no public NS/SOA response, while `buildooor.com` is an active Cloudflare zone but has no `dogswipe` record. A later no-secret credential probe found a stale local `CLOUDFLARE_API_TOKEN` rejected with `401`; logged-in Wrangler OAuth could read the zone but DNS writes failed with `403`; and a constrained `build000r/buildooor` GitHub Actions DNS upsert using that repo's existing Cloudflare secret also failed with `403`. | Blocked |
 | CI enforces gates | `.github/workflows/ci.yml` runs backend tests/coverage/CRAP/MMDX/SPAPS-contract/drift/lint/typecheck/migration/deploy/AASA-render/private-handoff/host-bootstrap/DNS-handoff-template/DNS-preflight-template/live-readiness-template/release-readiness/Docker build and conditional GHCR publish, Swift package tests, and iOS release/build/unit/screenshot gates. Pushed main run `25475523292` passed `backend`, `swift-package`, and `ios` for `ba9df2b`, including the DNS handoff template gate. | Done |
 | Original reference-image visual parity | The supplied DogSwipe reference image is now the visual source of truth for the iOS Discover/Matches/Orders surfaces: cream/red/mustard vendor-pack chrome, Chicago Classic cards, hotdog-first art, swipe controls, wrapped chips/add-ons, match/order CTA, and My Orders cards. | Done |
-| Live production deployment | The internal production Compose stack is running healthy with the private env and current GHCR image. Public live deployment remains blocked until DNS resolves, the SPAPS origin list matches the canonical host, the reverse proxy serves the API and AASA payload, and public health/AASA checks pass. | Blocked |
+| Live production deployment | The internal production Compose stack is running healthy with the private env and current GHCR image, and proxy/AASA artifacts are staged. Public live deployment remains blocked until DNS resolves, the SPAPS origin list matches the canonical host, certificates exist, the staged reverse proxy is enabled, and public health/AASA checks pass. | Blocked |
 | Hosted universal-link activation | Bundle-aware AASA template, local render target, and entitlement plumbing exist, but hosted verification needs the production domain and Apple Team ID. | Blocked |
 | App Store signing/TestFlight handoff | The iOS release archive/export/upload Make targets, build-setting-backed production auth/link configuration, App Store Connect export option plists, and secret ignore rules exist. A local signed-archive probe succeeded with Apple development signing for team `84GGQ3RBDZ`, but App Store export failed because this workspace lacks a usable Apple Distribution certificate/profile and App Store Connect account/API-key path. | Blocked |
 | Process-only orchestration requests | Repo artifacts show planning, workgraph, docs, gates, deploy, and quality evidence. Swarm/model-specific execution details are not independently verifiable from the current repo state and are not app runtime deliverables. | Weak evidence |
@@ -101,6 +101,8 @@ SwiftUI drift clean, CRAP below 20, and meaningful backend coverage above 80%.
 - Host-side deploy preflight against `/opt/envs/dogswipe/prod.env`: passed with 19 passed, 0 warnings, 0 failed on the production host; `docker network ls` confirms the shared `reverse-proxy` network exists.
 - Production host internal rollout on 2026-05-06: pulled `ghcr.io/build000r/dogswipe:ba9df2bf382fb24597d916e2212ce8522392a016`, ran Alembic migrations through `0009`, started Postgres/Redis/API, and verified internal `/health` returned HTTP 200 with `database_ready:true` and version `ba9df2bf382fb24597d916e2212ce8522392a016`.
 - Production auth boundary probe on 2026-05-06: unauthenticated `GET /v1/discovery?limit=1` returned HTTP 401, which is expected with `SPAPS_AUTH_ENABLED=true`.
+- Private overlay persistence on 2026-05-06: rendered and validated the private `skillbox-config` DogSwipe overlay with 15 passed, 0 failed, then committed and pushed private `skillbox-config` commit `0630348`.
+- Reverse-proxy/AASA staging on 2026-05-06: corrected the DogSwipe nginx template to read AASA from `/var/www/static/dogswipe/apple-app-site-association`, staged `sites-available/dogswipe.conf` without enabling it, installed the rendered AASA payload under the nginx static mount, verified `nginx -t` still passes, and verified the payload includes `84GGQ3RBDZ.com.build000r.dogswipe`.
 - Current DNS preflight after bootstrap: `DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN=dogswipe.buildooor.com DOGSWIPE_EXPECTED_A_RECORD=104.131.188.214 make deploy-dns-preflight` still fails at `domain has no A/AAAA record: dogswipe.buildooor.com`.
 - iOS signing probe on 2026-05-06: `xcodebuild archive` succeeded for `com.build000r.dogswipe` with automatic Apple development signing under team `84GGQ3RBDZ`, proving bundle/team provisioning is reachable locally.
 - App Store export probe on 2026-05-06: `xcodebuild -exportArchive` with the App Store Connect export options failed before upload because no usable App Store account/distribution signing path is available in this workspace.
@@ -110,12 +112,12 @@ SwiftUI drift clean, CRAP below 20, and meaningful backend coverage above 80%.
 The repo is production-quality and the internal production backend is running.
 Private SPAPS application values are present in an ignored local env file, the
 private release-readiness gate passes without printing secrets, the production
-host has its private DogSwipe env installed, and CI publishes pullable GHCR
-images for backend-image-changing `main` pushes. The full objective is not
-complete because public deployment still needs a DNS edit-capable Cloudflare
-token or a manual DNS record, SPAPS allowed-origin alignment,
-reverse-proxy/AASA activation, public URL proof, and live App Store/TestFlight
-signing/upload inputs.
+host has its private DogSwipe env installed, proxy/AASA artifacts are staged,
+and CI publishes pullable GHCR images for backend-image-changing `main` pushes.
+The full objective is not complete because public deployment still needs a DNS
+edit-capable Cloudflare token or a manual DNS record, SPAPS allowed-origin
+alignment, certificate-backed proxy enablement, public URL proof, and live App
+Store/TestFlight signing/upload inputs.
 
 ## Required Inputs To Finish
 
@@ -127,14 +129,10 @@ signing/upload inputs.
    manual `A dogswipe.buildooor.com -> 104.131.188.214` record. If
    `dogswipe.buildooor.com` stays canonical, the SPAPS app allowed origins also
    need that HTTPS origin before native publishable-key auth is live-ready.
-2. Reverse proxy and AASA activation on `sweet-potato-prod`: point the shared
-   proxy at the already-running DogSwipe API, install the signed
-   Apple app-site association payload for the canonical domain, and run public
-   health/AASA verification after DNS and certificates are live.
-3. A private, durable skillbox overlay file checked into the private
-   `skillbox-config` overlay source, not this public repo. The temporary
-   non-repo overlay validates, but it is not a persistent production contract.
-4. Apple distribution signing/TestFlight credentials to export and upload the
+2. Certificate-backed proxy enablement on `sweet-potato-prod`: after DNS
+   resolves, issue/link the certificate, enable the staged DogSwipe proxy site,
+   reload nginx, and run public health/AASA verification.
+3. Apple distribution signing/TestFlight credentials to export and upload the
    already-archiveable iOS app: either sign in through Xcode Organizer with a
    usable Apple Distribution certificate/profile or provide App Store Connect API
    key inputs for `make ios-testflight-upload`.

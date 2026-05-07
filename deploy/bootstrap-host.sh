@@ -15,6 +15,8 @@ Environment:
   DOGSWIPE_ENV_FILE             default: /opt/envs/dogswipe/prod.env
   DOGSWIPE_STORAGE_ROOT         default: /mnt/volume_nyc3_cfo_v1
   DOGSWIPE_POSTGRES_DATA        default: $DOGSWIPE_STORAGE_ROOT/dogswipe/pgdata
+  DOGSWIPE_REVERSE_PROXY_STATIC_ROOT
+                                default: /opt/sweet-potato/deploy/reverse-proxy/static/dogswipe
   DOGSWIPE_INSTALL_AASA         default: false
   AASA_RENDER_PATH              default: .build/aasa/apple-app-site-association
 EOF
@@ -47,6 +49,7 @@ deploy_root="${DOGSWIPE_DEPLOY_ROOT:-/opt/dogswipe}"
 env_file="${DOGSWIPE_ENV_FILE:-/opt/envs/dogswipe/prod.env}"
 storage_root="${DOGSWIPE_STORAGE_ROOT:-/mnt/volume_nyc3_cfo_v1}"
 postgres_data="${DOGSWIPE_POSTGRES_DATA:-$storage_root/dogswipe/pgdata}"
+reverse_proxy_static_root="${DOGSWIPE_REVERSE_PROXY_STATIC_ROOT:-/opt/sweet-potato/deploy/reverse-proxy/static/dogswipe}"
 aasa_render_path="${AASA_RENDER_PATH:-.build/aasa/apple-app-site-association}"
 install_aasa="${DOGSWIPE_INSTALL_AASA:-false}"
 
@@ -115,6 +118,7 @@ require_absolute_path "DOGSWIPE_DEPLOY_ROOT" "$deploy_root"
 require_absolute_path "DOGSWIPE_ENV_FILE" "$env_file"
 require_absolute_path "DOGSWIPE_STORAGE_ROOT" "$storage_root"
 require_absolute_path "DOGSWIPE_POSTGRES_DATA" "$postgres_data"
+require_absolute_path "DOGSWIPE_REVERSE_PROXY_STATIC_ROOT" "$reverse_proxy_static_root"
 
 echo "Running DogSwipe host bootstrap ($([[ "$apply" == "true" ]] && echo apply || echo dry-run))"
 
@@ -124,6 +128,7 @@ ensure_dir "$deploy_root/deploy/reverse-proxy" 0755
 ensure_dir "$deploy_root/.well-known" 0755
 ensure_dir "$(dirname "$env_file")" 0700
 ensure_dir "$postgres_data" 0700
+ensure_dir "$reverse_proxy_static_root" 0755
 
 install_artifact "$repo_root/deploy/docker-compose.prod.yml" "$deploy_root/deploy/docker-compose.prod.yml"
 install_artifact "$repo_root/deploy/prod.env.example" "$deploy_root/deploy/prod.env.example"
@@ -139,6 +144,7 @@ if is_true "$install_aasa"; then
   fi
   install_artifact "$aasa_render_path" "$deploy_root/.well-known/apple-app-site-association"
   install_artifact "$aasa_render_path" "$deploy_root/apple-app-site-association"
+  install_artifact "$aasa_render_path" "$reverse_proxy_static_root/apple-app-site-association"
 else
   warn "AASA payload install skipped; set DOGSWIPE_INSTALL_AASA=true after rendering a production payload"
 fi

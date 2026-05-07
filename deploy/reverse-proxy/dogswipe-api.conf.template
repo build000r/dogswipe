@@ -38,13 +38,13 @@ server {
 
     location = /.well-known/apple-app-site-association {
         default_type application/json;
-        alias /var/www/dogswipe/apple-app-site-association;
+        alias /var/www/static/dogswipe/apple-app-site-association;
         add_header Cache-Control "public, max-age=3600" always;
     }
 
     location = /apple-app-site-association {
         default_type application/json;
-        alias /var/www/dogswipe/apple-app-site-association;
+        alias /var/www/static/dogswipe/apple-app-site-association;
         add_header Cache-Control "public, max-age=3600" always;
     }
 

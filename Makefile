@@ -419,13 +419,15 @@ deploy-host-bootstrap-template:
 	DOGSWIPE_DEPLOY_ROOT="$$tmp/opt/dogswipe" \
 	DOGSWIPE_ENV_FILE="$$tmp/opt/envs/dogswipe/prod.env" \
 	DOGSWIPE_STORAGE_ROOT="$$tmp/mnt/volume_nyc3_cfo_v1" \
+	DOGSWIPE_REVERSE_PROXY_STATIC_ROOT="$$tmp/opt/sweet-potato/deploy/reverse-proxy/static/dogswipe" \
 	bash deploy/bootstrap-host.sh --apply; \
 	test -f "$$tmp/opt/dogswipe/deploy/docker-compose.prod.yml"; \
 	test -f "$$tmp/opt/dogswipe/deploy/pre-deploy-checks.sh"; \
 	test -f "$$tmp/opt/dogswipe/deploy/post-deploy-verify.sh"; \
 	test -f "$$tmp/opt/dogswipe/deploy/reverse-proxy/dogswipe-api.conf.template"; \
 	test -d "$$tmp/opt/envs/dogswipe"; \
-	test -d "$$tmp/mnt/volume_nyc3_cfo_v1/dogswipe/pgdata"
+	test -d "$$tmp/mnt/volume_nyc3_cfo_v1/dogswipe/pgdata"; \
+	test -d "$$tmp/opt/sweet-potato/deploy/reverse-proxy/static/dogswipe"
 
 deploy-post-verify:
 	bash deploy/post-deploy-verify.sh
