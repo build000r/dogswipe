@@ -59,13 +59,13 @@ The next ready work is to make the public edge real: grant a Cloudflare token DN
 
 ## Risks
 
-- Live deploy, production SPAPS auth proof, and hosted universal links are blocked until a real canonical domain, SPAPS allowed-origin alignment, certificate issuance, and proxy enablement exist. The current private handoff points at `dogswipe.build000r.com`, but `build000r.com` has no public NS/SOA response; `buildooor.com` is an active Cloudflare zone, but `dogswipe.buildooor.com` still has no A record. The local env-manager token is stale, logged-in Wrangler OAuth can read the zone but cannot edit DNS, and the existing `build000r/buildooor` Cloudflare secret also failed a constrained DNS upsert with `403`. The private `skillbox-config` repo now has a durable DogSwipe overlay, and the production host has the private DogSwipe env rendered, the database migrated, the API running healthy internally, and proxy/AASA artifacts staged, but it still lacks public DNS, a public certificate, and an enabled proxy site.
+- Live deploy, production SPAPS auth proof, and hosted universal links are blocked until a real canonical domain, SPAPS allowed-origin alignment, certificate issuance, and proxy enablement exist. The current private handoff points at `dogswipe.build000r.com`, but `build000r.com` has no public NS/SOA response; `buildooor.com` is an active Cloudflare zone, but `dogswipe.buildooor.com` still has no A record. The local env-manager token is stale, logged-in Wrangler OAuth can read the zone but cannot edit DNS records, and the existing `build000r/buildooor` Cloudflare secret also failed a constrained DNS upsert with `403`. A read-only production SPAPS metadata check confirms the live `dogswipe` app still lacks `https://dogswipe.buildooor.com` in allowed origins. The private `skillbox-config` repo now has a durable DogSwipe overlay, and the production host has the private DogSwipe env rendered, the database migrated, the API running healthy internally, and proxy/AASA artifacts staged, but it still lacks public DNS, a public certificate, and an enabled proxy site.
 - Live App Store/TestFlight submission remains blocked until signing assets, bundle ownership, and App Store Connect API credentials are known.
 
 ## Remote Checkpoint
 
 - Public repository: https://github.com/build000r/dogswipe
 - First pushed commit: `dbf880b`
-- Recent audited commit: `ba9df2b`
+- Recent audited commit: `db10d8a`
 - Recent published backend image evidence: `ghcr.io/build000r/dogswipe:ba9df2bf382fb24597d916e2212ce8522392a016`
-- Latest main CI evidence: GitHub Actions `25475523292` passed `backend`, `swift-package`, and `ios` for `ba9df2b` and published the current full-SHA backend image.
+- Latest main CI evidence: GitHub Actions `25476496164` passed `backend`, `swift-package`, and `ios` for `db10d8a`; the current full-SHA backend image remains `ba9df2b` because the latest push did not change backend-image inputs.
