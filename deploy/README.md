@@ -40,7 +40,7 @@ overlay body to stdout:
 ```bash
 DOGSWIPE_DEPLOY_SSH=aiops@sweet-potato-prod \
 DOGSWIPE_DEPLOY_IP=<tailscale-or-host-ip> \
-DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN=dogswipe.build000r.com \
+DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN=dogswipe.buildooor.com \
 IOS_RELEASE_DEVELOPMENT_TEAM=<apple-team-id> \
 DOGSWIPE_ENV_FILE=/opt/envs/dogswipe/prod.env \
 python3 deploy/render-skillbox-overlay.py \
@@ -50,11 +50,11 @@ bash deploy/validate-skillbox-overlay.sh \
   /path/to/skillbox-config/clients/dogswipe/overlay.yaml
 ```
 
-The current private handoff candidate is `dogswipe.build000r.com`. A fresh
-2026-05-06 DNS probe showed `build000r.com` has no public NS/SOA response.
-`buildooor.com` is an active Cloudflare zone, but switching DogSwipe to
-`dogswipe.buildooor.com` is a private release/SPAPS handoff change, not just a
-public-doc edit.
+The current practical public candidate is `dogswipe.buildooor.com`. A fresh
+2026-05-06 DNS probe showed `build000r.com` has no public NS/SOA response,
+while `buildooor.com` is an active Cloudflare zone. If `dogswipe.buildooor.com`
+stays canonical, the SPAPS app allowed origins and release env must include
+that HTTPS origin before native auth is live-ready.
 
 After the canonical domain is chosen, prove DNS before attempting the live
 Compose rollout:
@@ -134,9 +134,12 @@ make spaps-registration-payload > /tmp/dogswipe-spaps-application.json
 
 ## Production Env
 
-Create `deploy/prod.env` from `deploy/prod.env.example` on the deployment host.
-Keep `DOGSWIPE_AUTO_CREATE_SCHEMA=false` and `DOGSWIPE_SEED_SAMPLE_PROFILES=false`
-in production; run Alembic instead.
+Create `deploy/prod.env` from `deploy/prod.env.example` on the deployment host,
+or render the private env to the remote path named by the overlay. Keep
+`DOGSWIPE_AUTO_CREATE_SCHEMA=false` and `DOGSWIPE_SEED_SAMPLE_PROFILES=false`
+in production; run Alembic instead. The current `sweet-potato-prod` host has
+the private env installed at `/opt/envs/dogswipe/prod.env`, with the API pinned
+to `ghcr.io/build000r/dogswipe:ba9df2bf382fb24597d916e2212ce8522392a016`.
 
 Required runtime values:
 
@@ -173,7 +176,7 @@ to the requested output path and the file mode is `0600`:
 ```bash
 POSTGRES_PASSWORD=<strong-password> \
 DOGSWIPE_IMAGE=ghcr.io/build000r/dogswipe:<tag> \
-DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN=dogswipe.build000r.com \
+DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN=dogswipe.buildooor.com \
 DOGSWIPE_ENV_FILE=/opt/envs/dogswipe/prod.env \
 SPAPS_API_URL=https://api.sweetpotato.dev \
 SPAPS_API_KEY=<server-only-spaps-key> \
@@ -207,6 +210,11 @@ warns if the private production env file is still absent.
 
 `make deploy-host-bootstrap-template` exercises the bootstrap contract against a
 temporary directory and is safe for CI.
+
+On `sweet-potato-prod`, bootstrap has already installed the non-secret deploy
+artifacts, created the env directory, and prepared the PostgreSQL data path. The
+current API, Postgres, and Redis containers are running healthy internally after
+Alembic migrations.
 
 ## Universal Links
 
@@ -286,15 +294,17 @@ without committing or printing secrets.
    `ghcr.io/build000r/dogswipe:latest` only for `main` pushes that change
    `backend/**` or `.github/workflows/ci.yml`; production env should pin the
    full SHA tag for a deterministic rollout.
-2. Copy `deploy/docker-compose.prod.yml` and `deploy/prod.env` to the deploy root.
+2. Copy `deploy/docker-compose.prod.yml` to the deploy root and render the
+   private env to the overlay's `env_file` path, such as
+   `/opt/envs/dogswipe/prod.env`.
 3. Start database and Redis.
 4. Run migrations:
    ```bash
-   docker compose --env-file deploy/prod.env -f deploy/docker-compose.prod.yml -p dogswipe run --rm api alembic upgrade head
+   docker compose --env-file /opt/envs/dogswipe/prod.env -f deploy/docker-compose.prod.yml -p dogswipe run --rm api alembic upgrade head
    ```
 5. Start or restart the API:
    ```bash
-   docker compose --env-file deploy/prod.env -f deploy/docker-compose.prod.yml -p dogswipe up -d
+   docker compose --env-file /opt/envs/dogswipe/prod.env -f deploy/docker-compose.prod.yml -p dogswipe up -d
    ```
 6. Link `deploy/reverse-proxy/dogswipe-api.conf.template` into the shared reverse proxy after substituting `DOGSWIPE_API_DOMAIN`.
 7. Verify:
@@ -308,11 +318,13 @@ without committing or printing secrets.
 
 ## Known Block
 
-No live deployment should run until the skillbox overlay supplies the concrete
-host, deploy root, env source, production domain, Apple Team ID, health URL, and
-AASA URL. The production domain also needs public DNS authority: the current
-`dogswipe.build000r.com` candidate is blocked because `build000r.com` has no
-public NS/SOA response. The current repo can prove the container, migration,
-universal-link asset template/render path, and Compose contract locally; it
-cannot prove DNS, certificates, Apple account ownership, or production secrets
-by itself.
+The internal production Compose rollout is running, but public live readiness
+should not be marked complete until the skillbox overlay and release env point
+at the canonical production domain, that domain resolves publicly, SPAPS allows
+the same HTTPS origin, and the shared reverse proxy serves both `/health` and
+the Apple app-site association payload over a valid certificate. The current
+`dogswipe.buildooor.com` candidate still has no A record, and the discovered
+Cloudflare credentials can read the active zone but cannot edit DNS. The repo
+can prove the container, migration, universal-link asset template/render path,
+and Compose contract; it cannot prove DNS, certificates, Apple account
+ownership, or production secrets by itself.
