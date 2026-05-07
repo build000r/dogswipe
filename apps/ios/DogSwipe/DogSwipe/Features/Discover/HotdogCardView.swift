@@ -91,16 +91,38 @@ struct HotdogCardView: View {
 
                 VStack(spacing: 0) {
                     HStack(alignment: .top) {
-                        DogSwipeChip(text: "Popular", systemImage: "flame.fill", tint: Color.dsSurface)
+                        Text(profile.priceLabel)
+                            .font(.title3.weight(.heavy).monospacedDigit())
+                            .foregroundStyle(Color.dsSurface)
+                            .padding(.horizontal, .dsSpace3)
+                            .padding(.vertical, .dsSpace2)
+                            .background(Color.dsInk, in: RoundedRectangle(cornerRadius: .dsRadius3, style: .continuous))
                         Spacer()
-                        Image(systemName: "info.circle.fill")
-                            .font(.title3)
-                            .foregroundStyle(Color.dsInk.opacity(0.62))
-                            .frame(width: .dsInfoButtonSize, height: .dsInfoButtonSize)
-                            .background(Color.dsSurface.opacity(0.92), in: Circle())
+                        DogSwipeStatusPill(
+                            text: profile.availabilityStatus.cardLabel,
+                            tint: profile.availabilityStatus.cardTint
+                        )
+                        .background(Color.dsSurface.opacity(0.88), in: Capsule())
                     }
                     .padding(.dsSpace4)
                     Spacer()
+
+                    HStack(alignment: .bottom, spacing: .dsSpace3) {
+                        Text(profile.style.uppercased())
+                            .font(.caption.weight(.heavy))
+                            .tracking(1.1)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.76)
+                        Spacer()
+                        Text("\(String(format: "%.1f mi", profile.distanceMiles)) · \(profile.walkingTimeLabel) walk")
+                            .font(.caption.weight(.heavy))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.76)
+                    }
+                    .foregroundStyle(Color.dsSurface)
+                    .shadow(color: .black.opacity(0.24), radius: 3, x: 0, y: 1)
+                    .padding(.horizontal, .dsSpace4)
+                    .padding(.bottom, .dsSpace4)
                 }
             }
             .frame(width: proxy.size.width, height: proxy.size.height)
@@ -117,12 +139,13 @@ struct HotdogCardView: View {
     private var titleRow: some View {
         HStack(alignment: .top, spacing: .dsSpace3) {
             VStack(alignment: .leading, spacing: .dsSpace1) {
+                Text(profile.vendorName)
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(Color.dsMuted)
+                    .lineLimit(1)
                 Text(profile.name)
                     .font(.title3.weight(.heavy))
                     .foregroundStyle(Color.dsInk)
-                Text(profile.style)
-                    .font(.callout)
-                    .foregroundStyle(Color.dsMuted)
             }
             Spacer()
             DogSwipeStampView(text: stampText)
@@ -195,6 +218,40 @@ struct HotdogCardView: View {
             return "fork.knife"
         }
         return "sparkle"
+    }
+}
+
+private extension AvailabilityStatus {
+    var cardLabel: String {
+        switch self {
+        case .available:
+            "Available now"
+        case .limited:
+            "Limited"
+        case .soldOut:
+            "Sold out"
+        case .pendingReview:
+            "Pending review"
+        case .changesRequested:
+            "Changes requested"
+        case .rejected:
+            "Rejected"
+        }
+    }
+
+    var cardTint: Color {
+        switch self {
+        case .available:
+            .dsRelish
+        case .limited, .changesRequested:
+            .dsPrimary
+        case .soldOut:
+            .dsMuted
+        case .pendingReview:
+            .dsSuper
+        case .rejected:
+            .dsTomato
+        }
     }
 }
 

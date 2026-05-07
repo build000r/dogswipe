@@ -29,7 +29,27 @@ struct DiscoverView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: .dsSpace3) {
-                DogSwipeBrandHeader(activeTab: .discover, cartCount: orderStore.itemCount)
+                DogSwipeScreenHeader(title: "Tonight's craving", kicker: statusText) {
+                    HStack(spacing: .dsSpace2) {
+                        DogSwipeIconButton(
+                            systemImage: "magnifyingglass",
+                            accessibilityLabel: "Search menus"
+                        ) {
+                            withAnimation(.spring(response: 0.24, dampingFraction: 0.88)) {
+                                isSearchVisible.toggle()
+                            }
+                        }
+
+                        DogSwipeIconButton(
+                            systemImage: "arrow.counterclockwise",
+                            accessibilityLabel: "Restart deck",
+                            isDisabled: !viewModel.canSwipe
+                        ) {
+                            viewModel.resetToSamples()
+                        }
+                    }
+                }
+
                 if isSearchVisible {
                     menuSearchBar
                         .transition(.move(edge: .top).combined(with: .opacity))
@@ -399,7 +419,7 @@ struct DiscoverView: View {
         case .pass:
             .dsAccent
         case .superLike:
-            .dsPrimary
+            .dsSuper
         case nil:
             .clear
         }
@@ -473,9 +493,9 @@ private struct SwipeFeedbackOverlay: View {
         case .like:
             "YUM"
         case .pass:
-            "NOPE"
+            "NAH"
         case .superLike:
-            "HIT"
+            "MUST"
         case nil:
             ""
         }
@@ -488,7 +508,7 @@ private struct SwipeFeedbackOverlay: View {
         case .pass:
             "xmark"
         case .superLike:
-            "fork.knife.circle.fill"
+            "star.fill"
         case nil:
             "circle"
         }
@@ -501,7 +521,7 @@ private struct SwipeFeedbackOverlay: View {
         case .pass:
             .dsAccent
         case .superLike:
-            .dsPrimary
+            .dsSuper
         case nil:
             .clear
         }

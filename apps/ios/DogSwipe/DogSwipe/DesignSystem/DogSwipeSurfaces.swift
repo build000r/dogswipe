@@ -74,6 +74,77 @@ struct DogSwipeBrandHeader: View {
     }
 }
 
+struct DogSwipeScreenHeader<Right: View>: View {
+    let title: String
+    let kicker: String?
+    @ViewBuilder let right: () -> Right
+
+    init(
+        title: String,
+        kicker: String? = nil,
+        @ViewBuilder right: @escaping () -> Right
+    ) {
+        self.title = title
+        self.kicker = kicker
+        self.right = right
+    }
+
+    var body: some View {
+        HStack(alignment: .bottom, spacing: .dsSpace3) {
+            VStack(alignment: .leading, spacing: .dsSpace1) {
+                if let kicker, !kicker.isEmpty {
+                    Text(kicker.uppercased())
+                        .font(.caption2.weight(.heavy))
+                        .tracking(1.1)
+                        .foregroundStyle(Color.dsMuted)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.76)
+                }
+
+                Text(title)
+                    .font(.system(size: .dsScreenTitleFontSize, weight: .heavy, design: .rounded))
+                    .foregroundStyle(Color.dsInk)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.76)
+                    .accessibilityAddTraits(.isHeader)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            right()
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+extension DogSwipeScreenHeader where Right == EmptyView {
+    init(title: String, kicker: String? = nil) {
+        self.init(title: title, kicker: kicker) {
+            EmptyView()
+        }
+    }
+}
+
+struct DogSwipeIconButton: View {
+    let systemImage: String
+    let accessibilityLabel: String
+    var isDisabled = false
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: systemImage)
+                .font(.subheadline.weight(.heavy))
+                .foregroundStyle(Color.dsInk)
+                .frame(width: .dsIconButtonSize, height: .dsIconButtonSize)
+                .background(Color.dsInk.opacity(0.06), in: Circle())
+        }
+        .buttonStyle(.plain)
+        .disabled(isDisabled)
+        .opacity(isDisabled ? 0.38 : 1)
+        .accessibilityLabel(accessibilityLabel)
+    }
+}
+
 struct DogSwipeWavyDivider: View {
     let activeIndex: Int
     private let tabCount = DogSwipeHeaderTab.allCases.count
@@ -144,6 +215,99 @@ struct DogSwipeChip: View {
         .overlay {
             Capsule().stroke(Color.dsDivider)
         }
+    }
+}
+
+struct DogSwipeStatusPill: View {
+    let text: String
+    var tint: Color = .dsRelish
+    var size: Size = .small
+
+    enum Size {
+        case small
+        case medium
+    }
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Circle()
+                .fill(tint)
+                .frame(width: .dsStatusDotSize, height: .dsStatusDotSize)
+            Text(text)
+                .lineLimit(1)
+                .minimumScaleFactor(0.76)
+        }
+        .font(size == .medium ? .caption.weight(.bold) : .caption2.weight(.bold))
+        .foregroundStyle(tint)
+        .padding(.horizontal, size == .medium ? .dsSpace3 : .dsSpace2)
+        .padding(.vertical, size == .medium ? .dsSpace2 : .dsSpace1)
+        .background(tint.opacity(0.14), in: Capsule())
+        .overlay {
+            Capsule().stroke(tint.opacity(0.16))
+        }
+    }
+}
+
+struct DogSwipeDarkSummaryCard<Content: View>: View {
+    @ViewBuilder let content: () -> Content
+
+    var body: some View {
+        content()
+            .padding(.dsSpace4)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.dsInk, in: RoundedRectangle(cornerRadius: .dsRadius5, style: .continuous))
+            .foregroundStyle(Color.dsSurface)
+            .shadow(color: Color.dsShadow.opacity(0.72), radius: 16, x: 0, y: 10)
+    }
+}
+
+struct DogSwipeCraveMeter: View {
+    let score: Double
+    var showsLabel = true
+    var dark = false
+
+    private var normalizedScore: Double {
+        min(1, max(0, score))
+    }
+
+    private var scoreText: String {
+        "\(Int((normalizedScore * 100).rounded()))"
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: .dsSpace1) {
+            if showsLabel {
+                HStack {
+                    Text("Crave")
+                    Spacer()
+                    Text(scoreText)
+                        .monospacedDigit()
+                }
+                .font(.caption2.weight(.heavy))
+                .tracking(0.7)
+                .textCase(.uppercase)
+                .foregroundStyle(dark ? Color.dsSurface.opacity(0.68) : Color.dsMuted)
+            }
+
+            GeometryReader { proxy in
+                Capsule()
+                    .fill(dark ? Color.dsSurface.opacity(0.18) : Color.dsInk.opacity(0.10))
+                    .overlay(alignment: .leading) {
+                        Capsule()
+                            .fill(
+                                LinearGradient(
+                                    colors: [.dsPrimary, .dsAccent],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .frame(width: proxy.size.width * normalizedScore)
+                    }
+            }
+            .frame(height: .dsCraveMeterHeight)
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Crave score \(scoreText)")
     }
 }
 

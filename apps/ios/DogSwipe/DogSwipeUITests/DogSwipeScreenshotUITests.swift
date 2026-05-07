@@ -13,7 +13,7 @@ final class DogSwipeScreenshotUITests: XCTestCase {
             tab: "discover",
             screenIdentifier: "dogswipe.discover.screen",
             requiredElements: [
-                .staticText("DogSwipe"),
+                .staticText("Tonight's craving"),
                 .staticText("Chicago Classic"),
                 .button("Live walk"),
                 .button("Directions")
@@ -27,7 +27,7 @@ final class DogSwipeScreenshotUITests: XCTestCase {
             tab: "matches",
             screenIdentifier: "dogswipe.matches.screen",
             requiredElements: [
-                .staticText("It's a Match!"),
+                .staticText("Build the order"),
                 .staticText("Garden Snap")
             ],
             screenshotName: "02-matches"

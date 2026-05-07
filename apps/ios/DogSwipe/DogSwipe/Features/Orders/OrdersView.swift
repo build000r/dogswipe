@@ -13,7 +13,10 @@ struct OrdersView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: .dsSpace5) {
-                    DogSwipeBrandHeader(activeTab: .myOrders, cartCount: orderStore.itemCount)
+                    DogSwipeScreenHeader(
+                        title: "Drafts",
+                        kicker: "\(orderStore.itemCount) saved \(orderStore.itemCount == 1 ? "order" : "orders")"
+                    )
                     content
                 }
                 .padding(.horizontal, .dsSpace5)
@@ -80,6 +83,25 @@ struct OrdersView: View {
 
     private var ordersList: some View {
         VStack(alignment: .leading, spacing: .dsSpace3) {
+            DogSwipeDarkSummaryCard {
+                HStack(alignment: .center) {
+                    VStack(alignment: .leading, spacing: .dsSpace1) {
+                        Text("Cart total")
+                            .font(.caption.weight(.heavy))
+                            .tracking(1)
+                            .foregroundStyle(Color.dsSurface.opacity(0.62))
+                            .textCase(.uppercase)
+                        Text(totalLabel)
+                            .font(.system(size: .dsSummaryAmountFontSize, weight: .heavy, design: .rounded).monospacedDigit())
+                    }
+                    Spacer()
+                    Text("Drafts only\nno payment yet")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(Color.dsSurface.opacity(0.56))
+                        .multilineTextAlignment(.trailing)
+                }
+            }
+
             DogSwipeSectionHeader(
                 title: "My Orders",
                 subtitle: "\(orderStore.itemCount) saved \(orderStore.itemCount == 1 ? "draft" : "drafts")",
@@ -96,6 +118,10 @@ struct OrdersView: View {
                 OrderCardView(item: item)
             }
         }
+    }
+
+    private var totalLabel: String {
+        OrderAddOn.priceLabel(for: orderStore.items.reduce(0) { $0 + $1.totalDollars })
     }
 }
 

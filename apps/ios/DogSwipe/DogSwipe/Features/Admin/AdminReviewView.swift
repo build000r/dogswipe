@@ -13,13 +13,19 @@ struct AdminReviewView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: .dsSpace5) {
+                    DogSwipeScreenHeader(
+                        title: "Review queue",
+                        kicker: "\(store.pendingSubmissions.count) pending · admin"
+                    ) {
+                        refreshMenusButton
+                    }
                     header
                     queue
                 }
                 .padding(.dsSpace5)
             }
             .safeAreaPadding(.bottom, .dsSpace8)
-            .navigationTitle("Review")
+            .toolbar(.hidden, for: .navigationBar)
             .toolbar {
                 if store.isReviewing {
                     ToolbarItem(placement: .topBarTrailing) {
@@ -45,21 +51,6 @@ struct AdminReviewView: View {
     }
 
     private var header: some View {
-        ViewThatFits(in: .horizontal) {
-            HStack(alignment: .firstTextBaseline, spacing: .dsSpace3) {
-                headerText
-                Spacer(minLength: .dsSpace3)
-                refreshMenusButton
-            }
-
-            VStack(alignment: .leading, spacing: .dsSpace3) {
-                headerText
-                refreshMenusButton
-            }
-        }
-    }
-
-    private var headerText: some View {
         VStack(alignment: .leading, spacing: .dsSpace2) {
             DogSwipeSectionHeader(
                 title: "Pending vendor hotdogs",

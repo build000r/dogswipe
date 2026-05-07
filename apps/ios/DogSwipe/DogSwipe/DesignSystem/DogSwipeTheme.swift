@@ -8,7 +8,8 @@ extension Color {
     static let dsPrimary = Color(red: 0.94, green: 0.68, blue: 0.02)
     static let dsPrimarySoft = Color(red: 0.99, green: 0.92, blue: 0.72)
     static let dsAccent = Color(red: 0.86, green: 0.34, blue: 0.21)
-    static let dsRelish = Color(red: 0.23, green: 0.58, blue: 0.29)
+    static let dsRelish = Color(red: 0.35, green: 0.55, blue: 0.23)
+    static let dsSuper = Color(red: 0.17, green: 0.49, blue: 0.72)
     static let dsPickle = Color(red: 0.38, green: 0.52, blue: 0.17)
     static let dsTomato = Color(red: 0.78, green: 0.16, blue: 0.10)
     static let dsOnion = Color(red: 0.98, green: 0.95, blue: 0.84)
@@ -66,6 +67,11 @@ extension CGFloat {
     static let dsOrdersStateMinHeight: CGFloat = 260
     static let dsOrderThumbnailWidth: CGFloat = 96
     static let dsOrderThumbnailHeight: CGFloat = 78
+    static let dsScreenTitleFontSize: CGFloat = 32
+    static let dsSummaryAmountFontSize: CGFloat = 30
+    static let dsIconButtonSize: CGFloat = 38
+    static let dsStatusDotSize: CGFloat = 6
+    static let dsCraveMeterHeight: CGFloat = 6
 }
 
 extension View {

@@ -32,7 +32,7 @@ struct SwipeActionButton: View {
             case .like:
                 .dsRelish
             case .superLike:
-                .dsSurface
+                .dsSuper
             case .filter:
                 .dsMuted
             }
@@ -41,7 +41,7 @@ struct SwipeActionButton: View {
         var background: Color {
             switch self {
             case .superLike:
-                .dsPrimary
+                .dsSurface
             default:
                 .dsSurface
             }

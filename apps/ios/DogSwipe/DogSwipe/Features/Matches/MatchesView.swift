@@ -30,13 +30,20 @@ struct MatchesView: View {
                 } else {
                     ScrollView {
                         VStack(spacing: .dsSpace4) {
+                            DogSwipeScreenHeader(
+                                title: "Matches",
+                                kicker: "\(viewModel.matches.count) delicious crushes"
+                            )
+
+                            TopMatchCard(profile: viewModel.matches[0])
+
                             MatchDetailView(
                                 profile: viewModel.matches[0],
                                 orderStore: orderStore,
                                 onKeepSwiping: onKeepSwiping
                             )
                             Color.clear
-                                .frame(height: .dsMatchSavedListTopClearance)
+                                .frame(height: .dsSpace2)
                             savedMatches
                         }
                         .padding(.horizontal, .dsSpace5)
@@ -97,7 +104,7 @@ struct MatchesView: View {
     private var savedMatches: some View {
         VStack(alignment: .leading, spacing: .dsSpace3) {
             DogSwipeSectionHeader(
-                title: "Saved hotdogs",
+                title: "Also worth a bite",
                 subtitle: viewModel.isUsingCurrentLocation
                     ? "Ranked by your current walk."
                     : "Ready when the craving hits.",
@@ -119,6 +126,50 @@ struct MatchesView: View {
     MatchesView()
 }
 
+private struct TopMatchCard: View {
+    let profile: HotdogProfile
+
+    var body: some View {
+        DogSwipeDarkSummaryCard {
+            HStack(alignment: .center, spacing: .dsSpace3) {
+                HotdogIllustrationView(profile: profile)
+                    .frame(width: .dsMatchThumbnailWidth, height: .dsMatchThumbnailHeight)
+                    .background(Color.dsSurface.opacity(0.10))
+                    .clipShape(RoundedRectangle(cornerRadius: .dsRadius3, style: .continuous))
+
+                VStack(alignment: .leading, spacing: .dsSpace1) {
+                    Text("Closest to your craving")
+                        .font(.caption.weight(.heavy))
+                        .tracking(0.9)
+                        .foregroundStyle(Color.dsSurface.opacity(0.62))
+                        .textCase(.uppercase)
+                    Text(profile.name)
+                        .font(.headline.weight(.heavy))
+                        .foregroundStyle(Color.dsSurface)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.78)
+                    Text("\(profile.priceLabel) · \(String(format: "%.1f mi", profile.distanceMiles)) · \(profile.walkingTimeLabel) walk")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(Color.dsSurface.opacity(0.70))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.76)
+                    DogSwipeCraveMeter(score: profile.craveScore, showsLabel: false, dark: true)
+                        .padding(.top, .dsSpace1)
+                }
+
+                Text("Top")
+                    .font(.caption2.weight(.heavy))
+                    .tracking(0.6)
+                    .textCase(.uppercase)
+                    .foregroundStyle(Color.dsInk)
+                    .padding(.horizontal, .dsSpace2)
+                    .padding(.vertical, .dsSpace1)
+                    .background(Color.dsPrimary, in: RoundedRectangle(cornerRadius: .dsRadius2, style: .continuous))
+            }
+        }
+    }
+}
+
 private struct MatchDetailView: View {
     let profile: HotdogProfile
     @ObservedObject var orderStore: OrderStore
@@ -133,101 +184,84 @@ private struct MatchDetailView: View {
     ]
 
     var body: some View {
-        VStack(spacing: .dsSpace3) {
-            VStack(spacing: .dsSpace1) {
-                Text("It's a Match!")
-                    .font(.system(size: .dsMatchTitleFontSize, weight: .heavy, design: .rounded))
-                    .foregroundStyle(Color.dsInk)
-                    .multilineTextAlignment(.center)
-                    .minimumScaleFactor(0.74)
-
-                Text("\(profile.name) is all yours")
-                    .font(.headline)
-                    .foregroundStyle(Color.dsMuted)
-            }
-
-            HotdogIllustrationView(profile: profile)
-                .frame(height: .dsMatchHeroHeight)
-                .clipShape(RoundedRectangle(cornerRadius: .dsRadius5, style: .continuous))
-                .overlay {
-                    RoundedRectangle(cornerRadius: .dsRadius5, style: .continuous)
-                        .stroke(Color.dsDivider)
-                }
-
-            VStack(alignment: .leading, spacing: .dsSpace3) {
-                HStack(alignment: .firstTextBaseline, spacing: .dsSpace3) {
-                    Text(profile.name)
+        VStack(alignment: .leading, spacing: .dsSpace3) {
+            HStack(alignment: .firstTextBaseline, spacing: .dsSpace3) {
+                VStack(alignment: .leading, spacing: .dsSpace1) {
+                    Text("Build the order")
                         .font(.title2.weight(.heavy))
                         .foregroundStyle(Color.dsInk)
                         .minimumScaleFactor(0.76)
-                    Spacer()
-                    Text(profile.priceLabel)
-                        .font(.title3.weight(.heavy).monospacedDigit())
-                        .foregroundStyle(Color.dsAccent)
+                    Text(profile.vendorName)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Color.dsMuted)
                 }
-
-                Text(profile.signatureNotes)
-                    .font(.subheadline.weight(.medium))
-                    .foregroundStyle(Color.dsMuted)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                DogSwipeChipGrid {
-                    DogSwipeChip(text: "Mild", systemImage: "flame")
-                    DogSwipeChip(text: "All-Beef", systemImage: "fork.knife")
-                    DogSwipeChip(text: "Crunchy", systemImage: "leaf.fill")
-                    DogSwipeChip(text: "Popular", systemImage: "flame.fill")
-                }
-
-                VStack(alignment: .leading, spacing: .dsSpace3) {
-                    Text("Make it yours")
-                        .font(.headline.weight(.heavy))
-                        .foregroundStyle(Color.dsInk)
-
-                    LazyVGrid(columns: addOnColumns, alignment: .leading, spacing: .dsSpace2) {
-                        ForEach(OrderAddOn.matchDefaults) { addOn in
-                            addOnButton(addOn)
-                        }
-                    }
-                }
-
-                DogSwipePrimaryButton(
-                    title: orderButtonTitle,
-                    price: orderTotalLabel
-                ) {
-                    Task {
-                        await addOrder()
-                    }
-                }
-                .disabled(isAddingOrder)
-
-                if let orderError {
-                    Label(orderError, systemImage: "exclamationmark.triangle.fill")
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(Color.dsAccent)
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .accessibilityIdentifier("dogswipe.order.error")
-                }
-
-                if let confirmationText {
-                    Label(confirmationText, systemImage: "bag.fill")
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(Color.dsRelish)
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .accessibilityIdentifier("dogswipe.order.confirmation")
-                }
-
-                Button("Keep Swiping") {
-                    DogSwipeAnalytics.shared.trackMatchKeepSwiping(profileID: profile.id)
-                    onKeepSwiping()
-                }
-                .font(.subheadline.weight(.bold))
-                .foregroundStyle(Color.dsMuted)
-                .frame(maxWidth: .infinity)
-                .padding(.top, .dsSpace1)
+                Spacer()
+                Text(profile.priceLabel)
+                    .font(.title3.weight(.heavy).monospacedDigit())
+                    .foregroundStyle(Color.dsAccent)
             }
-            .padding(.dsSpace4)
-            .dsCardSurface()
+
+            Text(profile.signatureNotes)
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(Color.dsMuted)
+                .fixedSize(horizontal: false, vertical: true)
+
+            DogSwipeChipGrid {
+                DogSwipeChip(text: "Mild", systemImage: "flame")
+                DogSwipeChip(text: "All-Beef", systemImage: "fork.knife")
+                DogSwipeChip(text: "Crunchy", systemImage: "leaf.fill")
+                DogSwipeChip(text: "Popular", systemImage: "flame.fill")
+            }
+
+            VStack(alignment: .leading, spacing: .dsSpace3) {
+                Text("Make it yours")
+                    .font(.headline.weight(.heavy))
+                    .foregroundStyle(Color.dsInk)
+
+                LazyVGrid(columns: addOnColumns, alignment: .leading, spacing: .dsSpace2) {
+                    ForEach(OrderAddOn.matchDefaults) { addOn in
+                        addOnButton(addOn)
+                    }
+                }
+            }
+
+            DogSwipePrimaryButton(
+                title: orderButtonTitle,
+                price: orderTotalLabel
+            ) {
+                Task {
+                    await addOrder()
+                }
+            }
+            .disabled(isAddingOrder)
+
+            if let orderError {
+                Label(orderError, systemImage: "exclamationmark.triangle.fill")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(Color.dsAccent)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .accessibilityIdentifier("dogswipe.order.error")
+            }
+
+            if let confirmationText {
+                Label(confirmationText, systemImage: "bag.fill")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(Color.dsRelish)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .accessibilityIdentifier("dogswipe.order.confirmation")
+            }
+
+            Button("Keep Swiping") {
+                DogSwipeAnalytics.shared.trackMatchKeepSwiping(profileID: profile.id)
+                onKeepSwiping()
+            }
+            .font(.subheadline.weight(.bold))
+            .foregroundStyle(Color.dsMuted)
+            .frame(maxWidth: .infinity)
+            .padding(.top, .dsSpace1)
         }
+        .padding(.dsSpace4)
+        .dsCardSurface()
     }
 
     private var orderTotalLabel: String {
@@ -334,6 +368,7 @@ private struct MatchRowView: View {
                     .foregroundStyle(Color.dsPrimary)
                 routeButtons
             }
+            DogSwipeCraveMeter(score: profile.craveScore, showsLabel: false)
             RoutePreviewStatusView(state: routePreviewStore.state)
         }
         .padding(.dsSpace4)

@@ -13,13 +13,14 @@ struct VendorView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: .dsSpace5) {
+                    DogSwipeScreenHeader(title: "Your listings", kicker: "Vendor portal")
                     submissionSection
                     submissionsSection
                 }
                 .padding(.dsSpace5)
             }
             .safeAreaPadding(.bottom, .dsSpace8)
-            .navigationTitle("Vendor")
+            .toolbar(.hidden, for: .navigationBar)
             .toolbar {
                 if store.isBusy {
                     ToolbarItem(placement: .topBarTrailing) {
@@ -45,7 +46,7 @@ struct VendorView: View {
         VStack(alignment: .leading, spacing: .dsSpace4) {
             VStack(alignment: .leading, spacing: .dsSpace2) {
                 Text(store.isEditing ? "Revise hotdog" : "Submit a hotdog")
-                    .font(.title2.weight(.semibold))
+                    .font(.title2.weight(.heavy))
                     .foregroundStyle(Color.dsInk)
                 Text(store.isEditing ? "Send the updated listing back to review." : "Send a menu item for review before it enters discovery.")
                     .font(.subheadline)

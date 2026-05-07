@@ -16,9 +16,10 @@ struct SubmissionSummaryView: View {
                         .foregroundStyle(Color.dsMuted)
                 }
                 Spacer()
-                Text(profile.availabilityStatus.displayLabel)
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(Color.dsPrimary)
+                DogSwipeStatusPill(
+                    text: profile.availabilityStatus.displayLabel,
+                    tint: profile.availabilityStatus.displayTint
+                )
             }
 
             HStack(spacing: .dsSpace4) {
@@ -105,6 +106,21 @@ private extension AvailabilityStatus {
             "Edits needed"
         case .rejected:
             "Rejected"
+        }
+    }
+
+    var displayTint: Color {
+        switch self {
+        case .available:
+            .dsRelish
+        case .limited, .changesRequested:
+            .dsPrimary
+        case .soldOut:
+            .dsMuted
+        case .pendingReview:
+            .dsSuper
+        case .rejected:
+            .dsTomato
         }
     }
 }

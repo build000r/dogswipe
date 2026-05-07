@@ -17,64 +17,66 @@ struct ProfileView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(alignment: .leading, spacing: .dsSpace5) {
-                sessionSection
+            ScrollView {
+                VStack(alignment: .leading, spacing: .dsSpace5) {
+                    DogSwipeScreenHeader(title: "You", kicker: "Profile")
+                    sessionSection
 
-                VStack(alignment: .leading, spacing: .dsSpace2) {
-                    Text("Your cravings")
-                        .font(.title2.weight(.semibold))
-                        .foregroundStyle(Color.dsInk)
-                    Text("Tune distance and flavor filters for nearby hotdog picks.")
-                        .font(.body)
-                        .foregroundStyle(Color.dsMuted)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
+                    VStack(alignment: .leading, spacing: .dsSpace2) {
+                        Text("Your cravings")
+                            .font(.title2.weight(.heavy))
+                            .foregroundStyle(Color.dsInk)
+                        Text("Tune distance and flavor filters for nearby hotdog picks.")
+                            .font(.body)
+                            .foregroundStyle(Color.dsMuted)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
 
-                VStack(alignment: .leading, spacing: .dsSpace4) {
-                    Toggle(isOn: spicyFriendlyBinding) {
-                        preferenceLabel(icon: "flame", title: "Spicy friendly")
-                    }
-                    Toggle(isOn: classicOnlyBinding) {
-                        preferenceLabel(icon: "checkmark.seal", title: "Classic only")
-                    }
-                    VStack(alignment: .leading, spacing: .dsSpace3) {
-                        HStack {
-                            preferenceLabel(icon: "location", title: "Search radius")
-                            Spacer()
-                            Text("\(Int(preferencesStore.maxDistanceMiles)) mi")
-                                .font(.headline.monospacedDigit())
+                    VStack(alignment: .leading, spacing: .dsSpace4) {
+                        Toggle(isOn: spicyFriendlyBinding) {
+                            preferenceLabel(icon: "flame", title: "Spicy friendly")
+                        }
+                        Toggle(isOn: classicOnlyBinding) {
+                            preferenceLabel(icon: "checkmark.seal", title: "Classic only")
+                        }
+                        VStack(alignment: .leading, spacing: .dsSpace3) {
+                            HStack {
+                                preferenceLabel(icon: "location", title: "Search radius")
+                                Spacer()
+                                Text("\(Int(preferencesStore.maxDistanceMiles)) mi")
+                                    .font(.headline.monospacedDigit())
+                                    .foregroundStyle(Color.dsMuted)
+                            }
+                            Slider(
+                                value: maxDistanceBinding,
+                                in: 1...25,
+                                step: 1
+                            ) { isEditing in
+                                guard !isEditing else {
+                                    return
+                                }
+                                Task {
+                                    await preferencesStore.save()
+                                }
+                            }
+                                .tint(.dsPrimary)
+                        }
+
+                        if let syncMessage = preferencesStore.syncMessage {
+                            Text(syncMessage)
+                                .font(.footnote)
                                 .foregroundStyle(Color.dsMuted)
                         }
-                        Slider(
-                            value: maxDistanceBinding,
-                            in: 1...25,
-                            step: 1
-                        ) { isEditing in
-                            guard !isEditing else {
-                                return
-                            }
-                            Task {
-                                await preferencesStore.save()
-                            }
-                        }
-                            .tint(.dsPrimary)
                     }
+                    .toggleStyle(.switch)
+                    .tint(.dsPrimary)
+                    .padding(.dsSpace5)
+                    .dsCardSurface()
 
-                    if let syncMessage = preferencesStore.syncMessage {
-                        Text(syncMessage)
-                            .font(.footnote)
-                            .foregroundStyle(Color.dsMuted)
-                    }
+                    Spacer(minLength: .dsSpace6)
                 }
-                .toggleStyle(.switch)
-                .tint(.dsPrimary)
                 .padding(.dsSpace5)
-                .dsCardSurface()
-
-                Spacer()
             }
-            .padding(.dsSpace5)
-            .navigationTitle("Profile")
             .onAppear {
                 advancedToken = authSessionStore.bearerToken
                 DogSwipeAnalytics.shared.trackScreenViewed(.profile)
@@ -90,6 +92,7 @@ struct ProfileView: View {
                     }
                 }
             }
+            .toolbar(.hidden, for: .navigationBar)
             .dsPageBackground()
             .accessibilityIdentifier("dogswipe.profile.screen")
         }
