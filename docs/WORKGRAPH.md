@@ -55,17 +55,17 @@ Status key: `done`, `active`, `ready`, `blocked`.
 
 ## Ready Frontier
 
-The next ready work is to make the live infrastructure real: choose the canonical production domain, run `make deploy-dns-handoff`, create DNS for that domain, run `make deploy-live-readiness`, run the host bootstrap on `sweet-potato-prod`, use the private renderers to write the persistent skillbox overlay and production env file, pin `DOGSWIPE_IMAGE` to the published GHCR full-SHA tag, wire the shared reverse proxy to the API and AASA payload, run post-deploy verification, and then run the signed TestFlight handoff with private Apple credentials. Product work can also continue into payment/fulfillment beyond durable drafts, full route persistence or turn-by-turn navigation if lightweight previews prove insufficient, and broader crawler-backed menu indexing if bounded snapshot search proves insufficient.
+The next ready work is to make the live infrastructure real: grant a Cloudflare token DNS edit permission or manually create `A dogswipe.buildooor.com -> 104.131.188.214`, run `make deploy-dns-preflight`, run `make deploy-live-readiness`, run the host bootstrap on `sweet-potato-prod`, use the private renderers to write the persistent skillbox overlay and production env file, pin `DOGSWIPE_IMAGE` to the published GHCR full-SHA tag, wire the shared reverse proxy to the API and AASA payload, run post-deploy verification, and then run the signed TestFlight handoff with private Apple credentials. Product work can also continue into payment/fulfillment beyond durable drafts, full route persistence or turn-by-turn navigation if lightweight previews prove insufficient, and broader crawler-backed menu indexing if bounded snapshot search proves insufficient.
 
 ## Risks
 
-- Live deploy, production SPAPS auth proof, and hosted universal links are blocked until a real canonical domain, the DogSwipe deploy root, the production env source, and reverse-proxy routing exist. The current private handoff points at `dogswipe.build000r.com`, but `build000r.com` has no public NS/SOA response; `buildooor.com` is an active Cloudflare zone, but switching to `dogswipe.buildooor.com` requires updating the private SPAPS/release handoff and creating that DNS record. A non-repo overlay plus ignored private SPAPS values pass `make deploy-release-readiness`, but the production host currently has no DogSwipe deploy/env directories.
+- Live deploy, production SPAPS auth proof, and hosted universal links are blocked until a real canonical domain, the DogSwipe deploy root, the production env source, and reverse-proxy routing exist. The current private handoff points at `dogswipe.build000r.com`, but `build000r.com` has no public NS/SOA response; `buildooor.com` is an active Cloudflare zone, but `dogswipe.buildooor.com` still has no A record. The local env-manager token is stale, logged-in Wrangler OAuth can read the zone but cannot edit DNS, and the existing `build000r/buildooor` Cloudflare secret also failed a constrained DNS upsert with `403`. A non-repo overlay plus ignored private SPAPS values pass `make deploy-release-readiness`, but the production host currently has no DogSwipe deploy/env directories.
 - Live App Store/TestFlight submission remains blocked until signing assets, bundle ownership, and App Store Connect API credentials are known.
 
 ## Remote Checkpoint
 
 - Public repository: https://github.com/build000r/dogswipe
 - First pushed commit: `dbf880b`
-- Recent audited commit: `7e2a522`
+- Recent audited commit: `b2d9384`
 - Recent published backend image evidence: `ghcr.io/build000r/dogswipe:7e2a5221091fa40da0344e44ba6722858405dcf9`
-- Latest main CI evidence: GitHub Actions `25442723419` passed `backend`, `swift-package`, and `ios`, and published the current full-SHA backend image.
+- Latest main CI evidence: GitHub Actions `25465439287` passed `backend`, `swift-package`, and `ios` for `b2d9384`. GitHub Actions `25442723419` published the current full-SHA backend image.

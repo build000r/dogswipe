@@ -1,8 +1,8 @@
 # Completion Audit
 
 Date: 2026-05-06
-Implementation audited: hotdog swipe deck, wrapped Discover/Matches chips, visible Discover route controls, durable backend-backed order drafts with My Orders, signed release/TestFlight handoff scaffolding, bundle-aware AASA render path, release-readiness gate, DNS handoff/preflight, public SPAPS app descriptor, SPAPS operator handoff, private deploy handoff renderers, GHCR image publishing, and private release-readiness probe in the current branch state.
-Recent complete executable-code CI evidence: GitHub Actions `25442723419` for `7e2a5221091fa40da0344e44ba6722858405dcf9` passed `backend`, `swift-package`, and `ios` jobs and published the backend image to GHCR. The current full-SHA image tag is `ghcr.io/build000r/dogswipe:7e2a5221091fa40da0344e44ba6722858405dcf9`.
+Implementation audited: hotdog swipe deck, wrapped Discover/Matches chips, visible Discover route controls, durable backend-backed order drafts with My Orders, signed release/TestFlight handoff scaffolding, bundle-aware AASA render path, release-readiness gate, DNS handoff/preflight, public SPAPS app descriptor, SPAPS operator handoff, private deploy handoff renderers, GHCR image publishing, private release-readiness probe, and Cloudflare DNS credential probes in the current branch state.
+Recent complete executable-code CI evidence: GitHub Actions `25465439287` for `b2d9384` passed `backend`, `swift-package`, and `ios` jobs on pushed `main`. GitHub Actions `25442723419` for `7e2a5221091fa40da0344e44ba6722858405dcf9` published the backend image to GHCR; the current full-SHA image tag is `ghcr.io/build000r/dogswipe:7e2a5221091fa40da0344e44ba6722858405dcf9`.
 
 ## Objective Restated
 
@@ -47,8 +47,8 @@ SwiftUI drift clean, CRAP below 20, and meaningful backend coverage above 80%.
 | Private deploy handoff renderers | `deploy/render-prod-env.py` and `deploy/render-skillbox-overlay.py` write private output paths only, set owner-only permissions, validate required fields, and are covered by `make deploy-private-handoff-template`. | Done |
 | Private release-readiness probe | A non-repo overlay using `dogswipe.build000r.com`, the ignored SPAPS publishable key, `IOS_RELEASE_DEVELOPMENT_TEAM=84GGQ3RBDZ`, and HTTPS universal-link auth values passed `make deploy-release-readiness` before the DNS gate was added. Current release-readiness can include DNS with `CHECK_DNS=true` once the canonical domain is live. | Done locally |
 | Production host readiness | Read-only SSH probe resolved `aiops@sweet-potato-prod` and showed SPAPS healthy, but `/opt/envs/dogswipe`, `/opt/envs/dogswipe/prod.env`, `/opt/dogswipe`, and `/mnt/volume_nyc3_cfo_v1/dogswipe` do not exist yet. | Blocked |
-| Production DNS readiness | `dogswipe.build000r.com` did not resolve and `https://dogswipe.build000r.com/health` returned HTTP `000` during the probe. Fresh DNS checks showed `build000r.com` itself has no public NS/SOA response, while `buildooor.com` is an active Cloudflare zone but has no `dogswipe` record. | Blocked |
-| CI enforces gates | `.github/workflows/ci.yml` runs backend tests/coverage/CRAP/MMDX/SPAPS-contract/drift/lint/typecheck/migration/deploy/AASA-render/private-handoff/host-bootstrap/DNS-handoff-template/DNS-preflight-template/live-readiness-template/release-readiness/Docker build and conditional GHCR publish, Swift package tests, and iOS release/build/unit/screenshot gates. Pushed main run `25447018385` passed all jobs for `2b109e2`; local `make deploy-dns-handoff-template` covers the new handoff CI step before the next push. | Done |
+| Production DNS readiness | `dogswipe.build000r.com` did not resolve and `https://dogswipe.build000r.com/health` returned HTTP `000` during the probe. Fresh DNS checks showed `build000r.com` itself has no public NS/SOA response, while `buildooor.com` is an active Cloudflare zone but has no `dogswipe` record. A later no-secret credential probe found a stale local `CLOUDFLARE_API_TOKEN` rejected with `401`; logged-in Wrangler OAuth could read the zone but DNS writes failed with `403`; and a constrained `build000r/buildooor` GitHub Actions DNS upsert using that repo's existing Cloudflare secret also failed with `403`. | Blocked |
+| CI enforces gates | `.github/workflows/ci.yml` runs backend tests/coverage/CRAP/MMDX/SPAPS-contract/drift/lint/typecheck/migration/deploy/AASA-render/private-handoff/host-bootstrap/DNS-handoff-template/DNS-preflight-template/live-readiness-template/release-readiness/Docker build and conditional GHCR publish, Swift package tests, and iOS release/build/unit/screenshot gates. Pushed main run `25465439287` passed `backend`, `swift-package`, and `ios` for `b2d9384`, including the DNS handoff template gate. | Done |
 | Original reference-image visual parity | The supplied DogSwipe reference image is now the visual source of truth for the iOS Discover/Matches/Orders surfaces: cream/red/mustard vendor-pack chrome, Chicago Classic cards, hotdog-first art, swipe controls, wrapped chips/add-ons, match/order CTA, and My Orders cards. | Done |
 | Live production deployment | Deploy contract and preflight are ready, but `deploy/README.md` states live rollout needs a concrete skillbox overlay: host, deploy root, env source, domain, Apple Team ID, health URL, and AASA URL. | Blocked |
 | Hosted universal-link activation | Bundle-aware AASA template, local render target, and entitlement plumbing exist, but hosted verification needs the production domain and Apple Team ID. | Blocked |
@@ -88,10 +88,11 @@ SwiftUI drift clean, CRAP below 20, and meaningful backend coverage above 80%.
 - `make -n ios-release-archive ...`: dry-run showed the signed archive command receives production API/SPAPS/universal-link settings without running Apple signing.
 - `make -n ios-testflight-upload ...`: dry-run showed the upload target requires archive and App Store Connect API key inputs before invoking `xcodebuild -exportArchive`.
 - Sweet Potato usage audit: 0 high, 0 medium, 0 low findings.
-- GitHub Actions `25447018385`: `backend` succeeded in 2m0s including coverage, CRAP, MMDX, SPAPS app contract, SwiftUI drift, deploy preflight, AASA render smoke, private deploy handoff template, host bootstrap template, DNS preflight template, live-readiness template, release readiness, Docker image build, and docs-only image publish skip; `swift-package` succeeded in 43s; and `ios` succeeded in 13m22s, including release asset verification, generic iOS build, unit tests, and screenshot UI smoke.
+- GitHub Actions `25465439287`: `backend`, `swift-package`, and `ios` all passed for pushed `main` commit `b2d9384`; the backend job includes coverage, CRAP, MMDX, SPAPS app contract, SwiftUI drift, deploy preflight, AASA render smoke, private deploy handoff template, host bootstrap template, DNS handoff template, DNS preflight template, live-readiness template, release readiness, and Docker build.
 - Local `make ios-screenshots` after the chip-wrap change exported six PNGs; inspected Discover and Matches screenshots show wrapped chips/add-ons, no right-edge chip clipping, the match order CTA above the tab bar, and tab-bar overlay on intentional empty clearance instead of saved-list content.
 - `docker manifest inspect ghcr.io/build000r/dogswipe:7e2a5221091fa40da0344e44ba6722858405dcf9`: returned a readable Docker manifest with config digest `sha256:c6ec27bbbe0fffc5c77edb0e05dafde8be7eac2d4f775e61601bf612dda223a6`.
 - Fresh live blocker probe on 2026-05-06 after the latest GHCR publish: `dogswipe.build000r.com` still does not resolve; `curl https://dogswipe.build000r.com/health` returns HTTP `000`; `build000r.com` has no public NS/SOA response; `buildooor.com` resolves through Cloudflare but `dogswipe.buildooor.com` has no A record; Tailscale SSH asked for browser authorization, and the legacy key-backed read-only SSH path to `root@104.131.188.214` showed `/opt/envs/dogswipe`, `/opt/envs/dogswipe/prod.env`, `/opt/dogswipe`, and `/mnt/volume_nyc3_cfo_v1/dogswipe` are still absent while `spaps-python`, `spaps-python-redis`, and `spaps-python-db` are running.
+- Cloudflare DNS write probe on 2026-05-06: an ignored env-manager token was rejected with `401`; Wrangler OAuth could query the active `buildooor.com` zone but DNS record writes for `dogswipe.buildooor.com` failed with `403`; and a constrained GitHub Actions upsert in `build000r/buildooor` using the existing `CLOUDFLARE_API_TOKEN` secret also failed with `403`. No token values were printed or committed.
 
 ## Verdict
 
@@ -100,17 +101,19 @@ locally. Private SPAPS application values are present in an ignored local env
 file, the private release-readiness gate passes without printing secrets, and
 the repo now renders private production env/overlay handoff files safely. CI
 also publishes pullable GHCR images for backend-image-changing `main` pushes.
-The full objective is not complete because live deployment still needs DNS,
-host directories, the production env source, and reverse-proxy activation, and
-live App Store/TestFlight signing/upload still needs Apple/App Store Connect
-inputs.
+The full objective is not complete because live deployment still needs a DNS
+edit-capable Cloudflare token or a manual DNS record, host directories, the
+production env source, and reverse-proxy activation, and live App Store/TestFlight
+signing/upload still needs Apple/App Store Connect inputs.
 
 ## Required Inputs To Finish
 
 1. A canonical production domain decision and DNS write: either register/delegate
    `build000r.com` and create `dogswipe.build000r.com`, or switch the private
    SPAPS/release handoff to an active zone such as `dogswipe.buildooor.com` and
-   create that record.
+   create that record. Current discovered Cloudflare credentials can read the
+   active zone but cannot edit DNS, so this needs a DNS-edit-capable token or a
+   manual `A dogswipe.buildooor.com -> 104.131.188.214` record.
 2. DogSwipe host setup on `sweet-potato-prod`: deploy root, private
    `/opt/envs/dogswipe/prod.env`, PostgreSQL/Redis storage paths, and copied
    release artifacts.

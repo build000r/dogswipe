@@ -40,6 +40,10 @@ The first production slice must prove three things:
 
 These are valuable later, but they would dilute the core loop before the app has a reliable discovery contract.
 
+## Release Reality
+
+The application and deploy contract are ready for a real production target, but hosted proof is still infrastructure-gated. The current usable domain path is `dogswipe.buildooor.com`, which needs a DNS-edit-capable Cloudflare token or a manual `A` record to `104.131.188.214`; the discovered credentials can read the active `buildooor.com` zone but cannot write the DogSwipe record. After DNS resolves, the remaining live work is host bootstrap, private production env/skillbox overlay rendering, reverse-proxy and AASA activation, then the signed TestFlight handoff once Apple/App Store Connect credentials are available.
+
 ## Quality Bar
 
 - SwiftUI uses shared tokens for spacing, color, typography, radius, and controls.
