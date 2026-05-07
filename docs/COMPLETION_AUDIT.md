@@ -82,7 +82,7 @@ SwiftUI drift clean, CRAP below 20, and meaningful backend coverage above 80%.
 - `make deploy-overlay-template`: 15 passed, 0 failed.
 - `make deploy-private-handoff-template`: rendered throwaway private overlay/env files, validated the overlay, and ran deploy preflight with 19 passed, 0 warnings, 0 failed.
 - Private release-readiness probe with a non-repo overlay for `dogswipe.build000r.com`, ignored SPAPS values, `IOS_RELEASE_DEVELOPMENT_TEAM=84GGQ3RBDZ`, and HTTPS auth/universal-link settings: pre-DNS-gate run passed with 21 passed, 1 skipped, 0 failed.
-- `ssh-info` read-only production status: `spaps-python` was healthy; DogSwipe deploy root/env paths were absent.
+- Initial `ssh-info` read-only production status: `spaps-python` was healthy; DogSwipe deploy root/env paths were absent before host bootstrap.
 - DNS/health probe: `dogswipe.build000r.com` did not resolve; public health check returned HTTP `000`.
 - `make ios-release-assets`: iOS release assets verified, including build-setting-backed auth/link configuration and App Store Connect export/upload option plists.
 - `make -n ios-release-archive ...`: dry-run showed the signed archive command receives production API/SPAPS/universal-link settings without running Apple signing.
@@ -93,6 +93,9 @@ SwiftUI drift clean, CRAP below 20, and meaningful backend coverage above 80%.
 - `docker manifest inspect ghcr.io/build000r/dogswipe:7e2a5221091fa40da0344e44ba6722858405dcf9`: returned a readable Docker manifest with config digest `sha256:c6ec27bbbe0fffc5c77edb0e05dafde8be7eac2d4f775e61601bf612dda223a6`.
 - Fresh live blocker probe on 2026-05-06 after the latest GHCR publish: `dogswipe.build000r.com` still does not resolve; `curl https://dogswipe.build000r.com/health` returns HTTP `000`; `build000r.com` has no public NS/SOA response; `buildooor.com` resolves through Cloudflare but `dogswipe.buildooor.com` has no A record; Tailscale SSH asked for browser authorization, and the legacy key-backed read-only SSH path to `root@104.131.188.214` showed `/opt/envs/dogswipe`, `/opt/envs/dogswipe/prod.env`, `/opt/dogswipe`, and `/mnt/volume_nyc3_cfo_v1/dogswipe` are still absent while `spaps-python`, `spaps-python-redis`, and `spaps-python-db` are running.
 - Cloudflare DNS write probe on 2026-05-06: an ignored env-manager token was rejected with `401`; Wrangler OAuth could query the active `buildooor.com` zone but DNS record writes for `dogswipe.buildooor.com` failed with `403`; and a constrained GitHub Actions upsert in `build000r/buildooor` using the existing `CLOUDFLARE_API_TOKEN` secret also failed with `403`. No token values were printed or committed.
+- Host bootstrap on 2026-05-06: copied only non-secret deploy artifacts to the production host under `/opt/dogswipe`, created `/opt/envs/dogswipe` and `/mnt/volume_nyc3_cfo_v1/dogswipe/pgdata` with owner-only permissions, skipped AASA install because no signed production payload exists yet, and did not write credentials or restart containers.
+- Host-side deploy preflight after bootstrap: `ENV_FILE=deploy/prod.env.example DOGSWIPE_ENV_FILE=prod.env.example DOGSWIPE_IMAGE=dogswipe-api:local POSTGRES_PASSWORD=postgres bash deploy/pre-deploy-checks.sh` passed with 19 passed, 0 warnings, 0 failed on the production host; `docker network ls` confirms the shared `reverse-proxy` network exists.
+- Current DNS preflight after bootstrap: `DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN=dogswipe.buildooor.com DOGSWIPE_EXPECTED_A_RECORD=104.131.188.214 make deploy-dns-preflight` still fails at `domain has no A/AAAA record: dogswipe.buildooor.com`.
 
 ## Verdict
 
@@ -102,8 +105,8 @@ file, the private release-readiness gate passes without printing secrets, and
 the repo now renders private production env/overlay handoff files safely. CI
 also publishes pullable GHCR images for backend-image-changing `main` pushes.
 The full objective is not complete because live deployment still needs a DNS
-edit-capable Cloudflare token or a manual DNS record, host directories, the
-production env source, and reverse-proxy activation, and live App Store/TestFlight
+edit-capable Cloudflare token or a manual DNS record, the private production env
+source, reverse-proxy/AASA activation, and live App Store/TestFlight
 signing/upload still needs Apple/App Store Connect inputs.
 
 ## Required Inputs To Finish
@@ -114,9 +117,11 @@ signing/upload still needs Apple/App Store Connect inputs.
    create that record. Current discovered Cloudflare credentials can read the
    active zone but cannot edit DNS, so this needs a DNS-edit-capable token or a
    manual `A dogswipe.buildooor.com -> 104.131.188.214` record.
-2. DogSwipe host setup on `sweet-potato-prod`: deploy root, private
-   `/opt/envs/dogswipe/prod.env`, PostgreSQL/Redis storage paths, and copied
-   release artifacts.
+2. DogSwipe private host setup on `sweet-potato-prod`: render the private
+   `/opt/envs/dogswipe/prod.env`, including `DOGSWIPE_ADMIN_USER_IDS`, and pin
+   `DOGSWIPE_IMAGE` to the published GHCR image. The non-secret deploy root,
+   env directory, PostgreSQL data path, and release artifacts are already
+   installed.
 3. A private, durable skillbox overlay file checked into the private
    `skillbox-config` overlay source, not this public repo. The temporary
    non-repo overlay validates, but it is not a persistent production contract.
