@@ -6,13 +6,14 @@ is ready to provision the private `dogswipe` application row in Sweet Potato.
 
 ## Render The Payload
 
-Set the production release values first:
+Set the production release values first. The current public release host is
+`dogswipe.buildooor.com`:
 
 ```bash
-export DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN=<dogswipe-api-domain>
-export DOGSWIPE_RELEASE_SPAPS_ORIGIN=https://<dogswipe-api-domain>
-export DOGSWIPE_RELEASE_AUTH_REDIRECT_URL=https://<dogswipe-api-domain>/auth
-export DOGSWIPE_RELEASE_AUTH_UNIVERSAL_LINK_HOSTS=<dogswipe-api-domain>
+export DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN=dogswipe.buildooor.com
+export DOGSWIPE_RELEASE_SPAPS_ORIGIN=https://dogswipe.buildooor.com
+export DOGSWIPE_RELEASE_AUTH_REDIRECT_URL=https://dogswipe.buildooor.com/auth
+export DOGSWIPE_RELEASE_AUTH_UNIVERSAL_LINK_HOSTS=dogswipe.buildooor.com
 export IOS_RELEASE_BUNDLE_ID=com.build000r.dogswipe
 
 make spaps-registration-payload > /tmp/dogswipe-spaps-application.json

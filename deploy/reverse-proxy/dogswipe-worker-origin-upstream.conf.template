@@ -1,0 +1,4 @@
+upstream dogswipe_worker_origin_upstream {
+    server dogswipe-api:8000;
+    keepalive 16;
+}

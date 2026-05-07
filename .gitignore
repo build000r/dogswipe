@@ -27,3 +27,4 @@ apps/ios/DogSwipe/DogSwipe.xcodeproj/
 dist/
 build/
 *.log
+.wrangler/

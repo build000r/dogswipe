@@ -36,8 +36,14 @@ DOGSWIPE_RELEASE_SPAPS_API_BASE_URL ?= https://api.sweetpotato.dev
 DOGSWIPE_RELEASE_AUTH_REDIRECT_URL ?= $(if $(DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN),https://$(DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN)/auth,)
 DOGSWIPE_RELEASE_AUTH_UNIVERSAL_LINK_HOSTS ?= $(DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN)
 DOGSWIPE_RELEASE_SPAPS_ORIGIN ?= $(if $(DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN),https://$(DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN),)
+WRANGLER ?= npx wrangler
+EDGE_WORKER_CONFIG ?= workers/dogswipe-edge/wrangler.jsonc
+EDGE_PUBLIC_HEALTH_URL ?= https://dogswipe.buildooor.com/health
+EDGE_PUBLIC_AASA_URL ?= https://dogswipe.buildooor.com/.well-known/apple-app-site-association
+EDGE_CURL_RESOLVE ?=
+EDGE_CURL_RESOLVE_ARG := $(if $(EDGE_CURL_RESOLVE),--resolve $(EDGE_CURL_RESOLVE),)
 
-.PHONY: generate-ios ios-build ios-release-assets ios-ui-test ios-screenshots require-phone-device ios-phone-build ios-phone-reset-app ios-phone-install ios-phone-launch ios-phone-run require-ios-release-env require-ios-archive require-ios-asc-key ios-release-archive ios-testflight-export ios-testflight-upload swift-test backend-install backend-install-local backend-test coverage lint typecheck migrate migration-current test drift crap mmdx-preflight spaps-app-contract spaps-registration-payload spaps-origin-handoff spaps-origin-handoff-template deploy-config deploy-preflight deploy-render-aasa deploy-dns-handoff deploy-dns-handoff-template deploy-dns-preflight deploy-dns-preflight-template deploy-live-readiness deploy-live-readiness-template deploy-release-readiness deploy-overlay-template deploy-private-handoff-template deploy-post-verify
+.PHONY: generate-ios ios-build ios-release-assets ios-ui-test ios-screenshots require-phone-device ios-phone-build ios-phone-reset-app ios-phone-install ios-phone-launch ios-phone-run require-ios-release-env require-ios-archive require-ios-asc-key ios-release-archive ios-testflight-export ios-testflight-upload swift-test backend-install backend-install-local backend-test coverage lint typecheck migrate migration-current test drift crap mmdx-preflight spaps-app-contract spaps-registration-payload spaps-origin-handoff spaps-origin-handoff-template edge-dry-run edge-deploy edge-verify deploy-config deploy-preflight deploy-render-aasa deploy-dns-handoff deploy-dns-handoff-template deploy-dns-preflight deploy-dns-preflight-template deploy-live-readiness deploy-live-readiness-template deploy-release-readiness deploy-overlay-template deploy-private-handoff-template deploy-post-verify
 
 generate-ios:
 	cd apps/ios/DogSwipe && xcodegen generate
@@ -287,6 +293,16 @@ spaps-origin-handoff-template:
 	grep -q "UPDATE applications" "$$tmp"; \
 	grep -q "make deploy-release-readiness" "$$tmp"; \
 	cat "$$tmp"
+
+edge-dry-run:
+	$(WRANGLER) deploy --dry-run --config "$(EDGE_WORKER_CONFIG)"
+
+edge-deploy:
+	$(WRANGLER) deploy --config "$(EDGE_WORKER_CONFIG)"
+
+edge-verify:
+	curl $(EDGE_CURL_RESOLVE_ARG) -fsS "$(EDGE_PUBLIC_HEALTH_URL)" >/dev/null
+	curl $(EDGE_CURL_RESOLVE_ARG) -fsS "$(EDGE_PUBLIC_AASA_URL)" | python3 -m json.tool >/dev/null
 
 deploy-config:
 	DOGSWIPE_ENV_FILE=prod.env.example DOGSWIPE_IMAGE=dogswipe-api:local POSTGRES_PASSWORD=postgres docker compose --env-file deploy/prod.env.example -f deploy/docker-compose.prod.yml config >/dev/null

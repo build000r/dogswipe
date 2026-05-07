@@ -50,13 +50,15 @@ bash deploy/validate-skillbox-overlay.sh \
   /path/to/skillbox-config/clients/dogswipe/overlay.yaml
 ```
 
-The current practical public candidate is `dogswipe.buildooor.com`. A fresh
-2026-05-06 DNS probe showed `build000r.com` has no public NS/SOA response,
-while `buildooor.com` is an active Cloudflare zone. If `dogswipe.buildooor.com`
-stays canonical, the SPAPS app allowed origins and release env must include
-that HTTPS origin before native auth is live-ready.
+The current public production host is `dogswipe.buildooor.com`. It is routed by
+a Cloudflare Worker custom domain because the available Cloudflare OAuth can
+deploy Workers/custom domains but cannot edit ordinary DNS records. The Worker
+subrequests a scoped DogSwipe origin path on `api.sweetpotato.dev`, avoiding
+bare-IP Worker fetches and keeping the origin behind the existing Cloudflare-only
+firewall posture. The SPAPS app allowed origins and release env must still
+include `https://dogswipe.buildooor.com` before native auth is live-ready.
 
-After the canonical domain is chosen, prove DNS before attempting the live
+For a direct A-record rollout, render and prove the DNS handoff before the live
 Compose rollout:
 
 ```bash
@@ -74,6 +76,17 @@ renderer with a reserved example IP. The handoff output names the DNS zone,
 record name, A-record value, private release env values that must stay aligned,
 and the follow-up preflight commands for DNS-only and public URL verification.
 
+For the Worker custom-domain path, omit `DOGSWIPE_EXPECTED_A_RECORD` or point
+`DOGSWIPE_DNS_RESOLVER` at a fresh public resolver when the local resolver has a
+stale negative cache:
+
+```bash
+DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN=dogswipe.buildooor.com \
+DOGSWIPE_EXPECTED_A_RECORD= \
+DOGSWIPE_DNS_RESOLVER=1.1.1.1 \
+make deploy-dns-preflight
+```
+
 `deploy-release-readiness` can include the same check when the domain should
 already be live:
 
@@ -83,9 +96,17 @@ DOGSWIPE_EXPECTED_A_RECORD=<public-host-ip> \
 make deploy-release-readiness
 ```
 
-Set `CHECK_PUBLIC_URLS=true` after the reverse proxy and certificates are in
+Set `CHECK_PUBLIC_URLS=true` after the direct proxy or Worker public route is in
 place to prove `https://<domain>/health` and the hosted Apple app-site
 association URL.
+
+For immediate Worker-edge verification when local DNS still has a stale
+negative cache, pin curl to one currently returned Cloudflare edge address:
+
+```bash
+make edge-verify \
+  EDGE_CURL_RESOLVE=dogswipe.buildooor.com:443:<cloudflare-edge-ip>
+```
 
 For the full operator-facing readiness path, run the wrapper after the private
 overlay and release env are set:
@@ -226,10 +247,10 @@ temporary directory and is safe for CI.
 On `sweet-potato-prod`, bootstrap has already installed the non-secret deploy
 artifacts, created the env directory, and prepared the PostgreSQL data path. The
 current API, Postgres, and Redis containers are running healthy internally after
-Alembic migrations. The DogSwipe site config is staged in the shared proxy's
-`sites-available` directory and the rendered AASA payload is installed under
-the nginx static mount, but the site is not enabled until DNS and certificates
-are ready.
+Alembic migrations. The DogSwipe direct site config is staged in the shared
+proxy's `sites-available` directory, the Worker origin path is live under the
+existing `api.sweetpotato.dev` TLS server, and the rendered AASA payload is
+installed under the nginx static mount.
 
 ## Universal Links
 
@@ -323,8 +344,13 @@ without committing or printing secrets.
    ```bash
    docker compose --env-file /opt/envs/dogswipe/prod.env -f deploy/docker-compose.prod.yml -p dogswipe up -d
    ```
-6. Link `deploy/reverse-proxy/dogswipe-api.conf.template` into the shared reverse proxy after substituting `DOGSWIPE_API_DOMAIN`.
-7. Verify:
+6. For direct DNS/certificate hosting, link `deploy/reverse-proxy/dogswipe-api.conf.template` into the shared reverse proxy after substituting `DOGSWIPE_API_DOMAIN`. For the current Worker path, install `deploy/reverse-proxy/dogswipe-worker-origin-upstream.conf.template` as an enabled shared-proxy upstream definition and insert `deploy/reverse-proxy/dogswipe-worker-origin.locations.conf.template` inside the existing `api.sweetpotato.dev` TLS server before its catch-all location.
+7. Deploy or update the Worker:
+   ```bash
+   make edge-dry-run
+   make edge-deploy
+   ```
+8. Verify:
    ```bash
    PUBLIC_HEALTH_URL=https://<domain>/health \
      PUBLIC_AASA_URL=https://<domain>/.well-known/apple-app-site-association \
@@ -335,16 +361,13 @@ without committing or printing secrets.
 
 ## Known Block
 
-The internal production Compose rollout is running, but public live readiness
-should not be marked complete until the skillbox overlay and release env point
-at the canonical production domain, that domain resolves publicly, SPAPS allows
-the same HTTPS origin, and the shared reverse proxy serves both `/health` and
-the Apple app-site association payload over a valid certificate. The current
-`dogswipe.buildooor.com` candidate still has no A record, and the discovered
-Cloudflare credentials can read the active zone but cannot edit DNS. The live
-DogSwipe SPAPS app also still needs the same HTTPS origin, and the current
-Sweet Potato self-service API does not expose an edit-origin operation for an
-existing app. The repo can prove the container, migration, universal-link asset
-template/render path, staged proxy config, and Compose contract; it cannot
-prove DNS, certificates, SPAPS operator updates, Apple account ownership, or
-production secrets by itself.
+The internal production Compose rollout and public Worker edge are running:
+`https://dogswipe.buildooor.com/health` and the hosted Apple app-site association
+payload pass public verification. Live readiness should not be marked complete
+until the DogSwipe SPAPS application allows the same HTTPS origin and Apple
+distribution signing/upload is available. The current Sweet Potato self-service
+API does not expose an edit-origin operation for an existing app, so the SPAPS
+origin update remains an operator-side action. The repo can prove the container,
+migration, Worker edge, universal-link asset template/render path, and Compose
+contract; it cannot prove SPAPS database mutation approval, Apple account
+ownership, or production secrets by itself.

@@ -74,6 +74,8 @@ jobs:
         run: make deploy-dns-handoff-template
       - name: DNS preflight template
         run: make deploy-dns-preflight-template
+      - name: Worker edge dry run
+        run: make edge-dry-run
       - name: Live readiness template
         run: make deploy-live-readiness-template
       - name: Release readiness

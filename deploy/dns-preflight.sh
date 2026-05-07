@@ -6,6 +6,8 @@ zone="${DOGSWIPE_DNS_ZONE:-}"
 expected_records="${DOGSWIPE_EXPECTED_A_RECORD:-${DOGSWIPE_DEPLOY_IP:-}}"
 check_public_urls="${CHECK_PUBLIC_URLS:-false}"
 require_host_record="${REQUIRE_HOST_RECORD:-true}"
+dns_resolver="${DOGSWIPE_DNS_RESOLVER:-}"
+public_curl_resolve="${PUBLIC_CURL_RESOLVE:-}"
 
 passed=0
 failed=0
@@ -28,6 +30,14 @@ skip() {
 
 has_command() {
   command -v "$1" >/dev/null 2>&1
+}
+
+dig_lookup() {
+  if [[ -n "$dns_resolver" ]]; then
+    dig "@$dns_resolver" "$@"
+  else
+    dig "$@"
+  fi
 }
 
 valid_domain() {
@@ -77,8 +87,8 @@ if [[ "$failed" -eq 0 ]]; then
 fi
 
 if [[ "$failed" -eq 0 ]]; then
-  ns_records="$(dig +short NS "$zone" || true)"
-  soa_record="$(dig +short SOA "$zone" || true)"
+  ns_records="$(dig_lookup +short NS "$zone" || true)"
+  soa_record="$(dig_lookup +short SOA "$zone" || true)"
   if [[ -n "$ns_records" || -n "$soa_record" ]]; then
     pass "DNS zone has public NS/SOA authority"
   else
@@ -87,8 +97,8 @@ if [[ "$failed" -eq 0 ]]; then
 fi
 
 if [[ "$failed" -eq 0 ]]; then
-  a_records="$(dig +short A "$domain" | grep -E '^([0-9]{1,3}\.){3}[0-9]{1,3}$' || true)"
-  aaaa_records="$(dig +short AAAA "$domain" | sed -n '/:/p' || true)"
+  a_records="$(dig_lookup +short A "$domain" | grep -E '^([0-9]{1,3}\.){3}[0-9]{1,3}$' || true)"
+  aaaa_records="$(dig_lookup +short AAAA "$domain" | sed -n '/:/p' || true)"
   if [[ -n "$a_records" || -n "$aaaa_records" ]]; then
     pass "domain resolves to at least one A/AAAA record"
   elif [[ "$require_host_record" == "true" ]]; then
@@ -121,14 +131,18 @@ fi
 if [[ "$check_public_urls" == "true" && "$failed" -eq 0 ]]; then
   public_health_url="${PUBLIC_HEALTH_URL:-https://$domain/health}"
   public_aasa_url="${PUBLIC_AASA_URL:-https://$domain/.well-known/apple-app-site-association}"
+  curl_args=()
+  if [[ -n "$public_curl_resolve" ]]; then
+    curl_args=(--resolve "$public_curl_resolve")
+  fi
 
-  if curl -fsS "$public_health_url" >/dev/null; then
+  if curl "${curl_args[@]}" -fsS "$public_health_url" >/dev/null; then
     pass "public health URL responds"
   else
     fail "public health URL failed: $public_health_url"
   fi
 
-  if curl -fsS "$public_aasa_url" >/dev/null; then
+  if curl "${curl_args[@]}" -fsS "$public_aasa_url" >/dev/null; then
     pass "public Apple app-site association URL responds"
   else
     fail "public Apple app-site association URL failed: $public_aasa_url"

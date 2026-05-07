@@ -1,0 +1,14 @@
+{
+  "name": "dogswipe-edge",
+  "main": "src/index.js",
+  "compatibility_date": "2026-05-06",
+  "routes": [
+    {
+      "pattern": "dogswipe.buildooor.com",
+      "custom_domain": true
+    }
+  ],
+  "vars": {
+    "DOGSWIPE_ORIGIN_URL": "https://api.sweetpotato.dev/__dogswipe_edge_origin"
+  }
+}
