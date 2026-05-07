@@ -178,7 +178,8 @@ ios-testflight-export: require-ios-archive
 		-exportArchive \
 		-archivePath "$(IOS_RELEASE_ARCHIVE_PATH)" \
 		-exportPath "$(IOS_RELEASE_EXPORT_PATH)" \
-		-exportOptionsPlist "$(IOS_RELEASE_EXPORT_OPTIONS)"
+		-exportOptionsPlist "$(IOS_RELEASE_EXPORT_OPTIONS)" \
+		-allowProvisioningUpdates
 
 ios-testflight-upload: require-ios-archive require-ios-asc-key
 	@xcodebuild \
@@ -259,6 +260,7 @@ crap:
 
 mmdx-preflight:
 	python3 $(SKILLS_ROOT)/mmdx/scripts/mmd.py docs/architecture.mmdx --preflight-only
+	python3 $(SKILLS_ROOT)/mmdx/scripts/mmd.py docs/ux-release-gantt.mmdx --preflight-only
 
 spaps-app-contract:
 	python3 scripts/verify_spaps_app_contract.py

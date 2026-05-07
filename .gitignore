@@ -24,6 +24,7 @@ apps/ios/DogSwipe/DogSwipe.xcodeproj/
 *.mobileprovision
 .drift/scan*.json
 .crap/
+.ntm/
 dist/
 build/
 *.log

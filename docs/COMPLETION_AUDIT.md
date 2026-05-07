@@ -1,7 +1,7 @@
 # Completion Audit
 
 Date: 2026-05-07
-Implementation audited: hotdog swipe deck, wrapped Discover/Matches chips, visible Discover route controls, durable backend-backed order drafts with My Orders, signed release/TestFlight handoff scaffolding, bundle-aware AASA render path, release-readiness gate, DNS handoff/preflight, Cloudflare Worker edge, public SPAPS app descriptor, SPAPS operator handoff and applied SPAPS origin update, private deploy handoff renderers, GHCR image publishing, private release-readiness probe, Cloudflare credential probes, current Sweet Potato self-service route shape, internal production host rollout, and public Worker-hosted production checks in the current branch state.
+Implementation audited: hotdog swipe deck, DogSwipe prototype zip UX hardening, wrapped Discover/Matches chips, visible Discover route controls, durable backend-backed order drafts with My Orders, signed release/TestFlight handoff scaffolding, bundle-aware AASA render path, release-readiness gate, DNS handoff/preflight, Cloudflare Worker edge, public SPAPS app descriptor, SPAPS operator handoff and applied SPAPS origin update, private deploy handoff renderers, GHCR image publishing, private release-readiness probe, Cloudflare credential probes, current Sweet Potato self-service route shape, internal production host rollout, and public Worker-hosted production checks in the current branch state.
 Recent complete CI evidence: GitHub Actions `25480814180` for `07cac9d` passed `backend`, `swift-package`, and `ios` jobs on pushed `main`, including the Worker edge dry-run gate. The production container is still pinned to `ghcr.io/build000r/dogswipe:ba9df2bf382fb24597d916e2212ce8522392a016` until an explicit backend image rollout changes it.
 
 ## Objective Restated
@@ -31,9 +31,9 @@ SwiftUI drift clean, CRAP below 20, and meaningful backend coverage above 80%.
 | CRAP below 20 | Fresh `make crap` reported `FINAL_SCORE: 9.00`; CI CRAP gate passed. | Done |
 | Meaningful backend test coverage above 80% | Fresh `make coverage` ran 85 backend tests and reported total coverage 89.85%. | Done |
 | Swift test coverage through behavior | Fresh `make swift-test` ran 35 tests across API client, order API contract, scorer, and deck state. | Done |
-| iOS build/test/screenshot smoke | CI run `25480814180` passed iOS release asset verification, generic iOS build, iOS unit tests, and screenshot UI smoke. Local `make ios-build`, iOS unit tests, `make ios-ui-test`, and `make ios-screenshots` cover the reference Discover surface, visible route controls, draggable card advancement, Matches, match add-to-order, Orders, Vendor, Review, and Profile in isolated screenshot-mode launches. | Done |
-| MMDX architecture tracking | `docs/architecture.mmdx`; fresh `make mmdx-preflight` passed 3 charts. | Done |
-| Workgraph/planning tracked | `docs/WORKGRAPH.md` lists WG-001 through WG-048 and current ready frontier/risks. | Done |
+| iOS build/test/screenshot smoke | CI run `25480814180` passed iOS release asset verification, generic iOS build, iOS unit tests, and screenshot UI smoke. Local `make ios-build`, iOS unit tests, `make ios-ui-test`, `make ios-screenshots`, and the nested `ios_build_probe.sh --root apps/ios/DogSwipe --scheme DogSwipe --run` cover the prototype-hardened Discover/Matches surfaces, visible route controls, draggable card advancement, match add-to-order, Orders, Vendor, Review, and Profile in isolated screenshot-mode launches. | Done |
+| MMDX architecture and UX tracking | `docs/architecture.mmdx` and `docs/ux-release-gantt.mmdx`; fresh `make mmdx-preflight` now covers the architecture stack plus a sub-linked UX release Gantt. | Done |
+| Workgraph/planning tracked | `docs/WORKGRAPH.md` lists WG-001 through WG-050 and current ready frontier/risks. | Done |
 | README and vision docs updated | `README.md`, `docs/VISION.md`, `docs/QUALITY_GATES.md`, and `docs/WORKGRAPH.md` describe the hotdog app and current limits. | Done |
 | Build-vs-clone decision captured | `README.md` records `NEW REPO` and `BORROW + BUILD` using Sweet Potato/SPAPS patterns. | Done |
 | Deploy artifacts exist | `deploy/docker-compose.prod.yml`, env template, host bootstrap script, pre/post deploy scripts, DNS handoff renderer, DNS preflight script, Cloudflare Worker edge proxy, live-readiness wrapper, release-readiness script, reverse-proxy templates, bundle-aware AASA template/render script, GHCR publish workflow, and `deploy/README.md`. | Done |
@@ -50,7 +50,7 @@ SwiftUI drift clean, CRAP below 20, and meaningful backend coverage above 80%.
 | Production host readiness | Private `/opt/envs/dogswipe/prod.env` is installed with owner-only permissions; `DOGSWIPE_IMAGE` is pinned to `ghcr.io/build000r/dogswipe:ba9df2bf382fb24597d916e2212ce8522392a016`; Alembic migrations applied through `0009`; Postgres, Redis, and the API container are running healthy internally; the Worker origin path is installed under the existing `api.sweetpotato.dev` TLS server; AASA payload is valid and visible through the public Worker edge; unauthenticated discovery returns `401` as expected with SPAPS auth enabled; host-side post-deploy verification passed 8 passed, 0 failed. | Done for edge path |
 | Production DNS/edge readiness | Direct DNS writes failed with available credentials, but `make edge-deploy` published Cloudflare Worker custom-domain version `34587272-053f-48f8-a32e-f1c7ddf5a2c1` for `dogswipe.buildooor.com`. Authoritative DNS now returns Cloudflare A/AAAA records, public health returns HTTP 200 with `x-dogswipe-edge: cloudflare-worker`, and hosted AASA returns the expected app ID. | Done for edge path |
 | CI enforces gates | `.github/workflows/ci.yml` runs backend tests/coverage/CRAP/MMDX/SPAPS-contract/drift/lint/typecheck/migration/deploy/AASA-render/private-handoff/host-bootstrap/DNS-handoff-template/DNS-preflight-template/Worker-edge-dry-run/live-readiness-template/release-readiness/Docker build and conditional GHCR publish, Swift package tests, and iOS release/build/unit/screenshot gates. GitHub Actions `25480814180` passed `backend`, `swift-package`, and `ios` for `07cac9d`, including the Worker edge dry-run gate. | Done |
-| Original reference-image visual parity | The supplied DogSwipe reference image is now the visual source of truth for the iOS Discover/Matches/Orders surfaces: cream/red/mustard vendor-pack chrome, Chicago Classic cards, hotdog-first art, swipe controls, wrapped chips/add-ons, match/order CTA, and My Orders cards. | Done |
+| DogSwipe prototype visual parity | The supplied prototype zip is now the visual source of truth for the iOS Discover/Matches/Orders/Vendor/Review/Profile surfaces: cream/red/mustard/relish/super-blue vendor-pack chrome, screen headers, Chicago Classic cards with price/status overlays, hotdog-first art, swipe controls, wrapped chips/add-ons, `CraveMeter`, match/order CTA, status pills, and My Orders cards. | Done |
 | Live production deployment | The internal production Compose stack is running healthy with the private env and current GHCR image, the Cloudflare Worker custom domain serves public health plus AASA, and SPAPS allowed origins include the canonical HTTPS host. Full native auth proof still needs a signed TestFlight/App Store build. | Done for backend/edge/auth-origin |
 | Hosted universal-link activation | Bundle-aware AASA template, local render target, entitlement plumbing, and hosted AASA verification for `84GGQ3RBDZ.com.build000r.dogswipe` exist. End-to-end universal-link handling still needs a signed TestFlight/App Store build. | Partially done |
 | App Store signing/TestFlight handoff | The iOS release archive/export/upload Make targets, build-setting-backed production auth/link configuration, App Store Connect export option plists, and secret ignore rules exist. Local signing/export has produced DogSwipe archives/IPAs, an Apple Distribution identity is present, and an App Store Connect API key file exists outside the repo. TestFlight remains unconfirmed because the App Store Connect issuer/upload path has not been completed. | Blocked |
@@ -61,14 +61,15 @@ SwiftUI drift clean, CRAP below 20, and meaningful backend coverage above 80%.
 - `make swift-test`: 35 tests passed.
 - `make ios-build`: generic iOS build passed with build-setting-backed production auth/link Info.plist values.
 - `xcodebuild -quiet -project apps/ios/DogSwipe/DogSwipe.xcodeproj -scheme DogSwipe -destination 'platform=iOS Simulator,id=<iPhone 17 Pro simulator UDID>,arch=arm64' -only-testing:DogSwipeTests test`: iOS unit tests passed.
-- `make ios-ui-test`: 8 isolated screenshot UI tests passed, including visible Discover `Live walk`/`Directions` controls, draggable Discover card advancement, match add-to-order confirmation, and the My Orders screen.
-- `make ios-screenshots`: 6 PNG attachments exported and inspected.
+- `make ios-ui-test`: 8 isolated screenshot UI tests passed after the prototype hardening, including visible Discover `Live walk`/`Directions` controls, draggable Discover card advancement, match add-to-order confirmation, and the My Orders screen.
+- `make ios-screenshots`: 6 PNG attachments exported and inspected; Discover shows price/status hero overlays and prototype swipe language, and Matches shows the compact dark top-match card plus an unobscured `Add to Order` CTA above the floating tab bar.
+- `ios_build_probe.sh --root apps/ios/DogSwipe --scheme DogSwipe --run`: nested iOS project probe passed with `** BUILD SUCCEEDED **`.
 - `make backend-test`: 85 backend tests passed.
 - `make coverage`: 85 backend tests passed with 89.85% total coverage.
 - CI `Coverage` gate in run `25480814180`: backend coverage passed the required 80.0% threshold.
 - `make drift`: 0 Swift findings.
 - `make crap`: `FINAL_SCORE: 9.00`.
-- `make mmdx-preflight`: 3 charts passed.
+- `make mmdx-preflight`: `docs/architecture.mmdx` passed 3 charts and `docs/ux-release-gantt.mmdx` passed 4 charts.
 - `make spaps-app-contract`: public SPAPS app descriptor and registration-payload renderer verified without raw app ID or keys.
 - `ALLOW_PLACEHOLDERS=true make spaps-registration-payload`: rendered a non-secret Sweet Potato self-service application payload for the `dogswipe` slug.
 - `ALLOW_PLACEHOLDERS=true make spaps-origin-handoff-template`: rendered an idempotent no-secret SQL/psql operator handoff to merge the release HTTPS origin into the existing `dogswipe` SPAPS app.
@@ -76,6 +77,7 @@ SwiftUI drift clean, CRAP below 20, and meaningful backend coverage above 80%.
 - CI `make deploy-preflight`: 18 passed, 1 expected warning for the absent runner-local `reverse-proxy` network, 0 failed.
 - `make deploy-render-aasa AASA_APPLE_TEAM_ID=ABCDE12345`: rendered the bundle-aware Apple app-site association payload.
 - `make deploy-release-readiness ALLOW_PLACEHOLDERS=true ...`: release handoff gate passed in placeholder mode without secrets; 21 passed, 2 skipped, 0 failed, including SPAPS app contract and registration-payload verification.
+- `make deploy-release-readiness ALLOW_PLACEHOLDERS=true DOGSWIPE_RELEASE_API_BASE_URL=https://dogswipe.buildooor.com DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN=dogswipe.buildooor.com ...`: current local release-readiness recheck passed with 21 passed, 2 skipped, 0 failed, and live `https://dogswipe.buildooor.com/health` returned `status:"ok"` with `database_ready:true` on backend version `ba9df2bf382fb24597d916e2212ce8522392a016`.
 - `make deploy-release-readiness ALLOW_PLACEHOLDERS=true CHECK_DNS=true ... DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN=dogswipe.buildooor.com`: live-host release handoff gate passed with DNS preflight included; 22 passed, 1 skipped, 0 failed.
 - `make deploy-dns-handoff-template`: passed; rendered the no-secret reserved-example DNS record and follow-up preflight commands.
 - `make deploy-dns-handoff DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN=dogswipe.buildooor.com DOGSWIPE_EXPECTED_A_RECORD=104.131.188.214`: passed; rendered `Zone: buildooor.com`, `Name: dogswipe`, `Type: A`, `Value: 104.131.188.214`, aligned release env values, and post-DNS/public-URL preflight commands.
@@ -111,18 +113,19 @@ SwiftUI drift clean, CRAP below 20, and meaningful backend coverage above 80%.
 - SPAPS origin update on 2026-05-07: an idempotent production DB transaction merged `https://dogswipe.buildooor.com` into the live `dogswipe` app allowed origins without printing keys, and a follow-up read-only DB/container inspection returned `http://127.0.0.1:*`, `http://localhost:*`, `https://dogswipe.build000r.com`, `https://dogswipe.buildooor.com`, and `https://dogswipe.local`.
 - iOS signing probe on 2026-05-06: `xcodebuild archive` succeeded for `com.build000r.dogswipe` with automatic Apple development signing under team `84GGQ3RBDZ`, proving bundle/team provisioning is reachable locally.
 - App Store export probe on 2026-05-06: `xcodebuild -exportArchive` with the App Store Connect export options failed before upload because no usable App Store account/distribution signing path is available in this workspace.
+- Prototype zip review on 2026-05-07: the supplied prototype zip was inspected directly and with two parallel Opus review passes; the implemented deltas were then verified through SwiftUI drift, iOS UI smoke, exported screenshots, and the iOS build probe.
 
 ## Verdict
 
-The repo is production-quality, the internal production backend is running, the
-public Worker edge is live, and the production SPAPS origin list now includes
-`https://dogswipe.buildooor.com`. Private SPAPS application values are present
-in an ignored local env file, the private release-readiness gate passes without
-printing secrets, the production host has its private DogSwipe env installed,
-public health/AASA proof passes through `dogswipe.buildooor.com`, and CI
-publishes pullable GHCR images for backend-image-changing `main` pushes. The
-full objective is not complete because a live App Store/TestFlight upload has
-not been confirmed.
+The repo is production-quality, the prototype-derived UX hardening is verified,
+the internal production backend is running, the public Worker edge is live, and
+the production SPAPS origin list now includes `https://dogswipe.buildooor.com`.
+Private SPAPS application values are present in an ignored local env file, the
+private release-readiness gate passes without printing secrets, the production
+host has its private DogSwipe env installed, public health/AASA proof passes
+through `dogswipe.buildooor.com`, and CI publishes pullable GHCR images for
+backend-image-changing `main` pushes. The full objective is not complete because
+a live App Store/TestFlight upload has not been confirmed.
 
 ## Required Inputs To Finish
 

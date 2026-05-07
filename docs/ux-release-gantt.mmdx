@@ -1,0 +1,102 @@
+<!-- mmdx
+{
+  "entry": "main",
+  "links": [
+    {
+      "from": "main",
+      "label": "Design zip audit",
+      "to": "design-proof",
+      "title": "Open design proof detail"
+    },
+    {
+      "from": "main",
+      "label": "Quality gates",
+      "to": "quality-proof",
+      "title": "Open quality gate detail"
+    },
+    {
+      "from": "main",
+      "label": "TestFlight handoff",
+      "to": "testflight-blockers",
+      "title": "Open TestFlight blocker detail"
+    }
+  ]
+}
+-->
+
+## chart main DogSwipe UX Release Gantt
+```mermaid
+gantt
+  title DogSwipe UX Release Gantt
+  dateFormat YYYY-MM-DD
+  axisFormat %b %d
+
+  section Design Extraction
+  Design zip audit      :done, design-audit, 2026-05-07, 1d
+  Opus review wave      :done, opus-review, 2026-05-07, 1d
+
+  section SwiftUI Hardening
+  Discover card polish  :done, discover-ui, 2026-05-07, 1d
+  Screen headers        :done, headers, 2026-05-07, 1d
+  Match and order cues  :done, match-order, 2026-05-07, 1d
+  Vendor status polish  :done, vendor-status, 2026-05-07, 1d
+
+  section Verification
+  Quality gates         :done, quality-gates, 2026-05-07, 1d
+  Completion audit      :done, audit, after quality-gates, 1d
+  Commit batches        :done, commit, after audit, 1d
+
+  section Release
+  Deploy verification   :done, release-verify, after commit, 1d
+  TestFlight handoff    :crit, active, testflight, after release-verify, 2d
+```
+
+## chart design-proof Design Proof
+```mermaid
+flowchart TD
+  zip["supplied prototype zip"]
+  tokens["tokens.css: paper, mustard, tomato, relish, super blue"]
+  shared["ui.jsx: ScreenHeader, StatusPill, CraveMeter"]
+  discover["screens/discover.jsx: price/status hero overlays"]
+  release["screens/orders/matches/vendor/review/profile"]
+  swift["SwiftUI design system and app surfaces"]
+
+  zip --> tokens
+  zip --> shared
+  zip --> discover
+  zip --> release
+  tokens --> swift
+  shared --> swift
+  discover --> swift
+  release --> swift
+```
+
+## chart quality-proof Quality Proof
+```mermaid
+stateDiagram-v2
+  [*] --> SwiftPackage
+  SwiftPackage --> IOSBuild
+  IOSBuild --> UISmoke
+  UISmoke --> Drift
+  Drift --> Coverage
+  Coverage --> Crap
+  Crap --> MMDX
+  MMDX --> ReleaseAssets
+  ReleaseAssets --> DeployReadiness
+  DeployReadiness --> [*]
+```
+
+## chart testflight-blockers TestFlight Blockers
+```mermaid
+flowchart TD
+  local["Local release lane ready"]
+  archive["Signed archive command available"]
+  export["Export/upload Make targets available"]
+  asc["BLOCKED: App Store Connect issuer/upload access"]
+  record["BLOCKED: App Store Connect app record if absent"]
+  upload["TestFlight upload confirmation"]
+  device["Signed-device universal-link and SPAPS auth proof"]
+
+  local --> archive --> export --> asc --> upload --> device
+  record --> upload
+```

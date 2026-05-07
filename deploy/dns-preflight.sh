@@ -131,18 +131,23 @@ fi
 if [[ "$check_public_urls" == "true" && "$failed" -eq 0 ]]; then
   public_health_url="${PUBLIC_HEALTH_URL:-https://$domain/health}"
   public_aasa_url="${PUBLIC_AASA_URL:-https://$domain/.well-known/apple-app-site-association}"
-  curl_args=()
-  if [[ -n "$public_curl_resolve" ]]; then
-    curl_args=(--resolve "$public_curl_resolve")
-  fi
 
-  if curl "${curl_args[@]}" -fsS "$public_health_url" >/dev/null; then
+  curl_public_url() {
+    local url="$1"
+    if [[ -n "$public_curl_resolve" ]]; then
+      curl --resolve "$public_curl_resolve" -fsS "$url" >/dev/null
+    else
+      curl -fsS "$url" >/dev/null
+    fi
+  }
+
+  if curl_public_url "$public_health_url"; then
     pass "public health URL responds"
   else
     fail "public health URL failed: $public_health_url"
   fi
 
-  if curl "${curl_args[@]}" -fsS "$public_aasa_url" >/dev/null; then
+  if curl_public_url "$public_aasa_url"; then
     pass "public Apple app-site association URL responds"
   else
     fail "public Apple app-site association URL failed: $public_aasa_url"
