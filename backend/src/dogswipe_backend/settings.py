@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Annotated
+from typing import Literal
 
 from pydantic import Field
 from pydantic_settings import NoDecode
@@ -11,6 +12,7 @@ class DogSwipeSettings(BaseServiceSettings):  # type: ignore[misc]
     app_name: str = "DogSwipe API"
     service_slug: str = "dogswipe-api"
     version: str = "0.1.0"
+    development_environment: Literal["local", "production", "prod"] | None = None
     database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/dogswipe"
     redis_url: str = "redis://localhost:6379/0"
     spaps_auth_enabled: bool = False
