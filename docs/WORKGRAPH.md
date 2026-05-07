@@ -54,20 +54,22 @@ Status key: `done`, `active`, `ready`, `blocked`.
 | WG-048 DNS preflight contract | done | WG-041, WG-047 | `deploy/**`, `.github/**`, `Makefile`, `docs/**` | The repo has a no-secret DNS handoff renderer, DNS preflight, and live-readiness wrapper that check canonical-domain authority, host records, expected deploy IPs, and optional public health/AASA URLs; CI exercises handoff rendering, pass/fail branches, and the operator wrapper through template targets, and release readiness can include DNS with `CHECK_DNS=true` |
 | WG-049 Cloudflare Worker public edge | done | WG-048 | `workers/**`, `deploy/reverse-proxy/**`, `Makefile`, `docs/**` | `dogswipe.buildooor.com` is routed by a Cloudflare Worker custom domain to a scoped DogSwipe origin path on `api.sweetpotato.dev`; public health, AASA, unauthenticated API boundary, and host-side post-deploy verification pass |
 | WG-050 Prototype zip UX hardening | done | WG-034, WG-040, WG-049 | `apps/ios/DogSwipe/**`, `docs/**`, `Makefile` | The supplied prototype zip and two parallel Opus reviews were distilled into the SwiftUI design system and app surfaces; exported screenshots show the Discover hero price/status overlays, prototype swipe language, dark Matches top-card/CraveMeter, order summary, vendor/review status pills, and an unobscured match order CTA; drift, UI smoke, screenshots, and iOS build probe pass |
+| WG-051 TestFlight upload | done | WG-039, WG-050 | `.build/ios-release/**`, `docs/**` | The current HEAD archived, exported, uploaded to App Store Connect, and `xcrun altool --build-status --delivery-id 6d92868f-05b4-4538-badf-a8f2d0acb20e --wait` returned `VALID` for DogSwipe `0.1.0` uploaded build `2`; generated Apple artifacts remain ignored |
 
 ## Ready Frontier
 
-The next ready work is the signed TestFlight handoff with private Apple credentials. The production host has the private env rendered, `DOGSWIPE_IMAGE` pinned to the current GHCR full-SHA tag, Alembic migrations applied through `0009`, Postgres, Redis, and the DogSwipe API running healthy internally. The public Worker edge serves health and AASA from `dogswipe.buildooor.com`, unauthenticated protected API routes return `401` as expected, the live SPAPS app now allows `https://dogswipe.buildooor.com`, and the prototype zip UX hardening is verified locally through screenshots and build gates. Product work can also continue into payment/fulfillment beyond durable drafts, full route persistence or turn-by-turn navigation if lightweight previews prove insufficient, and broader crawler-backed menu indexing if bounded snapshot search proves insufficient.
+The next ready work is physical-device proof from the valid TestFlight build. The production host has the private env rendered, `DOGSWIPE_IMAGE` pinned to the current GHCR full-SHA tag, Alembic migrations applied through `0009`, Postgres, Redis, and the DogSwipe API running healthy internally. The public Worker edge serves health and AASA from `dogswipe.buildooor.com`, unauthenticated protected API routes return `401` as expected, the live SPAPS app now allows `https://dogswipe.buildooor.com`, the prototype zip UX hardening is verified locally through screenshots and build gates, and DogSwipe `0.1.0` build `2` is valid in App Store Connect. Product work can also continue into payment/fulfillment beyond durable drafts, full route persistence or turn-by-turn navigation if lightweight previews prove insufficient, and broader crawler-backed menu indexing if bounded snapshot search proves insufficient.
 
 ## Risks
 
-- Full native auth proof still depends on a signed TestFlight/App Store build exercising the universal-link return on device, but the production SPAPS origin list is now aligned with the public Worker host.
-- Live App Store/TestFlight submission remains blocked until App Store Connect API issuer/upload access or an interactive Xcode Organizer upload path is completed.
+- Full native auth proof still depends on installing the TestFlight build on a physical device and exercising the universal-link return, but the production SPAPS origin list is aligned with the public Worker host and the build is valid in App Store Connect.
+- The local repository is ahead of `origin/main`; pushing requires explicit approval under the deploy workflow.
 
 ## Remote Checkpoint
 
 - Public repository: https://github.com/build000r/dogswipe
 - First pushed commit: `dbf880b`
-- Recent audited commit: `07cac9d`
+- Recent audited local commit: `f43d583`
+- TestFlight evidence: DogSwipe `0.1.0` uploaded build `2`, delivery `6d92868f-05b4-4538-badf-a8f2d0acb20e`, status `VALID`
 - Recent published backend image evidence: `ghcr.io/build000r/dogswipe:ba9df2bf382fb24597d916e2212ce8522392a016`
 - Latest main CI evidence: GitHub Actions `25480814180` passed `backend`, `swift-package`, and `ios` for `07cac9d`; the currently running production backend image remains `ba9df2b` until a separate pinned-image rollout changes it.

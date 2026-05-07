@@ -34,7 +34,7 @@ The first production slice must prove three things:
 - Payments, booking, or fulfillment-backed order management
 - Real-time chat
 - Recommendation ML
-- Live App Store/TestFlight submission without Apple signing and App Store Connect credentials
+- Public App Store review before the TestFlight build has been exercised on a physical device
 - Full turn-by-turn navigation or route persistence beyond lightweight MapKit previews
 - Broad crawler-based menu indexing beyond bounded snapshot search
 
@@ -42,7 +42,7 @@ These are valuable later, but they would dilute the core loop before the app has
 
 ## Release Reality
 
-The application and deploy contract are on a real production host, and the public edge is now live through `https://dogswipe.buildooor.com`. The production host has the private DogSwipe env rendered, Alembic migrations applied through `0009`, Postgres, Redis, and the API container running healthy on the current GHCR full-SHA image. A Cloudflare Worker custom domain fronts the release host and subrequests a scoped DogSwipe origin path on `api.sweetpotato.dev`; public health and hosted Apple app-site association checks pass through that edge. SPAPS origin alignment is now live too: the production `dogswipe` app includes `https://dogswipe.buildooor.com` in `allowed_origins`. The remaining live work is the signed TestFlight handoff once App Store Connect issuer/upload access or an interactive Xcode Organizer upload path is available.
+The application and deploy contract are on a real production host, and the public edge is now live through `https://dogswipe.buildooor.com`. The production host has the private DogSwipe env rendered, Alembic migrations applied through `0009`, Postgres, Redis, and the API container running healthy on the current GHCR full-SHA image. A Cloudflare Worker custom domain fronts the release host and subrequests a scoped DogSwipe origin path on `api.sweetpotato.dev`; public health and hosted Apple app-site association checks pass through that edge. SPAPS origin alignment is now live too: the production `dogswipe` app includes `https://dogswipe.buildooor.com` in `allowed_origins`. DogSwipe `0.1.0` uploaded build `2` is valid in App Store Connect/TestFlight; the remaining live proof is a physical-device TestFlight install exercising the SPAPS universal-link callback.
 
 ## Quality Bar
 

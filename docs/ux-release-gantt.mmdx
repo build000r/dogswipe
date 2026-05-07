@@ -48,7 +48,8 @@ gantt
 
   section Release
   Deploy verification   :done, release-verify, after commit, 1d
-  TestFlight handoff    :crit, active, testflight, after release-verify, 2d
+  TestFlight handoff    :crit, done, testflight, after release-verify, 1d
+  Device auth proof     :crit, active, device-proof, after testflight, 1d
 ```
 
 ## chart design-proof Design Proof
@@ -92,10 +93,10 @@ flowchart TD
   local["Local release lane ready"]
   archive["Signed archive command available"]
   export["Export/upload Make targets available"]
-  asc["BLOCKED: App Store Connect issuer/upload access"]
-  record["BLOCKED: App Store Connect app record if absent"]
-  upload["TestFlight upload confirmation"]
-  device["Signed-device universal-link and SPAPS auth proof"]
+  asc["App Store Connect key present"]
+  record["App record present: 6766942964"]
+  upload["VALID: DogSwipe 0.1.0 build 2"]
+  device["NEXT: TestFlight device universal-link and SPAPS auth proof"]
 
   local --> archive --> export --> asc --> upload --> device
   record --> upload
