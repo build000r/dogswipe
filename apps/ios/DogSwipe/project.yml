@@ -19,6 +19,7 @@ targets:
       properties:
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        ITSAppUsesNonExemptEncryption: false
         UILaunchScreen: {}
         UIApplicationSupportsIndirectInputEvents: true
         UIRequiresFullScreen: true
@@ -43,7 +44,7 @@ targets:
         CODE_SIGN_ENTITLEMENTS: DogSwipe/DogSwipe.entitlements
         CODE_SIGNING_ALLOWED: NO
         CODE_SIGNING_REQUIRED: NO
-        CURRENT_PROJECT_VERSION: 1
+        CURRENT_PROJECT_VERSION: 4
         DOGSWIPE_API_BASE_URL: http://localhost:8000
         DOGSWIPE_ASSOCIATED_DOMAIN: dogswipe.example.com
         DOGSWIPE_SPAPS_API_BASE_URL: https://api.sweetpotato.dev

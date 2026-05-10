@@ -82,16 +82,34 @@ final class DogSwipeScreenshotUITests: XCTestCase {
         waitFor(.staticText("Garden Snap"), timeout: 8, screenshotName: "06-discover-swipe-left")
     }
 
-    func test07MatchAddToOrderUpdatesCTA() {
-        launch(tab: "matches")
-        waitFor(identifier: "dogswipe.matches.screen", timeout: 20, screenshotName: "07-match-order")
-        waitFor(.button("Bacon"), timeout: 20, screenshotName: "07-match-order").tap()
-        waitFor(.button("Add to Order"), timeout: 20, screenshotName: "07-match-order").tap()
-        waitFor(.button("Added to Order"), timeout: 8, screenshotName: "07-match-order")
-        waitFor(identifier: "dogswipe.order.confirmation", timeout: 8, screenshotName: "07-match-order")
+    func test07DiscoverExhaustedDeckHidesSwipeControls() {
+        launch(tab: "discover")
+        waitFor(identifier: "dogswipe.discover.screen", timeout: 20, screenshotName: "07-discover-complete")
+        waitFor(.staticText("Chicago Classic"), timeout: 20, screenshotName: "07-discover-complete")
+
+        for _ in 0..<4 {
+            swipe(from: CGVector(dx: 0.25, dy: 0.48), to: CGVector(dx: 0.90, dy: 0.44))
+            Thread.sleep(forTimeInterval: 0.35)
+        }
+
+        waitFor(.staticText("You reviewed every hotdog"), timeout: 8, screenshotName: "07-discover-complete")
+        XCTAssertFalse(app.staticTexts["Swipe right for hotdogs"].exists)
+        XCTAssertFalse(app.buttons["Pass"].exists)
+        XCTAssertFalse(app.buttons["Like"].exists)
+        XCTAssertTrue(app.buttons["Restart deck"].isEnabled)
+        attachScreenshot(named: "07-discover-complete")
     }
 
-    func test08OrdersScreenshot() {
+    func test08MatchAddToOrderUpdatesCTA() {
+        launch(tab: "matches")
+        waitFor(identifier: "dogswipe.matches.screen", timeout: 20, screenshotName: "08-match-order")
+        waitFor(.button("Bacon"), timeout: 20, screenshotName: "08-match-order").tap()
+        waitFor(.button("Add to Order"), timeout: 20, screenshotName: "08-match-order").tap()
+        waitFor(.button("Added to Order"), timeout: 8, screenshotName: "08-match-order")
+        waitFor(identifier: "dogswipe.order.confirmation", timeout: 8, screenshotName: "08-match-order")
+    }
+
+    func test09OrdersScreenshot() {
         captureScreenshot(
             tab: "orders",
             screenIdentifier: "dogswipe.orders.screen",

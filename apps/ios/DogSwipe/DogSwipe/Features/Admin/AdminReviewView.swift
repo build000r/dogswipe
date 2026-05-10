@@ -114,8 +114,7 @@ struct AdminReviewView: View {
             }
         }
         .tint(.dsPrimary)
-        .padding(.dsSpace4)
-        .dsCardSurface()
+        .dsCard()
     }
 
     @ViewBuilder

@@ -12,6 +12,7 @@ struct DiscoverView: View {
     @State private var armedSwipeDecision: SwipeDecision?
     @State private var feedbackTrigger = 0
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.openURL) private var openURL
 
     @MainActor
     init(
@@ -35,7 +36,10 @@ struct DiscoverView: View {
                             systemImage: "magnifyingglass",
                             accessibilityLabel: "Search menus"
                         ) {
-                            withAnimation(.spring(response: 0.24, dampingFraction: 0.88)) {
+                            withAnimation(.spring(
+                                response: .dsHeaderSpringResponse,
+                                dampingFraction: .dsHeaderSpringDamping
+                            )) {
                                 isSearchVisible.toggle()
                             }
                         }
@@ -43,7 +47,7 @@ struct DiscoverView: View {
                         DogSwipeIconButton(
                             systemImage: "arrow.counterclockwise",
                             accessibilityLabel: "Restart deck",
-                            isDisabled: !viewModel.canSwipe
+                            isDisabled: !viewModel.canRestartDeck || isCommittingSwipe
                         ) {
                             viewModel.resetToSamples()
                         }
@@ -63,14 +67,17 @@ struct DiscoverView: View {
                     emptyState
                 }
 
-                Text("Swipe right for hotdogs")
-                    .font(.footnote.weight(.semibold))
-                    .foregroundStyle(Color.dsMuted)
-                controls
+                if viewModel.canSwipe {
+                    Text("Swipe right for hotdogs")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(Color.dsMuted)
+                    controls
+                }
             }
             .padding(.horizontal, .dsSpace5)
             .padding(.top, .dsSpace2)
             .padding(.bottom, .dsSpace4)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             .toolbar(.hidden, for: .navigationBar)
             .dsPageBackground()
             .accessibilityIdentifier("dogswipe.discover.screen")
@@ -93,9 +100,15 @@ struct DiscoverView: View {
         case .idle, .loading:
             "Refreshing local hotdogs"
         case .ready:
-            viewModel.isUsingCurrentLocation
-                ? "\(viewModel.remainingCount) hotdogs near you"
-                : "\(viewModel.remainingCount) hotdogs ready for review"
+            if viewModel.hasReviewedEveryHotdog {
+                "All hotdogs reviewed"
+            } else if viewModel.remainingCount == 0 {
+                "No hotdogs ready"
+            } else if viewModel.isUsingCurrentLocation {
+                "\(viewModel.remainingCount) hotdogs near you"
+            } else {
+                "\(viewModel.remainingCount) hotdogs ready for review"
+            }
         case .failed:
             "Showing saved local picks"
         }
@@ -107,7 +120,7 @@ struct DiscoverView: View {
                 .foregroundStyle(Color.dsAccent)
             Text(statusText)
                 .lineLimit(1)
-                .minimumScaleFactor(0.82)
+                .minimumScaleFactor(0.8)
             Spacer(minLength: .dsSpace2)
             Text("Best nearby bite")
                 .foregroundStyle(Color.dsInk)
@@ -128,16 +141,19 @@ struct DiscoverView: View {
                 viewModel.resetToSamples()
             }
             SwipeActionButton(role: .pass) {
-                commitSwipe(.pass, verticalLift: 12)
+                commitSwipe(.pass, verticalLift: .dsSwipeButtonVerticalLift)
             }
             SwipeActionButton(role: .superLike) {
-                commitSwipe(.superLike, verticalLift: -320)
+                commitSwipe(.superLike, verticalLift: .dsSwipeSuperLikeButtonLift)
             }
             SwipeActionButton(role: .like) {
-                commitSwipe(.like, verticalLift: 12)
+                commitSwipe(.like, verticalLift: .dsSwipeButtonVerticalLift)
             }
             SwipeActionButton(role: .filter) {
-                withAnimation(.spring(response: 0.24, dampingFraction: 0.88)) {
+                withAnimation(.spring(
+                    response: .dsHeaderSpringResponse,
+                    dampingFraction: .dsHeaderSpringDamping
+                )) {
                     isSearchVisible.toggle()
                 }
             }
@@ -198,7 +214,12 @@ struct DiscoverView: View {
             RoundedRectangle(cornerRadius: .dsRadius4, style: .continuous)
                 .stroke(Color.dsDivider)
         }
-        .shadow(color: Color.dsShadow.opacity(0.65), radius: 8, x: 0, y: 4)
+        .shadow(
+            color: Color.dsShadow.opacity(DogSwipeCardOpacity.menuSearchShadow),
+            radius: 8,
+            x: 0,
+            y: 4
+        )
     }
 
     private var loadingState: some View {
@@ -215,10 +236,10 @@ struct DiscoverView: View {
 
     private var emptyState: some View {
         VStack(spacing: .dsSpace3) {
-            Image(systemName: "checkmark.seal.fill")
+            Image(systemName: emptyStateIconName)
                 .font(.largeTitle)
                 .foregroundStyle(Color.dsPrimary)
-            Text("You reviewed every hotdog")
+            Text(emptyStateTitle)
                 .font(.headline)
                 .foregroundStyle(Color.dsInk)
             Button("Start over") {
@@ -231,83 +252,55 @@ struct DiscoverView: View {
         .dsCardSurface()
     }
 
+    private var emptyStateIconName: String {
+        viewModel.hasReviewedEveryHotdog ? "checkmark.seal.fill" : "magnifyingglass.circle.fill"
+    }
+
+    private var emptyStateTitle: String {
+        viewModel.hasReviewedEveryHotdog ? "You reviewed every hotdog" : "No hotdogs ready"
+    }
+
     private func deck(_ profile: HotdogProfile) -> some View {
-        let swipeProgress = currentSwipeProgress
-        let activeDecision = activeSwipeDecision
-
-        return ZStack {
-            RoundedRectangle(cornerRadius: .dsRadius5, style: .continuous)
-                .fill(Color.dsSurface.opacity(0.76))
-                .overlay {
-                    RoundedRectangle(cornerRadius: .dsRadius5, style: .continuous)
-                        .stroke(Color.dsDivider)
-                }
-                .scaleEffect(0.96 + (0.035 * swipeProgress))
-                .offset(
-                    x: .dsDeckBackOffsetX * (1 - (0.55 * swipeProgress)),
-                    y: .dsDeckBackOffsetY * (1 - (0.70 * swipeProgress))
-                )
-                .rotationEffect(.degrees(2.5 - (1.8 * swipeProgress)))
-
-            HotdogCardView(
-                profile: profile,
-                originLocation: viewModel.currentLocation
-            )
-            .id(profile.id)
-            .overlay {
-                SwipeFeedbackOverlay(decision: activeDecision, progress: swipeProgress)
-            }
-            .scaleEffect(1 - (0.035 * swipeProgress))
-            .rotationEffect(.degrees(cardRotationDegrees))
-            .offset(cardOffset)
-            .shadow(
-                color: feedbackColor(for: activeDecision).opacity(0.26 * swipeProgress),
-                radius: 26 * swipeProgress,
-                x: 0,
-                y: 16 * swipeProgress
-            )
-            .contentShape(RoundedRectangle(cornerRadius: .dsRadius5, style: .continuous))
-            .gesture(cardDragGesture)
-            .transition(.asymmetric(
-                insertion: .scale(scale: 0.96).combined(with: .opacity),
-                removal: .opacity
-            ))
-            .accessibilityAction(named: "Like") {
-                commitSwipe(.like, verticalLift: 12)
-            }
-            .accessibilityAction(named: "Pass") {
-                commitSwipe(.pass, verticalLift: 12)
-            }
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .frame(height: .dsDiscoverDeckHeight)
-        .animation(.spring(response: 0.26, dampingFraction: 0.78), value: dragTranslation)
-        .animation(.spring(response: 0.24, dampingFraction: 0.84), value: swipeExitOffset)
+        DiscoverDeckCard(
+            profile: profile,
+            originLocation: viewModel.currentLocation,
+            dragTranslation: dragTranslation,
+            swipeExitOffset: swipeExitOffset,
+            progress: currentSwipeProgress,
+            activeDecision: activeSwipeDecision,
+            onDragChanged: handleDragChanged,
+            onDragEnded: handleDragEnded,
+            onLikeAction: { commitSwipe(.like, verticalLift: .dsSwipeButtonVerticalLift) },
+            onPassAction: { commitSwipe(.pass, verticalLift: .dsSwipeButtonVerticalLift) }
+        )
+        .animation(.spring(response: .dsSwipeDragSpringResponse, dampingFraction: .dsSwipeDragSpringDamping), value: dragTranslation)
+        .animation(.spring(response: .dsSwipeExitSpringResponse, dampingFraction: .dsSwipeExitSpringDamping), value: swipeExitOffset)
         .sensoryFeedback(.selection, trigger: feedbackTrigger)
     }
 
-    private var cardDragGesture: some Gesture {
-        DragGesture(minimumDistance: 4, coordinateSpace: .local)
-            .onChanged { value in
-                guard viewModel.canSwipe, !isCommittingSwipe else {
-                    return
-                }
-                dragTranslation = value.translation
-                updateArmedDecision(for: value.translation)
+    private func handleDragChanged(_ value: DragGesture.Value) {
+        guard viewModel.canSwipe, !isCommittingSwipe else {
+            return
+        }
+        dragTranslation = value.translation
+        updateArmedDecision(for: value.translation)
+    }
+
+    private func handleDragEnded(_ value: DragGesture.Value) {
+        guard viewModel.canSwipe, !isCommittingSwipe else {
+            resetSwipeState()
+            return
+        }
+        if let decision = decision(for: value) {
+            commitSwipe(decision, verticalLift: value.predictedEndTranslation.height)
+        } else {
+            withAnimation(.spring(
+                response: .dsSwipeRecoilSpringResponse,
+                dampingFraction: .dsSwipeRecoilSpringDamping
+            )) {
+                resetSwipeState()
             }
-            .onEnded { value in
-                guard viewModel.canSwipe, !isCommittingSwipe else {
-                    resetSwipeState()
-                    return
-                }
-                if let decision = decision(for: value) {
-                    commitSwipe(decision, verticalLift: value.predictedEndTranslation.height)
-                } else {
-                    withAnimation(.spring(response: 0.26, dampingFraction: 0.68)) {
-                        resetSwipeState()
-                    }
-                }
-            }
+        }
     }
 
     private var cardOffset: CGSize {
@@ -315,12 +308,6 @@ struct DiscoverView: View {
             width: dragTranslation.width + swipeExitOffset.width,
             height: dragTranslation.height + swipeExitOffset.height
         )
-    }
-
-    private var cardRotationDegrees: Double {
-        let width = cardOffset.width
-        let verticalBias = min(1, max(-1, cardOffset.height / 520))
-        return Double((width / 18) + (verticalBias * 2.5) - 1.5)
     }
 
     private var currentSwipeProgress: Double {
@@ -331,10 +318,10 @@ struct DiscoverView: View {
         if let armedSwipeDecision {
             return armedSwipeDecision
         }
-        if cardOffset.width > 18 {
+        if cardOffset.width > .dsSwipeArmThreshold {
             return .like
         }
-        if cardOffset.width < -18 {
+        if cardOffset.width < -.dsSwipeArmThreshold {
             return .pass
         }
         return nil
@@ -345,7 +332,7 @@ struct DiscoverView: View {
         let actualWidth = value.translation.width
         let verticalTravel = abs(value.translation.height)
         guard max(abs(projectedWidth), abs(actualWidth)) > .dsSwipeCommitThreshold,
-              abs(actualWidth) > verticalTravel * 0.72 else {
+              abs(actualWidth) > verticalTravel * .dsSwipeHorizontalDominanceRatio else {
             return nil
         }
         return projectedWidth >= 0 ? .like : .pass
@@ -375,6 +362,8 @@ struct DiscoverView: View {
             return
         }
 
+        let profileSnapshot = viewModel.currentProfile
+
         isCommittingSwipe = true
         armedSwipeDecision = decision
         feedbackTrigger += 1
@@ -389,19 +378,48 @@ struct DiscoverView: View {
 
         let exitY: CGFloat
         if decision == .superLike {
-            exitY = -620
+            exitY = .dsSwipeSuperLikeExitY
         } else {
-            exitY = min(180, max(-180, verticalLift * 0.35))
+            exitY = min(
+                .dsSwipeExitYClamp,
+                max(-.dsSwipeExitYClamp, verticalLift * .dsSwipeExitYLiftMultiplier)
+            )
         }
 
-        withAnimation(reduceMotion ? .easeOut(duration: 0.16) : .interpolatingSpring(stiffness: 220, damping: 24)) {
-            swipeExitOffset = CGSize(width: horizontalDirection * 720, height: exitY)
+        let commitAnimation: Animation = reduceMotion
+            ? .easeOut(duration: .dsSwipeReduceMotionDuration)
+            : .interpolatingSpring(
+                stiffness: .dsSwipeCommitSpringStiffness,
+                damping: .dsSwipeCommitSpringDamping
+            )
+        withAnimation(commitAnimation) {
+            swipeExitOffset = CGSize(
+                width: horizontalDirection * .dsSwipeExitX,
+                height: exitY
+            )
         }
 
         Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(reduceMotion ? 120 : 190))
+            let sleepMs = reduceMotion
+                ? Double.dsSwipeReduceMotionCommitSleepMs
+                : Double.dsSwipeCommitSleepMs
+            try? await Task.sleep(for: .milliseconds(sleepMs))
             advance(decision)
             resetSwipeState()
+
+            if decision == .superLike, let profile = profileSnapshot {
+                handleGoGetItNow(profile)
+            }
+        }
+    }
+
+    private func handleGoGetItNow(_ profile: HotdogProfile) {
+        DogSwipeAnalytics.shared.trackOrderCTA(profileID: profile.id)
+        Task {
+            try? await orderStore.add(profile: profile, addOns: [])
+        }
+        if let url = profile.directionsURL {
+            openURL(url)
         }
     }
 
@@ -412,21 +430,11 @@ struct DiscoverView: View {
         armedSwipeDecision = nil
     }
 
-    private func feedbackColor(for decision: SwipeDecision?) -> Color {
-        switch decision {
-        case .like:
-            .dsRelish
-        case .pass:
-            .dsAccent
-        case .superLike:
-            .dsSuper
-        case nil:
-            .clear
-        }
-    }
-
     private func advance(_ decision: SwipeDecision) {
-        withAnimation(.spring(response: 0.28, dampingFraction: 0.86)) {
+        withAnimation(.spring(
+            response: .dsSwipeAdvanceSpringResponse,
+            dampingFraction: .dsSwipeAdvanceSpringDamping
+        )) {
             if let profile = viewModel.record(decision) {
                 DogSwipeAnalytics.shared.trackDiscoverySwipe(
                     decision: decision.rawValue,
@@ -435,101 +443,6 @@ struct DiscoverView: View {
             }
         }
     }
-}
-
-private struct SwipeFeedbackOverlay: View {
-    let decision: SwipeDecision?
-    let progress: Double
-
-    var body: some View {
-        ZStack {
-            LinearGradient(
-                colors: [
-                    color.opacity(0.28 * progress),
-                    color.opacity(0.06 * progress),
-                    .clear
-                ],
-                startPoint: alignment == .leading ? .leading : .trailing,
-                endPoint: alignment == .leading ? .trailing : .leading
-            )
-            .clipShape(RoundedRectangle(cornerRadius: .dsRadius5, style: .continuous))
-
-            VStack {
-                HStack {
-                    if alignment == .trailing {
-                        Spacer()
-                    }
-                    Label(labelText, systemImage: systemImage)
-                        .font(.title2.weight(.heavy))
-                        .foregroundStyle(color)
-                        .padding(.horizontal, .dsSpace4)
-                        .padding(.vertical, .dsSpace3)
-                        .background(Color.dsSurface.opacity(0.92), in: Capsule())
-                        .overlay {
-                            Capsule().stroke(color.opacity(0.72), lineWidth: 2)
-                        }
-                        .rotationEffect(.degrees(alignment == .leading ? -10 : 10))
-                        .scaleEffect(0.82 + (0.22 * progress))
-                        .opacity(progress)
-                        .accessibilityHidden(true)
-                    if alignment == .leading {
-                        Spacer()
-                    }
-                }
-                Spacer()
-            }
-            .padding(.dsSpace5)
-        }
-        .allowsHitTesting(false)
-        .opacity(decision == nil ? 0 : 1)
-    }
-
-    private var alignment: HorizontalAlignment {
-        decision == .pass ? .trailing : .leading
-    }
-
-    private var labelText: String {
-        switch decision {
-        case .like:
-            "YUM"
-        case .pass:
-            "NAH"
-        case .superLike:
-            "MUST"
-        case nil:
-            ""
-        }
-    }
-
-    private var systemImage: String {
-        switch decision {
-        case .like:
-            "heart.fill"
-        case .pass:
-            "xmark"
-        case .superLike:
-            "star.fill"
-        case nil:
-            "circle"
-        }
-    }
-
-    private var color: Color {
-        switch decision {
-        case .like:
-            .dsRelish
-        case .pass:
-            .dsAccent
-        case .superLike:
-            .dsSuper
-        case nil:
-            .clear
-        }
-    }
-}
-
-private extension CGFloat {
-    static let dsSwipeCommitThreshold: CGFloat = 126
 }
 
 #Preview {

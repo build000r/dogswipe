@@ -207,10 +207,9 @@ private struct MatchDetailView: View {
                 .fixedSize(horizontal: false, vertical: true)
 
             DogSwipeChipGrid {
-                DogSwipeChip(text: "Mild", systemImage: "flame")
-                DogSwipeChip(text: "All-Beef", systemImage: "fork.knife")
-                DogSwipeChip(text: "Crunchy", systemImage: "leaf.fill")
-                DogSwipeChip(text: "Popular", systemImage: "flame.fill")
+                ForEach(featureChips(for: profile)) { chip in
+                    DogSwipeChip(text: chip.text, systemImage: chip.systemImage)
+                }
             }
 
             VStack(alignment: .leading, spacing: .dsSpace3) {
@@ -371,8 +370,7 @@ private struct MatchRowView: View {
             DogSwipeCraveMeter(score: profile.craveScore, showsLabel: false)
             RoutePreviewStatusView(state: routePreviewStore.state)
         }
-        .padding(.dsSpace4)
-        .dsCardSurface()
+        .dsCard()
         .onChange(of: profile.id) {
             routePreviewStore.reset()
         }
@@ -410,4 +408,20 @@ private struct MatchRowView: View {
             }
         }
     }
+}
+
+struct MatchFeatureChip: Identifiable {
+    let text: String
+    let systemImage: String
+    var id: String { text }
+}
+
+func featureChips(for profile: HotdogProfile) -> [MatchFeatureChip] {
+    _ = profile
+    return [
+        MatchFeatureChip(text: "Mild", systemImage: "flame"),
+        MatchFeatureChip(text: "All-Beef", systemImage: "fork.knife"),
+        MatchFeatureChip(text: "Crunchy", systemImage: "leaf.fill"),
+        MatchFeatureChip(text: "Popular", systemImage: "flame.fill")
+    ]
 }

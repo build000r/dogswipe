@@ -1,5 +1,12 @@
 import SwiftUI
 
+extension View {
+    /// Canonical interactive-card surface: ds-spacing inner padding + dsCardSurface chrome.
+    func dsCard(padding: CGFloat = .dsSpace4) -> some View {
+        self.padding(padding).dsCardSurface()
+    }
+}
+
 enum DogSwipeHeaderTab: String, CaseIterable {
     case discover = "Discover"
     case nearYou = "Near You"

@@ -15,8 +15,18 @@ extension Color {
     static let dsOnion = Color(red: 0.98, green: 0.95, blue: 0.84)
     static let dsBun = Color(red: 0.86, green: 0.52, blue: 0.18)
     static let dsBunLight = Color(red: 0.99, green: 0.76, blue: 0.36)
-    static let dsDivider = Color.black.opacity(0.08)
+    /// Alpha-derived hairline routed through `dsInk` so the divider tracks
+    /// the brand ink color rather than pure black. Tweak `dsDividerOpacity`
+    /// (Double, below) instead of touching this token directly.
+    static let dsDivider = Color.dsInk.opacity(.dsDividerOpacity)
     static let dsShadow = Color(red: 0.21, green: 0.16, blue: 0.09).opacity(0.16)
+}
+
+extension Double {
+    /// Hairline alpha applied to `Color.dsInk` to produce `Color.dsDivider`.
+    /// Lifted out of the previous `Color.black.opacity(0.08)` literal so the
+    /// alpha is named and reusable.
+    static let dsDividerOpacity: Double = 0.08
 }
 
 extension CGFloat {
@@ -41,6 +51,7 @@ extension CGFloat {
     static let dsHotdogToppingDash: CGFloat = 10
     static let dsHotdogToppingDashGap: CGFloat = 9
     static let dsCardHeroAspectRatio: CGFloat = 2.05
+    static let dsHeroMinimumHeight: CGFloat = 240
     static let dsBrandLogoFontSize: CGFloat = 34
     static let dsBrandIconFrame: CGFloat = 40
     static let dsBrandBadgeSize: CGFloat = 18

@@ -87,7 +87,7 @@ struct SwipeActionButton: View {
         case .like:
             "Like"
         case .superLike:
-            "Super like"
+            "Go get this now"
         case .filter:
             "Search menu"
         }

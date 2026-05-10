@@ -25,12 +25,6 @@ struct HotdogCardView: View {
             hero
 
             VStack(alignment: .leading, spacing: .dsSpace2) {
-                titleRow
-                Text(profile.signatureNotes)
-                    .font(.subheadline.weight(.medium))
-                    .foregroundStyle(Color.dsMuted)
-                    .lineLimit(2)
-
                 if !profile.menuHighlightLabels.isEmpty {
                     DogSwipeChipGrid {
                         ForEach(profile.menuHighlightLabels.prefix(4), id: \.self) { highlight in
@@ -59,8 +53,10 @@ struct HotdogCardView: View {
                 routeControls
             }
             .padding(.horizontal, .dsSpace4)
+            .padding(.top, .dsSpace3)
             .padding(.bottom, .dsSpace4)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .dsCardSurface()
         .onChange(of: profile.id) {
             routePreviewStore.reset()
@@ -105,58 +101,87 @@ struct HotdogCardView: View {
                         .background(Color.dsSurface.opacity(0.88), in: Capsule())
                     }
                     .padding(.dsSpace4)
-                    Spacer()
+                    Spacer(minLength: .dsSpace8)
 
-                    HStack(alignment: .bottom, spacing: .dsSpace3) {
-                        Text(profile.style.uppercased())
-                            .font(.caption.weight(.heavy))
-                            .tracking(1.1)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.76)
-                        Spacer()
-                        Text("\(String(format: "%.1f mi", profile.distanceMiles)) · \(profile.walkingTimeLabel) walk")
-                            .font(.caption.weight(.heavy))
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.76)
-                    }
-                    .foregroundStyle(Color.dsSurface)
-                    .shadow(color: .black.opacity(0.24), radius: 3, x: 0, y: 1)
-                    .padding(.horizontal, .dsSpace4)
-                    .padding(.bottom, .dsSpace4)
+                    heroFooter
                 }
             }
             .frame(width: proxy.size.width, height: proxy.size.height)
         }
-        .aspectRatio(.dsCardHeroAspectRatio, contentMode: .fit)
+        .frame(maxWidth: .infinity, minHeight: .dsHeroMinimumHeight, maxHeight: .infinity)
         .clipped()
-        .clipShape(RoundedRectangle(cornerRadius: .dsRadius5, style: .continuous))
+        .clipShape(
+            UnevenRoundedRectangle(
+                topLeadingRadius: .dsRadius5,
+                bottomLeadingRadius: 0,
+                bottomTrailingRadius: 0,
+                topTrailingRadius: .dsRadius5,
+                style: .continuous
+            )
+        )
+    }
+
+    private var heroFooter: some View {
+        VStack(alignment: .leading, spacing: .dsSpace1) {
+            Text(profile.vendorName.uppercased())
+                .font(.caption2.weight(.heavy))
+                .tracking(1.1)
+                .foregroundStyle(Color.dsSurface.opacity(0.88))
+                .lineLimit(1)
+
+            HStack(alignment: .firstTextBaseline, spacing: .dsSpace2) {
+                Text(profile.name)
+                    .font(.title2.weight(.heavy))
+                    .foregroundStyle(Color.dsSurface)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.82)
+                inlineStampBadge
+            }
+
+            Text(profile.signatureNotes)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(Color.dsSurface.opacity(0.92))
+                .lineLimit(2)
+                .padding(.top, .dsSpace1)
+        }
+        .shadow(color: .black.opacity(0.32), radius: 6, x: 0, y: 2)
+        .padding(.horizontal, .dsSpace4)
+        .padding(.top, .dsSpace8)
+        .padding(.bottom, .dsSpace4)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            LinearGradient(
+                colors: [
+                    .black.opacity(0.0),
+                    .black.opacity(0.32),
+                    .black.opacity(0.62)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        )
+    }
+
+    private var inlineStampBadge: some View {
+        Text(inlineStampText)
+            .font(.caption2.weight(.heavy))
+            .tracking(0.6)
+            .foregroundStyle(Color.dsInk)
+            .padding(.horizontal, .dsSpace2)
+            .padding(.vertical, .dsSpace1)
+            .background(Color.dsSurface.opacity(0.92), in: Capsule())
+            .fixedSize()
+    }
+
+    private var inlineStampText: String {
+        if profile.style.localizedCaseInsensitiveContains("chicago") {
+            return "CHICAGO"
+        }
+        return "STREET PICK"
     }
 
     private var fallbackHero: some View {
         HotdogIllustrationView(profile: profile)
-    }
-
-    private var titleRow: some View {
-        HStack(alignment: .top, spacing: .dsSpace3) {
-            VStack(alignment: .leading, spacing: .dsSpace1) {
-                Text(profile.vendorName)
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(Color.dsMuted)
-                    .lineLimit(1)
-                Text(profile.name)
-                    .font(.title3.weight(.heavy))
-                    .foregroundStyle(Color.dsInk)
-            }
-            Spacer()
-            DogSwipeStampView(text: stampText)
-        }
-    }
-
-    private var stampText: String {
-        if profile.style.localizedCaseInsensitiveContains("chicago") {
-            return "Chicago\nStyle"
-        }
-        return "Street\nPick"
     }
 
     private var ratingLabel: String {

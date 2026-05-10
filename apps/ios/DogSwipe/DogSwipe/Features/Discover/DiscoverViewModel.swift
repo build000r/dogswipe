@@ -44,6 +44,14 @@ final class DiscoverViewModel: ObservableObject {
         currentProfile != nil && state != .loading
     }
 
+    var canRestartDeck: Bool {
+        !allProfiles.isEmpty && state != .loading
+    }
+
+    var hasReviewedEveryHotdog: Bool {
+        !allProfiles.isEmpty && deck.isEmpty && !deck.history.isEmpty
+    }
+
     var hasMenuQuery: Bool {
         menuQueryParameter != nil
     }

@@ -168,8 +168,7 @@ private struct OrderCardView: View {
                 Spacer(minLength: .dsSpace1)
             }
         }
-        .padding(.dsSpace4)
-        .dsCardSurface()
+        .dsCard()
     }
 
     private var previewProfile: HotdogProfile {

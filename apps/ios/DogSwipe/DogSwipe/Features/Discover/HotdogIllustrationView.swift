@@ -15,22 +15,28 @@ struct HotdogIllustrationView: View {
 
                 hotdog(width: proxy.size.width, height: proxy.size.height)
                     .rotationEffect(.degrees(-7))
-                    .offset(y: proxy.size.height * 0.02)
+                    .offset(y: proxy.size.height * HotdogIllustrationGeometry.stackOffsetYRatio)
             }
         }
         .accessibilityLabel(profile.mediaAltText ?? profile.name)
     }
 
     private func hotdog(width: CGFloat, height: CGFloat) -> some View {
-        let dogWidth = width * 0.92
-        let dogHeight = min(height * 0.64, 220)
+        let dogWidth = width * HotdogIllustrationGeometry.dogWidthRatio
+        let dogHeight = min(height * HotdogIllustrationGeometry.dogHeightRatio, HotdogIllustrationGeometry.dogHeightCap)
 
         return ZStack {
             Capsule()
                 .fill(Color.dsBun.opacity(0.20))
-                .frame(width: dogWidth * 0.94, height: dogHeight * 0.58)
-                    .offset(x: .dsHotdogPlateOffsetX, y: dogHeight * 0.22)
-                .blur(radius: 6)
+                .frame(
+                    width: dogWidth * HotdogIllustrationGeometry.plateWidthRatio,
+                    height: dogHeight * HotdogIllustrationGeometry.plateHeightRatio
+                )
+                .offset(
+                    x: .dsHotdogPlateOffsetX,
+                    y: dogHeight * HotdogIllustrationGeometry.plateOffsetYRatio
+                )
+                .blur(radius: HotdogIllustrationGeometry.plateBlurRadius)
 
             Capsule()
                 .fill(
@@ -40,50 +46,74 @@ struct HotdogIllustrationView: View {
                         endPoint: .bottomTrailing
                     )
                 )
-                .frame(width: dogWidth, height: dogHeight * 0.72)
-                .offset(y: dogHeight * 0.16)
+                .frame(width: dogWidth, height: dogHeight * HotdogIllustrationGeometry.bunHeightRatio)
+                .offset(y: dogHeight * HotdogIllustrationGeometry.bunOffsetYRatio)
 
             Capsule()
-                .fill(Color.dsSurface.opacity(0.92))
-                .frame(width: dogWidth * 0.84, height: dogHeight * 0.48)
-                .offset(y: -dogHeight * 0.04)
+                .fill(Color.dsSurface.opacity(HotdogIllustrationGeometry.highlightOpacity))
+                .frame(
+                    width: dogWidth * HotdogIllustrationGeometry.highlightWidthRatio,
+                    height: dogHeight * HotdogIllustrationGeometry.highlightHeightRatio
+                )
+                .offset(y: dogHeight * HotdogIllustrationGeometry.highlightOffsetYRatio)
 
             Capsule()
                 .fill(
                     LinearGradient(
-                        colors: [Color.dsAccent, Color.dsTomato.opacity(0.82)],
+                        colors: [Color.dsAccent, Color.dsTomato.opacity(HotdogIllustrationGeometry.frankTrailOpacity)],
                         startPoint: .leading,
                         endPoint: .trailing
                     )
                 )
-                .frame(width: dogWidth * 0.74, height: dogHeight * 0.34)
-                .offset(y: -dogHeight * 0.06)
+                .frame(
+                    width: dogWidth * HotdogIllustrationGeometry.frankWidthRatio,
+                    height: dogHeight * HotdogIllustrationGeometry.frankHeightRatio
+                )
+                .offset(y: dogHeight * HotdogIllustrationGeometry.frankOffsetYRatio)
 
             Capsule()
                 .fill(Color.dsPickle)
-                .frame(width: dogWidth * 0.58, height: dogHeight * 0.18)
-                .offset(x: dogWidth * 0.08, y: -dogHeight * 0.18)
+                .frame(
+                    width: dogWidth * HotdogIllustrationGeometry.pickleWidthRatio,
+                    height: dogHeight * HotdogIllustrationGeometry.pickleHeightRatio
+                )
+                .offset(
+                    x: dogWidth * HotdogIllustrationGeometry.pickleOffsetXRatio,
+                    y: dogHeight * HotdogIllustrationGeometry.pickleOffsetYRatio
+                )
                 .overlay {
-                    Capsule().stroke(Color.dsSurface.opacity(0.52), lineWidth: 2)
+                    Capsule().stroke(
+                        Color.dsSurface.opacity(HotdogIllustrationGeometry.pickleStrokeOpacity),
+                        lineWidth: HotdogIllustrationGeometry.pickleStrokeLineWidth
+                    )
                 }
 
             toppingScatter(width: dogWidth, height: dogHeight)
 
             MustardSquiggle()
-                .stroke(Color.dsPrimary, style: StrokeStyle(lineWidth: 7, lineCap: .round))
-                .frame(width: dogWidth * 0.68, height: dogHeight * 0.24)
-                .offset(y: -dogHeight * 0.13)
+                .stroke(
+                    Color.dsPrimary,
+                    style: StrokeStyle(lineWidth: HotdogIllustrationGeometry.mustardLineWidth, lineCap: .round)
+                )
+                .frame(
+                    width: dogWidth * HotdogIllustrationGeometry.mustardWidthRatio,
+                    height: dogHeight * HotdogIllustrationGeometry.mustardHeightRatio
+                )
+                .offset(y: dogHeight * HotdogIllustrationGeometry.mustardOffsetYRatio)
         }
         .frame(width: width, height: height)
     }
 
     private func toppingScatter(width: CGFloat, height: CGFloat) -> some View {
         ZStack {
-            ForEach(0..<16, id: \.self) { index in
-                RoundedRectangle(cornerRadius: 2, style: .continuous)
+            ForEach(0..<HotdogIllustrationGeometry.toppingScatterCount, id: \.self) { index in
+                RoundedRectangle(cornerRadius: HotdogIllustrationGeometry.toppingCornerRadius, style: .continuous)
                     .fill(toppingColor(for: index))
-                    .frame(width: toppingSize(for: index), height: toppingSize(for: index) * 0.82)
-                    .rotationEffect(.degrees(Double((index % 5) * 11)))
+                    .frame(
+                        width: toppingSize(for: index),
+                        height: toppingSize(for: index) * HotdogIllustrationGeometry.toppingHeightRatio
+                    )
+                    .rotationEffect(.degrees(Double((index % HotdogIllustrationGeometry.toppingRotationModulus) * HotdogIllustrationGeometry.toppingRotationStep)))
                     .offset(
                         x: toppingX(for: index, width: width),
                         y: toppingY(for: index, height: height)
@@ -93,7 +123,7 @@ struct HotdogIllustrationView: View {
     }
 
     private func toppingColor(for index: Int) -> Color {
-        switch index % 4 {
+        switch index % HotdogIllustrationGeometry.toppingColorModulus {
         case 0:
             Color.dsOnion
         case 1:
@@ -106,16 +136,17 @@ struct HotdogIllustrationView: View {
     }
 
     private func toppingSize(for index: Int) -> CGFloat {
-        CGFloat(8 + (index % 3) * 3)
+        HotdogIllustrationGeometry.toppingBaseSize
+            + CGFloat(index % HotdogIllustrationGeometry.toppingSizeVariantModulus) * HotdogIllustrationGeometry.toppingSizeStep
     }
 
     private func toppingX(for index: Int, width: CGFloat) -> CGFloat {
-        let columns: [CGFloat] = [-0.28, -0.18, -0.07, 0.04, 0.15, 0.26, 0.34, -0.34]
+        let columns = HotdogIllustrationGeometry.toppingColumnOffsets
         return width * columns[index % columns.count]
     }
 
     private func toppingY(for index: Int, height: CGFloat) -> CGFloat {
-        let rows: [CGFloat] = [-0.19, -0.13, -0.07, -0.01, 0.04]
+        let rows = HotdogIllustrationGeometry.toppingRowOffsets
         return height * rows[(index / 2) % rows.count]
     }
 }
