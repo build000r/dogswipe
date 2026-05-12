@@ -67,12 +67,24 @@ final class DesignSystemTokenTests: XCTestCase {
             ("mustardWidthRatio", HotdogIllustrationGeometry.mustardWidthRatio),
             ("mustardHeightRatio", HotdogIllustrationGeometry.mustardHeightRatio),
             ("mustardOffsetYRatio", HotdogIllustrationGeometry.mustardOffsetYRatio),
+            ("mustardFirstControlXRatio", HotdogIllustrationGeometry.mustardFirstControlXRatio),
+            ("mustardSecondControlXRatio", HotdogIllustrationGeometry.mustardSecondControlXRatio),
             ("toppingHeightRatio", HotdogIllustrationGeometry.toppingHeightRatio)
         ]
         for (name, value) in ratios {
             XCTAssertGreaterThan(value, -1, "\(name) below -1: \(value)")
             XCTAssertLessThan(value, 1, "\(name) above 1: \(value)")
         }
+    }
+
+    func testHotdogIllustrationGeometryMustardSquiggleIsDrawable() {
+        XCTAssertGreaterThan(HotdogIllustrationGeometry.mustardSegmentCount, 0)
+        XCTAssertGreaterThan(HotdogIllustrationGeometry.mustardWavePhaseModulus, 1)
+        XCTAssertGreaterThan(
+            HotdogIllustrationGeometry.mustardSecondControlXRatio,
+            HotdogIllustrationGeometry.mustardFirstControlXRatio,
+            "Mustard bezier control points should progress left to right."
+        )
     }
 
     // MARK: - HotdogIllustrationGeometry topping scatter

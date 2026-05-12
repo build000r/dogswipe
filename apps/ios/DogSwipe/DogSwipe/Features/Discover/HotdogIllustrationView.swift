@@ -154,17 +154,26 @@ struct HotdogIllustrationView: View {
 private struct MustardSquiggle: Shape {
     func path(in rect: CGRect) -> Path {
         var path = Path()
-        let step = rect.width / 5
+        let segmentCount = HotdogIllustrationGeometry.mustardSegmentCount
+        let step = rect.width / CGFloat(segmentCount)
         path.move(to: CGPoint(x: rect.minX, y: rect.midY))
 
-        for index in 0..<5 {
+        for index in 0..<segmentCount {
             let startX = rect.minX + CGFloat(index) * step
             let endX = startX + step
-            let controlY = index.isMultiple(of: 2) ? rect.minY : rect.maxY
+            let controlY = index.isMultiple(of: HotdogIllustrationGeometry.mustardWavePhaseModulus)
+                ? rect.minY
+                : rect.maxY
             path.addCurve(
                 to: CGPoint(x: endX, y: rect.midY),
-                control1: CGPoint(x: startX + step * 0.35, y: controlY),
-                control2: CGPoint(x: startX + step * 0.65, y: controlY)
+                control1: CGPoint(
+                    x: startX + step * HotdogIllustrationGeometry.mustardFirstControlXRatio,
+                    y: controlY
+                ),
+                control2: CGPoint(
+                    x: startX + step * HotdogIllustrationGeometry.mustardSecondControlXRatio,
+                    y: controlY
+                )
             )
         }
 

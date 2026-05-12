@@ -32,3 +32,8 @@ build/
 .buildooor/
 .claude/
 .codex/
+
+# beads local database
+.beads/*.db
+.beads/*.db-shm
+.beads/*.db-wal

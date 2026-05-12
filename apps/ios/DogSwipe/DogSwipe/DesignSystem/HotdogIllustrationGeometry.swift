@@ -115,6 +115,19 @@ enum HotdogIllustrationGeometry {
     /// under-mustarded otherwise. See WG-D02 for justification.
     static let mustardLineWidth: CGFloat = 7
 
+    /// Number of bezier segments used to draw the mustard squiggle.
+    static let mustardSegmentCount: Int = 5
+
+    /// First bezier control point x-position as a fraction of segment width.
+    static let mustardFirstControlXRatio: CGFloat = 0.35
+
+    /// Second bezier control point x-position as a fraction of segment width.
+    static let mustardSecondControlXRatio: CGFloat = 0.65
+
+    /// Modulus used to alternate mustard control points above and below the
+    /// centerline.
+    static let mustardWavePhaseModulus: Int = 2
+
     // MARK: - Topping scatter
 
     /// Number of topping flakes drawn over the frank.
