@@ -1,6 +1,6 @@
 # Quality Gates
 
-Last verified: 2026-05-07
+Last verified: 2026-05-28
 
 | Gate | Command | Result |
 | --- | --- | --- |
@@ -10,8 +10,8 @@ Last verified: 2026-05-07
 | iOS screenshot UI smoke | `make ios-ui-test` | 8 isolated UI tests passed across Discover, draggable card advancement, Matches, match add-to-order, Orders, Vendor, Review, and Profile using direct screenshot-mode tab launches; Discover asserts visible `Live walk` and `Directions` route controls |
 | iOS screenshot export | `make ios-screenshots` | 6 PNG attachments exported under `.build/ios-screenshots/attachments`; current Discover and Matches PNGs were visually inspected after the zip-driven UI hardening, including the match order CTA clearing the floating tab bar |
 | DogSwipe prototype zip review | manual inspection of the supplied prototype zip plus two Opus review passes recorded under private `skillbox-config` invocation artifacts | prototype learnings folded into SwiftUI: warm paper/mustard/tomato/relish/super-blue tokens, screen headers, hero price/status overlays, `CraveMeter`, dark order/match summaries, vendor/review status pills, and `NAH`/`MUST` swipe language |
-| Backend API tests | `make backend-test` | 85 tests passed |
-| Backend coverage | `make coverage` | 89.85% total coverage |
+| Backend API tests | `make backend-test` | 85 tests passed in 1.58s |
+| Backend coverage | `make coverage` | 89.84% total coverage (api 100%, service 89%, repository 80%, menu 94%) |
 | Clean backend install | `python3.12 -m venv /tmp/... && pip install -e 'backend[test]'` | passed |
 | Backend lint | `make lint` | passed |
 | Backend typecheck | `make typecheck` | passed |
@@ -36,6 +36,7 @@ Last verified: 2026-05-07
 | SwiftUI drift scan | `make drift` | 0 Swift findings |
 | iOS release assets | `make ios-release-assets` | AppIcon, accent color, privacy manifest, associated-domains entitlement, bundle-aware Apple app-site association template, build-setting-backed auth config, and App Store Connect export option plists passed |
 | iOS signing/TestFlight upload | `make ios-release-archive`; `make ios-testflight-export`; `make ios-testflight-upload`; `xcrun altool --build-status --delivery-id 6d92868f-05b4-4538-badf-a8f2d0acb20e --wait` | current HEAD archived and exported with production API/SPAPS/universal-link settings; App Store Connect accepted the upload for app `6766942964`, version `0.1.0`, uploaded build `2`; build status returned `VALID` |
+| Hot-path latency profile | `pytest --durations=0` + `swift test` | Backend: all API call phases under 50ms — discovery 10ms, swipe/match 10–30ms, order create 20ms, vendor submission 30ms, admin approve/reject/changes 40ms; fixture setup dominates wall clock. Swift: 35 tests in 36ms total — MatchScorer ranking, SwipeDeckState, and DogSwipeAPIClient contract encode/decode each under 1ms |
 | CRAP score | `make crap` | `FINAL_SCORE: 9.00` |
 | MMDX preflight | `make mmdx-preflight` | `docs/architecture.mmdx` passed 3 charts and `docs/ux-release-gantt.mmdx` passed 4 charts |
 | SPAPS app contract | `make spaps-app-contract` | public descriptor declares the `dogswipe` slug, env-only private key handoff, renderable `browser_auth` self-service registration payload, and no-secret origin-update handoff check |
