@@ -43,7 +43,7 @@ EDGE_PUBLIC_AASA_URL ?= https://dogswipe.buildooor.com/.well-known/apple-app-sit
 EDGE_CURL_RESOLVE ?=
 EDGE_CURL_RESOLVE_ARG := $(if $(EDGE_CURL_RESOLVE),--resolve $(EDGE_CURL_RESOLVE),)
 
-.PHONY: generate-ios ios-build ios-release-assets ios-ui-test ios-screenshots require-phone-device ios-phone-build ios-phone-reset-app ios-phone-install ios-phone-launch ios-phone-run require-ios-release-env require-ios-archive require-ios-asc-key ios-release-archive ios-testflight-export ios-testflight-upload swift-test backend-install backend-install-local backend-test coverage lint typecheck migrate migration-current test drift crap mmdx-preflight spaps-app-contract spaps-registration-payload spaps-origin-handoff spaps-origin-handoff-template edge-dry-run edge-deploy edge-verify deploy-config deploy-preflight deploy-render-aasa deploy-dns-handoff deploy-dns-handoff-template deploy-dns-preflight deploy-dns-preflight-template deploy-live-readiness deploy-live-readiness-template deploy-release-readiness deploy-overlay-template deploy-private-handoff-template deploy-post-verify
+.PHONY: generate-ios ios-build ios-release-assets ios-ui-test ios-screenshots require-phone-device ios-phone-build ios-phone-reset-app ios-phone-install ios-phone-launch ios-phone-run require-ios-release-env require-ios-archive require-ios-asc-key ios-release-archive ios-testflight-export ios-testflight-upload swift-test backend-install backend-install-local backend-test coverage lint typecheck migrate migration-current test drift crap mmdx-preflight contract-fixtures spaps-app-contract spaps-registration-payload spaps-origin-handoff spaps-origin-handoff-template edge-dry-run edge-deploy edge-verify deploy-config deploy-preflight deploy-render-aasa deploy-dns-handoff deploy-dns-handoff-template deploy-dns-preflight deploy-dns-preflight-template deploy-live-readiness deploy-live-readiness-template deploy-release-readiness deploy-overlay-template deploy-private-handoff-template deploy-post-verify
 
 generate-ios:
 	cd apps/ios/DogSwipe && xcodegen generate
@@ -261,6 +261,9 @@ crap:
 mmdx-preflight:
 	python3 $(SKILLS_ROOT)/mmdx/scripts/mmd.py docs/architecture.mmdx --preflight-only
 	python3 $(SKILLS_ROOT)/mmdx/scripts/mmd.py docs/ux-release-gantt.mmdx --preflight-only
+
+contract-fixtures:
+	python3 scripts/verify_contract_fixtures.py
 
 spaps-app-contract:
 	python3 scripts/verify_spaps_app_contract.py
