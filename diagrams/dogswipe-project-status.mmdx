@@ -15,9 +15,9 @@
 flowchart LR
   vision["DogSwipe: swipe-first local hotdog discovery"]:::gray
   swift["GREEN Swift core tests passed 35 tests"]:::green
-  backend["YELLOW backend migration and API proof: dogswipe-portfolio-reality-idea-plan-pf5.7"]:::yellow
-  testflight["YELLOW physical TestFlight SPAPS callback proof: dogswipe-portfolio-reality-idea-plan-pf5.8"]:::yellow
-  perf["YELLOW discovery and menu-query profiling: dogswipe-portfolio-reality-idea-plan-pf5.9"]:::yellow
+  backend["GREEN backend 85 tests 90pct coverage migration through 0009"]:::green
+  testflight["YELLOW physical TestFlight SPAPS callback proof: pf5.8"]:::yellow
+  perf["GREEN all API hot paths under 50ms Swift under 1ms"]:::green
   vision --> swift --> backend --> testflight
   backend --> perf
   classDef green fill:#dff7df,stroke:#20833a,stroke-width:2px,color:#0f2f18
@@ -32,20 +32,21 @@ gantt
   dateFormat YYYY-MM-DD
   section GREEN Proven
   GREEN Swift package tests :done, 2026-05-28, 1d
+  GREEN backend 85 tests 90pct coverage :done, 2026-05-28, 1d
+  GREEN hot-path latency all under 50ms :done, 2026-05-28, 1d
+  GREEN status stack published :done, 2026-05-28, 1d
   section YELLOW Planned
-  YELLOW publish status pf5.6 :active, 2026-05-28, 1d
-  YELLOW backend and migration proof pf5.7 :active, 2026-05-29, 2d
-  YELLOW physical TestFlight SPAPS proof pf5.8 :active, 2026-05-31, 2d
-  YELLOW profiling and manifest refactor pf5.9 pf5.10 :active, 2026-06-02, 2d
+  YELLOW physical TestFlight SPAPS proof pf5.8 :active, 2026-05-29, 2d
+  YELLOW contract fixture manifest pf5.10 :active, 2026-05-31, 2d
 ```
 
 ## chart epic-map DogSwipe Dependency Map
 ```mermaid
 flowchart TD
   ios["GREEN Swift discovery match order contracts"]:::green
-  backend["YELLOW backend coverage migration live API pf5.7"]:::yellow
-  phone["YELLOW real iPhone TestFlight callback depends on backend pf5.8"]:::yellow
-  perf["YELLOW discovery menu match order profiling pf5.9"]:::yellow
+  backend["GREEN backend 85 tests 90pct coverage pf5.7"]:::green
+  phone["YELLOW real iPhone TestFlight callback pf5.8"]:::yellow
+  perf["GREEN all hot paths under 50ms pf5.9"]:::green
   manifest["YELLOW one contract manifest refactor pf5.10"]:::yellow
   ios --> backend --> phone
   backend --> perf --> manifest
@@ -61,7 +62,7 @@ flowchart TD
   swipe["GREEN deterministic swipe and match state"]:::green
   order["GREEN order draft client contract"]:::green
   auth["YELLOW SPAPS TestFlight auth callback pf5.8"]:::yellow
-  vendor["YELLOW backend vendor admin proof pf5.7"]:::yellow
+  vendor["GREEN backend vendor admin 100pct API coverage"]:::green
   eater --> discover --> swipe --> order --> auth
   vendor --> discover
   classDef green fill:#dff7df,stroke:#20833a,stroke-width:2px,color:#0f2f18
@@ -74,9 +75,9 @@ flowchart TD
 flowchart TD
   read["GREEN README and VISION read"]:::green
   swift["GREEN make swift-test passed 35 tests"]:::green
-  backend["YELLOW backend-test not run in this pass pf5.7"]:::yellow
+  backend["GREEN 85 backend tests 90pct coverage migration 0009"]:::green
   phone["YELLOW no physical TestFlight proof pf5.8"]:::yellow
-  perf["YELLOW no API or Swift performance baseline pf5.9"]:::yellow
+  perf["GREEN all API under 50ms Swift under 1ms"]:::green
   read --> swift --> backend --> phone --> perf
   classDef green fill:#dff7df,stroke:#20833a,stroke-width:2px,color:#0f2f18
   classDef yellow fill:#fff3bf,stroke:#b7791f,stroke-width:2px,color:#3a2a00
@@ -86,11 +87,9 @@ flowchart TD
 ```mermaid
 flowchart TD
   rank["Power-map: closest dollar is hungry user and vendor supply around a real order path"]:::gray
-  one["1 run backend coverage migration live API pf5.7"]:::yellow
-  two["2 prove iPhone TestFlight SPAPS callback pf5.8"]:::yellow
-  three["3 profile discovery menu match order paths pf5.9"]:::yellow
-  four["4 consolidate iOS backend contract fixtures pf5.10"]:::yellow
-  rank --> one --> two --> three --> four
+  one["1 prove iPhone TestFlight SPAPS callback pf5.8"]:::yellow
+  two["2 consolidate iOS backend contract fixtures pf5.10"]:::yellow
+  rank --> one --> two
   classDef yellow fill:#fff3bf,stroke:#b7791f,stroke-width:2px,color:#3a2a00
   classDef gray fill:#eef2f7,stroke:#64748b,stroke-width:1px,color:#111827
 ```
