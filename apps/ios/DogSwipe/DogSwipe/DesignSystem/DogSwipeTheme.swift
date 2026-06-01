@@ -1,5 +1,17 @@
 import SwiftUI
 
+enum DSRNativeTokenProjection {
+    static let family = "swiftui-token"
+    static let tier = "native-token-candidate"
+    static let sourceItem = "strike-mish"
+    static let generatedSource = "design-system-registry/registry/native-tokens/strike-mish.json"
+    static let generatedSourceChecksum = "bf0e227a44ec5d84"
+    static let generatedArtifactChecksum = "f43aba2521d2c5f4"
+    static let localAdapterSeam = "apps/ios/DogSwipe/DogSwipe/DesignSystem/DogSwipeTheme.swift"
+    static let proofStatus = "PROOF_ARTIFACT_MISSING"
+    static let missingProofArtifact = "tracked native screenshot/build proof artifact"
+}
+
 extension Color {
     static let dsCanvas = Color(red: 0.98, green: 0.97, blue: 0.94)
     static let dsSurface = Color(red: 1.00, green: 0.99, blue: 0.97)

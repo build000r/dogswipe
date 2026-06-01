@@ -9,6 +9,29 @@ import XCTest
 /// CRAP stays under 20 — i.e., any future drift in the token values
 /// triggers a failed test rather than a silently broken UI.
 final class DesignSystemTokenTests: XCTestCase {
+    // MARK: - DSR native-token candidate metadata
+
+    func testDSRNativeTokenProjectionStaysCandidateOnlyUntilProofExists() {
+        XCTAssertEqual(DSRNativeTokenProjection.family, "swiftui-token")
+        XCTAssertEqual(DSRNativeTokenProjection.tier, "native-token-candidate")
+        XCTAssertEqual(DSRNativeTokenProjection.sourceItem, "strike-mish")
+        XCTAssertEqual(
+            DSRNativeTokenProjection.generatedSource,
+            "design-system-registry/registry/native-tokens/strike-mish.json"
+        )
+        XCTAssertEqual(DSRNativeTokenProjection.generatedSourceChecksum, "bf0e227a44ec5d84")
+        XCTAssertEqual(DSRNativeTokenProjection.generatedArtifactChecksum, "f43aba2521d2c5f4")
+        XCTAssertEqual(
+            DSRNativeTokenProjection.localAdapterSeam,
+            "apps/ios/DogSwipe/DogSwipe/DesignSystem/DogSwipeTheme.swift"
+        )
+        XCTAssertEqual(DSRNativeTokenProjection.proofStatus, "PROOF_ARTIFACT_MISSING")
+        XCTAssertEqual(
+            DSRNativeTokenProjection.missingProofArtifact,
+            "tracked native screenshot/build proof artifact"
+        )
+    }
+
     // MARK: - Color.dsDivider / Double.dsDividerOpacity
 
     func testDividerOpacityIsRoutedThroughNamedDouble() {
