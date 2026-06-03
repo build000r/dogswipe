@@ -208,8 +208,14 @@ async def test_unknown_profile_swipe_is_not_match(async_client) -> None:
 
 
 @pytest.mark.asyncio
-async def test_pending_submission_swipe_never_becomes_match(async_client, monkeypatch) -> None:
+async def test_pending_submission_swipe_never_becomes_match(
+    async_client,
+    clear_settings,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    del clear_settings
     monkeypatch.setenv("DOGSWIPE_ADMIN_USER_IDS", "admin-user")
+    get_settings.cache_clear()
     submission = await async_client.post(
         "/v1/vendor/submissions",
         headers={"X-DogSwipe-User-ID": "vendor-pending-swipe"},
