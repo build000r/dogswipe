@@ -6,6 +6,7 @@ COMPOSE_PROJECT="${COMPOSE_PROJECT:-dogswipe}"
 ENV_FILE="${ENV_FILE:-deploy/prod.env}"
 AASA_TEMPLATE="${AASA_TEMPLATE:-deploy/apple-app-site-association.template.json}"
 COMPOSE_CMD="${COMPOSE_CMD:-docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" -p "$COMPOSE_PROJECT"}"
+ALLOW_PLACEHOLDERS="${ALLOW_PLACEHOLDERS:-false}"
 
 passed=0
 failed=0
@@ -28,6 +29,30 @@ warn() {
 
 env_value() {
   grep -E "^$1=" "$ENV_FILE" 2>/dev/null | tail -1 | cut -d= -f2-
+}
+
+is_placeholder_value() {
+  local value="$1"
+  [[ "$value" =~ (^|[/:_.-])(example|placeholder|replace-me|changeme|dummy)([/:_.-]|$) ]] ||
+    [[ "$value" == "00000000-0000-0000-0000-000000000000" ]]
+}
+
+require_real_env_value() {
+  local var="$1"
+  local value
+  value="$(env_value "$var")"
+  if [[ -z "$value" ]]; then
+    fail "$var is required when SPAPS_AUTH_ENABLED=true"
+    return
+  fi
+  pass "$var is set for SPAPS auth"
+  if [[ "$ALLOW_PLACEHOLDERS" == "true" ]]; then
+    pass "$var placeholder check skipped for template mode"
+  elif is_placeholder_value "$value"; then
+    fail "$var must not use placeholder values"
+  else
+    pass "$var is not a placeholder"
+  fi
 }
 
 echo "Running DogSwipe deploy preflight"
@@ -80,19 +105,30 @@ if [[ -f "$ENV_FILE" ]]; then
   auth_enabled="$(env_value SPAPS_AUTH_ENABLED | tr '[:upper:]' '[:lower:]')"
   if [[ "$auth_enabled" == "true" || "$auth_enabled" == "1" ]]; then
     for var in SPAPS_API_URL SPAPS_API_KEY SPAPS_APPLICATION_ID; do
-      if [[ -n "$(env_value "$var")" ]]; then
-        pass "$var is set for SPAPS auth"
-      else
-        fail "$var is required when SPAPS_AUTH_ENABLED=true"
-      fi
+      require_real_env_value "$var"
     done
+    application_id="$(env_value SPAPS_APPLICATION_ID)"
+    if [[ "$ALLOW_PLACEHOLDERS" == "true" ]]; then
+      pass "SPAPS_APPLICATION_ID UUID shape skipped for template mode"
+    elif [[ "$application_id" =~ ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$ ]]; then
+      pass "SPAPS_APPLICATION_ID has UUID shape"
+    else
+      fail "SPAPS_APPLICATION_ID must be a UUID"
+    fi
     if [[ -n "$(env_value DOGSWIPE_ADMIN_USER_IDS)" ]]; then
       pass "DOGSWIPE_ADMIN_USER_IDS is set for review tools"
+      if [[ "$ALLOW_PLACEHOLDERS" == "true" ]]; then
+        pass "DOGSWIPE_ADMIN_USER_IDS placeholder check skipped for template mode"
+      elif is_placeholder_value "$(env_value DOGSWIPE_ADMIN_USER_IDS)"; then
+        fail "DOGSWIPE_ADMIN_USER_IDS must not use placeholder values"
+      else
+        pass "DOGSWIPE_ADMIN_USER_IDS is not a placeholder"
+      fi
     else
       fail "DOGSWIPE_ADMIN_USER_IDS is required when SPAPS_AUTH_ENABLED=true"
     fi
   else
-    warn "SPAPS_AUTH_ENABLED is not true; production user routes will not use SPAPS"
+    fail "SPAPS_AUTH_ENABLED must be true for production deploys"
   fi
 
   for var in DOGSWIPE_AUTO_CREATE_SCHEMA DOGSWIPE_SEED_SAMPLE_PROFILES; do

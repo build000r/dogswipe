@@ -2,6 +2,9 @@
     # api.sweetpotato.dev TLS server so Worker subrequests use a hostname,
     # not a bare IP address.
     location = /__dogswipe_edge_origin/health {
+        if ($http_x_dogswipe_edge_origin_token != "${DOGSWIPE_EDGE_ORIGIN_TOKEN}") {
+            return 403;
+        }
         proxy_pass http://dogswipe_worker_origin_upstream/health;
         proxy_set_header Host ${DOGSWIPE_PUBLIC_DOMAIN};
         proxy_set_header X-Real-IP $remote_addr;
@@ -11,18 +14,27 @@
     }
 
     location = /__dogswipe_edge_origin/.well-known/apple-app-site-association {
+        if ($http_x_dogswipe_edge_origin_token != "${DOGSWIPE_EDGE_ORIGIN_TOKEN}") {
+            return 403;
+        }
         default_type application/json;
         alias /var/www/static/dogswipe/apple-app-site-association;
         add_header Cache-Control "public, max-age=3600" always;
     }
 
     location = /__dogswipe_edge_origin/apple-app-site-association {
+        if ($http_x_dogswipe_edge_origin_token != "${DOGSWIPE_EDGE_ORIGIN_TOKEN}") {
+            return 403;
+        }
         default_type application/json;
         alias /var/www/static/dogswipe/apple-app-site-association;
         add_header Cache-Control "public, max-age=3600" always;
     }
 
     location /__dogswipe_edge_origin/ {
+        if ($http_x_dogswipe_edge_origin_token != "${DOGSWIPE_EDGE_ORIGIN_TOKEN}") {
+            return 403;
+        }
         rewrite ^/__dogswipe_edge_origin/?(.*)$ /$1 break;
         proxy_pass http://dogswipe_worker_origin_upstream;
         proxy_http_version 1.1;

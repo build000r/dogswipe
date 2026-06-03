@@ -208,6 +208,46 @@ async def test_unknown_profile_swipe_is_not_match(async_client) -> None:
 
 
 @pytest.mark.asyncio
+async def test_pending_submission_swipe_never_becomes_match(async_client, monkeypatch) -> None:
+    monkeypatch.setenv("DOGSWIPE_ADMIN_USER_IDS", "admin-user")
+    submission = await async_client.post(
+        "/v1/vendor/submissions",
+        headers={"X-DogSwipe-User-ID": "vendor-pending-swipe"},
+        json={
+            "name": "Pending Snap",
+            "style": "Classic cart dog",
+            "price_dollars": 6.25,
+            "signature_notes": "Mustard, relish, and onion.",
+            "distance_miles": 1.8,
+            "vendor_name": "Pending Cart",
+        },
+    )
+    profile_id = submission.json()["profile"]["id"]
+
+    swipe = await async_client.post(
+        "/v1/swipes",
+        headers={"X-DogSwipe-User-ID": "early-diner"},
+        json={"profile_id": profile_id, "decision": "like"},
+    )
+    assert swipe.status_code == 200
+    assert swipe.json()["matched"] is False
+
+    approve = await async_client.post(
+        f"/v1/admin/vendor/submissions/{profile_id}/approve",
+        headers={"X-DogSwipe-User-ID": "admin-user"},
+        json={"crave_score": 0.95},
+    )
+    assert approve.status_code == 200
+
+    matches = await async_client.get(
+        "/v1/matches",
+        headers={"X-DogSwipe-User-ID": "early-diner"},
+    )
+    assert matches.status_code == 200
+    assert matches.json()["matches"] == []
+
+
+@pytest.mark.asyncio
 async def test_create_order_snapshots_profile_and_add_ons(async_client) -> None:
     headers = {"X-DogSwipe-User-ID": "order-user"}
 

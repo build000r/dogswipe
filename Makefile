@@ -313,7 +313,7 @@ deploy-config:
 	DOGSWIPE_ENV_FILE=prod.env.example DOGSWIPE_IMAGE=dogswipe-api:local POSTGRES_PASSWORD=postgres docker compose --env-file deploy/prod.env.example -f deploy/docker-compose.prod.yml config >/dev/null
 
 deploy-preflight:
-	ENV_FILE=deploy/prod.env.example DOGSWIPE_ENV_FILE=prod.env.example DOGSWIPE_IMAGE=dogswipe-api:local POSTGRES_PASSWORD=postgres bash deploy/pre-deploy-checks.sh
+	ALLOW_PLACEHOLDERS=true ENV_FILE=deploy/prod.env.example DOGSWIPE_ENV_FILE=prod.env.example DOGSWIPE_IMAGE=dogswipe-api:local POSTGRES_PASSWORD=postgres bash deploy/pre-deploy-checks.sh
 
 deploy-render-aasa:
 	@test -n "$(AASA_APPLE_TEAM_ID)" || { \
@@ -452,7 +452,7 @@ deploy-private-handoff-template:
 	DOGSWIPE_ENV_FILE="$$tmp/prod.env" \
 	DOGSWIPE_RELEASE_ASSOCIATED_DOMAIN=dogswipe.example.com \
 	python3 deploy/render-prod-env.py --allow-placeholders --output "$$tmp/prod.env"; \
-	ENV_FILE="$$tmp/prod.env" DOGSWIPE_ENV_FILE="$$tmp/prod.env" bash deploy/pre-deploy-checks.sh
+	ALLOW_PLACEHOLDERS=true ENV_FILE="$$tmp/prod.env" DOGSWIPE_ENV_FILE="$$tmp/prod.env" bash deploy/pre-deploy-checks.sh
 
 deploy-host-bootstrap-template:
 	@tmp="$$(mktemp -d)"; \

@@ -66,6 +66,18 @@ def test_get_current_user_id_requires_auth_when_spaps_enabled(
     assert exc_info.value.status_code == 401
 
 
+def test_get_current_user_id_rejects_local_header_outside_local_env(
+    clear_settings,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    del clear_settings
+    monkeypatch.setenv("ENV", "production")
+    get_settings.cache_clear()
+    with pytest.raises(HTTPException) as exc_info:
+        get_current_user_id(_request({LOCAL_USER_HEADER: "spoofed-admin"}))
+    assert exc_info.value.status_code == 401
+
+
 def test_get_current_admin_user_id_accepts_configured_admin(
     clear_settings,
     monkeypatch: pytest.MonkeyPatch,

@@ -15,8 +15,12 @@ export default {
   async fetch(request, env) {
     const incomingUrl = new URL(request.url);
     const originBaseUrl = env.DOGSWIPE_ORIGIN_URL || "https://api.sweetpotato.dev/__dogswipe_edge_origin";
+    const originToken = env.DOGSWIPE_EDGE_ORIGIN_TOKEN;
+    if (!originToken) {
+      return new Response("DogSwipe edge origin token is not configured", { status: 500 });
+    }
     const targetUrl = toOriginUrl(originBaseUrl, incomingUrl);
-    const requestHeaders = toOriginHeaders(request, incomingUrl);
+    const requestHeaders = toOriginHeaders(request, incomingUrl, originToken);
 
     const originResponse = await fetch(targetUrl, {
       body: BODYLESS_METHODS.has(request.method) ? undefined : request.body,
@@ -47,7 +51,7 @@ function toOriginUrl(originBaseUrl, incomingUrl) {
   return originUrl.toString();
 }
 
-function toOriginHeaders(request, incomingUrl) {
+function toOriginHeaders(request, incomingUrl, originToken) {
   const headers = new Headers(request.headers);
   for (const headerName of HOP_BY_HOP_HEADERS) {
     headers.delete(headerName);
@@ -58,5 +62,6 @@ function toOriginHeaders(request, incomingUrl) {
   headers.set("x-forwarded-proto", "https");
   headers.set("x-original-url", incomingUrl.toString());
   headers.set("x-dogswipe-edge", "cloudflare-worker");
+  headers.set("x-dogswipe-edge-origin-token", originToken);
   return headers;
 }

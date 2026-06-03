@@ -191,7 +191,7 @@ class SqlAlchemyHotdogRepository(HotdogRepository):
         decision: SwipeDecision,
     ) -> bool:
         profile = await self.session.get(HotdogProfileRecord, profile_id)
-        if profile is None:
+        if profile is None or not self._is_swipeable_profile(profile):
             return False
         self.session.add(
             SwipeEventRecord(user_id=user_id, profile_id=profile_id, decision=decision.value)
@@ -214,6 +214,7 @@ class SqlAlchemyHotdogRepository(HotdogRepository):
         statement: Select[tuple[HotdogProfileRecord]] = (
             select(HotdogProfileRecord)
             .where(HotdogProfileRecord.id.in_(liked_profile_ids))
+            .where(HotdogProfileRecord.availability_status.in_(["available", "limited"]))
             .where(HotdogProfileRecord.crave_score >= 0.72)
             .order_by(HotdogProfileRecord.crave_score.desc(), HotdogProfileRecord.name.asc())
         )
@@ -517,6 +518,10 @@ class SqlAlchemyHotdogRepository(HotdogRepository):
             return None
         stripped = value.strip()
         return stripped or None
+
+    @staticmethod
+    def _is_swipeable_profile(record: HotdogProfileRecord) -> bool:
+        return record.availability_status in {"available", "limited"}
 
     @staticmethod
     def _encode_order_add_ons(add_ons: list[OrderAddOn]) -> str:

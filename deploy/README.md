@@ -55,9 +55,13 @@ a Cloudflare Worker custom domain because the available Cloudflare OAuth can
 deploy Workers/custom domains but cannot edit ordinary DNS records. The Worker
 subrequests a scoped DogSwipe origin path on `api.sweetpotato.dev`, avoiding
 bare-IP Worker fetches and keeping the origin behind the existing Cloudflare-only
-firewall posture. The SPAPS app allowed origins and release env must still
-stay aligned with `https://dogswipe.buildooor.com`; the 2026-05-07 production
-metadata check confirms the live `dogswipe` SPAPS app now includes that origin.
+firewall posture. The Worker must also have a private
+`DOGSWIPE_EDGE_ORIGIN_TOKEN` secret, and the nginx origin-path template must be
+rendered with the same value so direct requests to `/__dogswipe_edge_origin/*`
+are rejected. Keep that value out of `wrangler.jsonc` `vars`. The SPAPS app
+allowed origins and release env must still stay aligned with
+`https://dogswipe.buildooor.com`; the 2026-05-07 production metadata check
+confirms the live `dogswipe` SPAPS app now includes that origin.
 
 For a direct A-record rollout, render and prove the DNS handoff before the live
 Compose rollout:
@@ -351,6 +355,8 @@ without committing or printing secrets.
 6. For direct DNS/certificate hosting, link `deploy/reverse-proxy/dogswipe-api.conf.template` into the shared reverse proxy after substituting `DOGSWIPE_API_DOMAIN`. For the current Worker path, install `deploy/reverse-proxy/dogswipe-worker-origin-upstream.conf.template` as an enabled shared-proxy upstream definition and insert `deploy/reverse-proxy/dogswipe-worker-origin.locations.conf.template` inside the existing `api.sweetpotato.dev` TLS server before its catch-all location.
 7. Deploy or update the Worker:
    ```bash
+   wrangler secret put DOGSWIPE_EDGE_ORIGIN_TOKEN \
+     --config workers/dogswipe-edge/wrangler.jsonc
    make edge-dry-run
    make edge-deploy
    ```
@@ -368,8 +374,10 @@ without committing or printing secrets.
 The internal production Compose rollout and public Worker edge are running:
 `https://dogswipe.buildooor.com/health` and the hosted Apple app-site association
 payload pass public verification, and the live DogSwipe SPAPS application allows
-the same HTTPS origin. Live readiness is now blocked on Apple distribution
-upload confirmation, not on backend, edge, DNS, AASA, or SPAPS origin alignment.
-The repo can prove the container, migration, Worker edge, SPAPS origin metadata,
-universal-link asset template/render path, and Compose contract; it cannot prove
-Apple account ownership or production secrets by itself.
+the same HTTPS origin. App Store Connect has accepted DogSwipe version `0.1.0`
+build `2` as `VALID`; live readiness is now blocked on physical-device
+TestFlight universal-link auth proof, not on backend, edge, DNS, AASA, SPAPS
+origin alignment, or upload confirmation. The repo can prove the container,
+migration, Worker edge, SPAPS origin metadata, universal-link asset
+template/render path, and Compose contract; it cannot prove the real on-device
+Apple account flow by itself.

@@ -22,6 +22,7 @@ from .settings import get_settings
 LOCAL_USER_HEADER = "X-DogSwipe-User-ID"
 DEFAULT_LOCAL_USER_ID = "local-user"
 MAX_USER_ID_LENGTH = 128
+LOCAL_AUTH_ENVS = {"local", "test", "testing", "development", "dev"}
 
 
 def get_current_user_id(request: Request) -> str:
@@ -36,6 +37,12 @@ def get_current_user_id(request: Request) -> str:
             detail="Authentication required",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    if not _local_identity_fallback_allowed(settings.env):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
     local_user_id = request.headers.get(LOCAL_USER_HEADER, DEFAULT_LOCAL_USER_ID).strip()
     if not local_user_id or len(local_user_id) > MAX_USER_ID_LENGTH:
@@ -45,6 +52,10 @@ def get_current_user_id(request: Request) -> str:
         )
 
     return local_user_id
+
+
+def _local_identity_fallback_allowed(env: object) -> bool:
+    return str(env or "").lower() in LOCAL_AUTH_ENVS
 
 
 def get_current_admin_user_id(
