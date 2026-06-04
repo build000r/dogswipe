@@ -65,26 +65,20 @@ class DogSwipeService:
     ) -> DiscoveryResponse:
         preferences = await self.repository.get_preferences(user_id=user_id)
         max_distance_miles = max(preferences.max_distance_miles, 1)
-        location = (latitude, longitude) if latitude is not None and longitude is not None else None
+        location = self._location_from_coordinates(latitude, longitude)
         normalized_menu_query = self._normalize_menu_query(menu_query)
         profiles = await self.repository.list_available_profiles(
-            limit=200 if location is not None or normalized_menu_query is not None else 50,
+            limit=self._profile_fetch_limit(location, normalized_menu_query),
             max_distance_miles=max_distance_miles,
             latitude=latitude,
             longitude=longitude,
         )
-        profiles = [self._profile_with_location_distance(profile, location) for profile in profiles]
-        ranked = sorted(
-            (
-                profile
-                for profile in profiles
-                if self._is_eligible(profile, preferences)
-                and self._matches_menu_query(profile, normalized_menu_query)
-            ),
-            key=lambda profile: self._score(profile, preferences, normalized_menu_query),
-            reverse=True,
+        ranked = self._rank_discovery_profiles(
+            self._profiles_with_location_distance(profiles, location),
+            preferences,
+            normalized_menu_query,
         )
-        return DiscoveryResponse(profiles=ranked[: max(1, min(limit, 50))])
+        return DiscoveryResponse(profiles=ranked[: self._clamped_discovery_limit(limit)])
 
     async def swipe(self, *, user_id: str, request: SwipeRequest) -> SwipeResponse:
         matched = await self.repository.record_swipe(
@@ -121,6 +115,52 @@ class DogSwipeService:
         preferences: CravingPreferences,
     ) -> CravingPreferences:
         return await self.repository.upsert_preferences(user_id=user_id, preferences=preferences)
+
+    @staticmethod
+    def _location_from_coordinates(
+        latitude: float | None,
+        longitude: float | None,
+    ) -> tuple[float, float] | None:
+        if latitude is None or longitude is None:
+            return None
+        return (latitude, longitude)
+
+    @staticmethod
+    def _profile_fetch_limit(
+        location: tuple[float, float] | None,
+        normalized_menu_query: str | None,
+    ) -> int:
+        if location is not None or normalized_menu_query is not None:
+            return 200
+        return 50
+
+    @staticmethod
+    def _clamped_discovery_limit(limit: int) -> int:
+        return max(1, min(limit, 50))
+
+    def _profiles_with_location_distance(
+        self,
+        profiles: list[HotdogProfile],
+        location: tuple[float, float] | None,
+    ) -> list[HotdogProfile]:
+        return [self._profile_with_location_distance(profile, location) for profile in profiles]
+
+    def _rank_discovery_profiles(
+        self,
+        profiles: list[HotdogProfile],
+        preferences: CravingPreferences,
+        normalized_menu_query: str | None,
+    ) -> list[HotdogProfile]:
+        return sorted(
+            (
+                profile
+                for profile in profiles
+                if self._is_eligible(profile, preferences)
+                and self._matches_menu_query(profile, normalized_menu_query)
+            ),
+            key=lambda profile: self._score(profile, preferences, normalized_menu_query),
+            reverse=True,
+        )
 
     async def orders(self, *, user_id: str) -> OrderListResponse:
         return OrderListResponse(orders=await self.repository.list_orders(user_id=user_id))

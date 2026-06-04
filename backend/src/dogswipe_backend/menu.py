@@ -7,7 +7,7 @@ from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from html.parser import HTMLParser
 from typing import Protocol
-from urllib.parse import urljoin, urlparse
+from urllib.parse import ParseResult, urljoin, urlparse
 
 import httpx
 
@@ -141,17 +141,32 @@ class HTTPMenuIngestor:
         return b"".join(chunks)
 
     def _is_public_http_url(self, url: str) -> bool:
+        parsed = self._parse_http_url(url)
+        if parsed is None:
+            return False
+        hostname = parsed.hostname
+        if hostname is None or self._is_blocked_host(hostname):
+            return False
+        return self._has_public_resolved_addresses(hostname, parsed.port)
+
+    @staticmethod
+    def _parse_http_url(url: str) -> ParseResult | None:
         try:
             parsed = urlparse(url)
             _ = parsed.port
         except ValueError:
-            return False
-        if parsed.scheme not in {"http", "https"} or not parsed.netloc or not parsed.hostname:
-            return False
-        if self._is_blocked_host(parsed.hostname):
-            return False
+            return None
+        if parsed.scheme not in {"http", "https"}:
+            return None
+        if not parsed.netloc:
+            return None
+        if not parsed.hostname:
+            return None
+        return parsed
+
+    def _has_public_resolved_addresses(self, hostname: str, port: int | None) -> bool:
         try:
-            resolved_addresses = list(self.host_resolver(parsed.hostname, parsed.port))
+            resolved_addresses = list(self.host_resolver(hostname, port))
         except OSError:
             return False
         return bool(resolved_addresses) and not any(
