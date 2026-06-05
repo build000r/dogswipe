@@ -3,9 +3,11 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta
 
 import pytest
+from sqlalchemy import select
 
+from dogswipe_backend.models import SwipeEventRecord
 from dogswipe_backend.repository import SqlAlchemyHotdogRepository
-from dogswipe_backend.schemas import OrderAddOn, VendorSubmissionRequest
+from dogswipe_backend.schemas import OrderAddOn, SwipeDecision, VendorSubmissionRequest
 
 
 @pytest.mark.asyncio
@@ -26,6 +28,59 @@ async def test_repository_filters_available_profiles_by_coordinate_window(databa
             "hotdog-nightcap",
         ]
         assert all(profile.latitude is not None for profile in profiles)
+
+
+@pytest.mark.asyncio
+async def test_repository_records_swipes_only_for_swipeable_profiles(database) -> None:
+    async with database.session_factory() as session:
+        repository = SqlAlchemyHotdogRepository(session)
+        pending = await repository.submit_vendor_profile(
+            user_id="vendor-swipe",
+            submission=VendorSubmissionRequest(
+                name="Pending Swipe",
+                style="Classic cart dog",
+                price_dollars=6.25,
+                signature_notes="Mustard, relish, and onion.",
+                distance_miles=1.8,
+                vendor_name="Swipe Cart",
+            ),
+        )
+
+        assert await repository.record_swipe(
+            user_id="swipe-owner",
+            profile_id="hotdog-coney",
+            decision=SwipeDecision.like,
+        ) is True
+        assert await repository.record_swipe(
+            user_id="swipe-owner",
+            profile_id="hotdog-kimchi",
+            decision=SwipeDecision.reject,
+        ) is False
+        assert await repository.record_swipe(
+            user_id="swipe-owner",
+            profile_id=pending.id,
+            decision=SwipeDecision.super_like,
+        ) is False
+        assert await repository.record_swipe(
+            user_id="swipe-owner",
+            profile_id="missing-hotdog",
+            decision=SwipeDecision.like,
+        ) is False
+
+        events = list(
+            await session.scalars(
+                select(SwipeEventRecord)
+                .where(SwipeEventRecord.user_id == "swipe-owner")
+                .order_by(SwipeEventRecord.profile_id.asc())
+            )
+        )
+        assert [(event.profile_id, event.decision) for event in events] == [
+            ("hotdog-coney", "like"),
+            ("hotdog-kimchi", "pass"),
+        ]
+        assert [profile.id for profile in await repository.list_matches(user_id="swipe-owner")] == [
+            "hotdog-coney"
+        ]
 
 
 @pytest.mark.asyncio
@@ -104,6 +159,40 @@ async def test_repository_only_approves_vendor_pending_records(database) -> None
         assert await repository.approve_vendor_submission(
             profile_id="missing-hotdog",
             crave_score=0.9,
+        ) is None
+
+
+@pytest.mark.asyncio
+async def test_repository_gets_vendor_submission_only_for_owner(database) -> None:
+    async with database.session_factory() as session:
+        repository = SqlAlchemyHotdogRepository(session)
+        pending = await repository.submit_vendor_profile(
+            user_id="vendor-owner",
+            submission=VendorSubmissionRequest(
+                name="Owned Submission",
+                style="Classic cart dog",
+                price_dollars=6.25,
+                signature_notes="Mustard, relish, and onion.",
+                distance_miles=1.8,
+                vendor_name="Owner Cart",
+            ),
+        )
+
+        owned = await repository.get_vendor_submission(
+            user_id="vendor-owner",
+            profile_id=pending.id,
+        )
+
+        assert owned is not None
+        assert owned.id == pending.id
+        assert owned.availability_status == "pending_review"
+        assert await repository.get_vendor_submission(
+            user_id="other-vendor",
+            profile_id=pending.id,
+        ) is None
+        assert await repository.get_vendor_submission(
+            user_id="vendor-owner",
+            profile_id="missing-hotdog",
         ) is None
 
 
