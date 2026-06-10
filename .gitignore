@@ -37,3 +37,6 @@ build/
 .beads/*.db
 .beads/*.db-shm
 .beads/*.db-wal
+
+# bv (beads viewer) local config and caches
+.bv/
