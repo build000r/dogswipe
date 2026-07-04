@@ -86,6 +86,10 @@ struct ScreenshotDogSwipeHTTPClient: DogSwipeHTTPClient {
             return try encoder.encode(
                 AdminModerationResponse(profile: ScreenshotHotdogs.rejectedSubmission)
             )
+        case ("POST", _)
+            where path.hasPrefix("/v1/orders/")
+                && path.hasSuffix("/claim"):
+            return try encoder.encode(OrderResponse(order: ScreenshotHotdogs.claimedOrder))
         case ("GET", "/v1/wallet"):
             return try encoder.encode(ScreenshotWallet.walletResponse)
         case ("POST", "/v1/credits/purchase"):
@@ -143,10 +147,25 @@ private enum ScreenshotHotdogs {
                 DogSwipeOrderAddOn(id: "jalapenos", name: "Jalapenos", creditCost: 1)
             ],
             totalCredits: 8,
-            status: "draft",
+            status: "claimed",
             createdAt: "2026-05-06T13:40:00Z"
         )
     ]
+
+    static let claimedOrder = DogSwipeOrder(
+        id: "screenshot-order-1",
+        profileID: coney.id,
+        hotdogName: coney.name,
+        vendorName: coney.vendorName,
+        baseCreditCost: coney.creditCost,
+        addOns: [
+            DogSwipeOrderAddOn(id: "bacon", name: "Bacon", creditCost: 2),
+            DogSwipeOrderAddOn(id: "extra-pickle", name: "Extra Pickle", creditCost: 1)
+        ],
+        totalCredits: 9,
+        status: "claimed",
+        createdAt: "2026-05-06T14:00:00Z"
+    )
 
     static let createdOrder = DogSwipeOrder(
         id: "screenshot-order-created",

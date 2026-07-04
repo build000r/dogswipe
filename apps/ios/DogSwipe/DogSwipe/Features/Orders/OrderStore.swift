@@ -79,6 +79,15 @@ struct OrderItem: Identifiable, Equatable {
             }
             .joined(separator: " ")
     }
+
+    var isDraft: Bool { status == "draft" }
+    var isClaimed: Bool { status == "claimed" }
+}
+
+struct ClaimConfirmation: Equatable {
+    let orderName: String
+    let creditsDebited: Int
+    let newBalance: Int
 }
 
 @MainActor
@@ -86,6 +95,8 @@ final class OrderStore: ObservableObject {
     @Published private(set) var items: [OrderItem] = []
     @Published private(set) var isLoading = false
     @Published private(set) var errorMessage: String?
+    @Published private(set) var claimingOrderID: String?
+    @Published var claimConfirmation: ClaimConfirmation?
 
     private let apiClient: DogSwipeAPIClient
 
@@ -99,6 +110,10 @@ final class OrderStore: ObservableObject {
 
     var latestItem: OrderItem? {
         items.first
+    }
+
+    var draftCount: Int {
+        items.filter { $0.status == "draft" }.count
     }
 
     func load() async {
@@ -130,6 +145,34 @@ final class OrderStore: ObservableObject {
             errorMessage = "Could not save order."
             throw error
         }
+    }
+
+    func claim(_ item: OrderItem) async {
+        claimingOrderID = item.id
+        errorMessage = nil
+        do {
+            let order = try await apiClient.claimOrder(orderID: item.id)
+            let claimed = OrderItem(order: order)
+            upsert(claimed)
+            let wallet = try? await apiClient.wallet()
+            claimConfirmation = ClaimConfirmation(
+                orderName: claimed.hotdogName,
+                creditsDebited: claimed.totalCredits,
+                newBalance: wallet?.account.balance ?? 0
+            )
+        } catch let error as DogSwipeAPIError {
+            switch error {
+            case .invalidResponseStatus(409):
+                errorMessage = "Not enough credits. Visit Wallet to buy more."
+            case .invalidResponseStatus(403):
+                errorMessage = "You cannot claim your own offering."
+            default:
+                errorMessage = "Could not claim order."
+            }
+        } catch {
+            errorMessage = "Could not claim order."
+        }
+        claimingOrderID = nil
     }
 
     private func upsert(_ item: OrderItem) {

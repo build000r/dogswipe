@@ -239,6 +239,37 @@ final class DogSwipeAPIClientTests: XCTestCase {
         XCTAssertTrue(body.contains("\"add_on_ids\":[\"bacon\"]"))
     }
 
+    func testClaimOrderEncodesBackendContract() async throws {
+        let http = MockHTTPClient()
+        http.nextData = """
+        {
+          "order": {
+            "id": "order-hotdog-coney",
+            "profile_id": "hotdog-coney",
+            "hotdog_name": "Coney Classic",
+            "vendor_name": "Franklin Cart",
+            "base_credit_cost": 7,
+            "add_ons": [
+              {"id": "bacon", "name": "Bacon", "credit_cost": 2}
+            ],
+            "total_credits": 9,
+            "status": "claimed",
+            "created_at": "2026-05-06T14:10:00Z"
+          }
+        }
+        """.data(using: .utf8)!
+        let client = DogSwipeAPIClient(baseURL: URL(string: "http://localhost:8000")!, httpClient: http)
+
+        let order = try await client.claimOrder(orderID: "order-hotdog-coney")
+
+        XCTAssertEqual(order.id, "order-hotdog-coney")
+        XCTAssertEqual(order.status, "claimed")
+        XCTAssertEqual(order.totalCredits, 9)
+        XCTAssertEqual(http.requests.first?.url?.path, "/v1/orders/order-hotdog-coney/claim")
+        XCTAssertEqual(http.requests.first?.httpMethod, "POST")
+        XCTAssertNil(http.requests.first?.httpBody)
+    }
+
     func testWalletDecodesBackendContract() async throws {
         let http = MockHTTPClient()
         http.nextData = """

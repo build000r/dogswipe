@@ -14,8 +14,8 @@ struct OrdersView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: .dsSpace5) {
                     DogSwipeScreenHeader(
-                        title: "Drafts",
-                        kicker: "\(orderStore.itemCount) saved \(orderStore.itemCount == 1 ? "order" : "orders")"
+                        title: "My Orders",
+                        kicker: "\(orderStore.itemCount) \(orderStore.itemCount == 1 ? "order" : "orders")"
                     )
                     content
                 }
@@ -83,28 +83,15 @@ struct OrdersView: View {
 
     private var ordersList: some View {
         VStack(alignment: .leading, spacing: .dsSpace3) {
-            DogSwipeDarkSummaryCard {
-                HStack(alignment: .center) {
-                    VStack(alignment: .leading, spacing: .dsSpace1) {
-                        Text("Cart total")
-                            .font(.caption.weight(.heavy))
-                            .tracking(1)
-                            .foregroundStyle(Color.dsSurface.opacity(0.62))
-                            .textCase(.uppercase)
-                        Text(totalLabel)
-                            .font(.system(size: .dsSummaryAmountFontSize, weight: .heavy, design: .rounded).monospacedDigit())
-                    }
-                    Spacer()
-                    Text("Drafts only\nno payment yet")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(Color.dsSurface.opacity(0.56))
-                        .multilineTextAlignment(.trailing)
-                }
+            summaryCard
+
+            if let confirmation = orderStore.claimConfirmation {
+                claimConfirmationBanner(confirmation)
             }
 
             DogSwipeSectionHeader(
                 title: "My Orders",
-                subtitle: "\(orderStore.itemCount) saved \(orderStore.itemCount == 1 ? "draft" : "drafts")",
+                subtitle: orderSubtitle,
                 systemImage: "bag.fill"
             )
 
@@ -115,9 +102,74 @@ struct OrdersView: View {
             }
 
             ForEach(orderStore.items) { item in
-                OrderCardView(item: item)
+                OrderCardView(
+                    item: item,
+                    isClaiming: orderStore.claimingOrderID == item.id
+                ) {
+                    Task { await orderStore.claim(item) }
+                }
             }
         }
+    }
+
+    private var summaryCard: some View {
+        DogSwipeDarkSummaryCard {
+            HStack(alignment: .center) {
+                VStack(alignment: .leading, spacing: .dsSpace1) {
+                    Text("Cart total")
+                        .font(.caption.weight(.heavy))
+                        .tracking(1)
+                        .foregroundStyle(Color.dsSurface.opacity(0.62))
+                        .textCase(.uppercase)
+                    Text(totalLabel)
+                        .font(.system(size: .dsSummaryAmountFontSize, weight: .heavy, design: .rounded).monospacedDigit())
+                }
+                Spacer()
+                if orderStore.draftCount > 0 {
+                    Text("\(orderStore.draftCount) \(orderStore.draftCount == 1 ? "draft" : "drafts") ready to claim")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(Color.dsSurface.opacity(0.56))
+                        .multilineTextAlignment(.trailing)
+                }
+            }
+        }
+    }
+
+    private func claimConfirmationBanner(_ confirmation: ClaimConfirmation) -> some View {
+        HStack(spacing: .dsSpace3) {
+            Image(systemName: "checkmark.circle.fill")
+                .font(.title2)
+                .foregroundStyle(Color.dsRelish)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("\(confirmation.orderName) claimed!")
+                    .font(.subheadline.weight(.bold))
+                    .foregroundStyle(Color.dsInk)
+                Text("\(confirmation.creditsDebited) credits debited · Balance: \(confirmation.newBalance)")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(Color.dsMuted)
+            }
+            Spacer()
+            Button {
+                orderStore.claimConfirmation = nil
+            } label: {
+                Image(systemName: "xmark.circle.fill")
+                    .foregroundStyle(Color.dsMuted)
+            }
+        }
+        .padding(.dsSpace3)
+        .background(Color.dsRelish.opacity(0.12), in: RoundedRectangle(cornerRadius: .dsRadius3, style: .continuous))
+    }
+
+    private var orderSubtitle: String {
+        let drafts = orderStore.draftCount
+        let claimed = orderStore.itemCount - drafts
+        if claimed == 0 {
+            return "\(drafts) \(drafts == 1 ? "draft" : "drafts")"
+        }
+        if drafts == 0 {
+            return "\(claimed) claimed"
+        }
+        return "\(drafts) \(drafts == 1 ? "draft" : "drafts"), \(claimed) claimed"
     }
 
     private var totalLabel: String {
@@ -127,6 +179,8 @@ struct OrdersView: View {
 
 private struct OrderCardView: View {
     let item: OrderItem
+    var isClaiming: Bool = false
+    var onClaim: (() -> Void)?
 
     var body: some View {
         VStack(alignment: .leading, spacing: .dsSpace3) {
@@ -163,12 +217,45 @@ private struct OrderCardView: View {
             }
 
             HStack(spacing: .dsSpace2) {
-                DogSwipeChip(text: item.statusLabel, systemImage: "clock.fill", tint: Color.dsPrimarySoft)
-                DogSwipeChip(text: "Saved", systemImage: "bag.fill", tint: Color.dsSurface)
-                Spacer(minLength: .dsSpace1)
+                if item.isDraft {
+                    DogSwipeChip(text: "Draft", systemImage: "pencil.circle.fill", tint: Color.dsPrimarySoft)
+                    Spacer(minLength: .dsSpace1)
+                    claimButton
+                } else if item.isClaimed {
+                    DogSwipeChip(text: "Claimed", systemImage: "checkmark.seal.fill", tint: Color.dsRelish.opacity(0.15))
+                    Spacer(minLength: .dsSpace1)
+                } else {
+                    DogSwipeChip(text: item.statusLabel, systemImage: "clock.fill", tint: Color.dsPrimarySoft)
+                    Spacer(minLength: .dsSpace1)
+                }
             }
         }
         .dsCard()
+    }
+
+    private var claimButton: some View {
+        Button {
+            onClaim?()
+        } label: {
+            HStack(spacing: .dsSpace1) {
+                if isClaiming {
+                    ProgressView()
+                        .controlSize(.mini)
+                        .tint(.white)
+                } else {
+                    Image(systemName: "creditcard.fill")
+                        .font(.caption2)
+                }
+                Text(isClaiming ? "Claiming…" : "Claim · \(item.totalLabel)")
+                    .font(.caption.weight(.bold))
+            }
+            .padding(.horizontal, .dsSpace3)
+            .padding(.vertical, .dsSpace2)
+            .foregroundStyle(.white)
+            .background(Color.dsAccent, in: Capsule())
+        }
+        .buttonStyle(.plain)
+        .disabled(isClaiming)
     }
 
     private var previewProfile: HotdogProfile {

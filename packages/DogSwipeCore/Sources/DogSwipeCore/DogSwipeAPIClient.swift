@@ -139,6 +139,15 @@ public struct DogSwipeAPIClient: Sendable {
         return response.order
     }
 
+    @discardableResult
+    public func claimOrder(orderID: String) async throws -> DogSwipeOrder {
+        let response: OrderResponse = try await send(
+            path: "/v1/orders/\(orderID)/claim",
+            method: "POST"
+        )
+        return response.order
+    }
+
     public func wallet() async throws -> WalletResponse {
         try await send(path: "/v1/wallet")
     }
