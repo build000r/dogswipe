@@ -39,15 +39,6 @@ from .schemas import (
 
 EARTH_RADIUS_MILES = 3958.8
 MENU_QUERY_MAX_LENGTH = 64
-ORDER_ADD_ONS: dict[str, OrderAddOn] = {
-    add_on.id: add_on
-    for add_on in [
-        OrderAddOn(id="bacon", name="Bacon", credit_cost=1),
-        OrderAddOn(id="jalapenos", name="Jalapenos", credit_cost=1),
-        OrderAddOn(id="cheese-sauce", name="Cheese Sauce", credit_cost=1),
-        OrderAddOn(id="extra-pickle", name="Extra Pickle", credit_cost=1),
-    ]
-}
 
 
 class DogSwipeService:
@@ -180,13 +171,16 @@ class DogSwipeService:
         user_id: str,
         request: OrderCreateRequest,
     ) -> OrderResponse:
-        add_ons = self._order_add_ons(request.add_on_ids)
         profile = await self.repository.get_orderable_profile(profile_id=request.profile_id)
         if profile is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Hotdog profile not found",
             )
+        add_ons = self._order_add_ons(
+            add_on_ids=request.add_on_ids,
+            available_add_ons=profile.add_ons,
+        )
         return OrderResponse(
             order=await self.repository.create_order(
                 user_id=user_id,
@@ -500,12 +494,17 @@ class DogSwipeService:
         return re.findall(r"[a-z0-9]+", menu_query.lower())
 
     @staticmethod
-    def _order_add_ons(add_on_ids: list[str]) -> list[OrderAddOn]:
+    def _order_add_ons(
+        *,
+        add_on_ids: list[str],
+        available_add_ons: list[OrderAddOn],
+    ) -> list[OrderAddOn]:
         seen: set[str] = set()
         add_ons: list[OrderAddOn] = []
+        add_ons_by_id = {add_on.id: add_on for add_on in available_add_ons}
         for add_on_id in add_on_ids:
             normalized = add_on_id.strip()
-            if not normalized or normalized not in ORDER_ADD_ONS:
+            if not normalized or normalized not in add_ons_by_id:
                 raise HTTPException(
                     status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                     detail="Unknown order add-on",
@@ -516,7 +515,7 @@ class DogSwipeService:
                     detail="Duplicate order add-on",
                 )
             seen.add(normalized)
-            add_ons.append(ORDER_ADD_ONS[normalized])
+            add_ons.append(add_ons_by_id[normalized])
         return add_ons
 
     @staticmethod

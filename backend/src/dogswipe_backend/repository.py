@@ -4,8 +4,9 @@ import json
 from collections.abc import Iterable
 from datetime import UTC, datetime
 from math import cos, radians
+from uuid import uuid4
 
-from sqlalchemy import Select, and_, func as sa_func, or_, select
+from sqlalchemy import Select, and_, delete, func as sa_func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.elements import ColumnElement
 
@@ -13,6 +14,7 @@ from .models import (
     CreditAccountRecord,
     CreditLedgerEntry as CreditLedgerEntryRecord,
     HotdogProfileRecord,
+    OfferingAddOnRecord,
     OrderRecord,
     ReviewRecord,
     SwipeEventRecord,
@@ -27,6 +29,7 @@ from .schemas import (
     OrderAddOn,
     OrderItem,
     OrderStatus,
+    OfferingAddOnCreate,
     Review,
     ReviewCreate,
     SwipeDecision,
@@ -237,7 +240,7 @@ class SqlAlchemyHotdogRepository(HotdogRepository):
             HotdogProfileRecord.crave_score.desc(),
             HotdogProfileRecord.name.asc(),
         ).limit(limit)
-        return self._profiles(await self.session.scalars(statement))
+        return await self._profiles(await self.session.scalars(statement))
 
     async def record_swipe(
         self,
@@ -274,7 +277,7 @@ class SqlAlchemyHotdogRepository(HotdogRepository):
             .where(HotdogProfileRecord.crave_score >= 0.72)
             .order_by(HotdogProfileRecord.crave_score.desc(), HotdogProfileRecord.name.asc())
         )
-        return self._profiles(await self.session.scalars(statement))
+        return await self._profiles(await self.session.scalars(statement))
 
     async def get_preferences(self, *, user_id: str) -> CravingPreferences:
         record = await self.session.get(UserPreferenceRecord, user_id)
@@ -302,7 +305,7 @@ class SqlAlchemyHotdogRepository(HotdogRepository):
         record = await self.session.get(HotdogProfileRecord, profile_id)
         if record is None or record.availability_status not in {"available", "limited"}:
             return None
-        return HotdogProfile.model_validate(record)
+        return await self._profile(record)
 
     async def create_order(
         self,
@@ -368,7 +371,8 @@ class SqlAlchemyHotdogRepository(HotdogRepository):
         )
         self.session.add(record)
         await self.session.flush()
-        return HotdogProfile.model_validate(record)
+        await self._replace_add_ons(profile_id=record.id, add_ons=submission.add_ons)
+        return await self._profile(record)
 
     async def list_vendor_submissions(self, *, user_id: str) -> list[HotdogProfile]:
         statement = (
@@ -376,7 +380,7 @@ class SqlAlchemyHotdogRepository(HotdogRepository):
             .where(HotdogProfileRecord.vendor_owner_user_id == user_id)
             .order_by(HotdogProfileRecord.created_at.desc(), HotdogProfileRecord.name.asc())
         )
-        return self._profiles(await self.session.scalars(statement))
+        return await self._profiles(await self.session.scalars(statement))
 
     async def update_vendor_submission(
         self,
@@ -402,7 +406,8 @@ class SqlAlchemyHotdogRepository(HotdogRepository):
         record.menu_excerpt = None
         record.menu_checked_at = None
         await self.session.flush()
-        return HotdogProfile.model_validate(record)
+        await self._replace_add_ons(profile_id=record.id, add_ons=submission.add_ons)
+        return await self._profile(record)
 
     async def get_vendor_submission(
         self,
@@ -413,7 +418,7 @@ class SqlAlchemyHotdogRepository(HotdogRepository):
         record = await self.session.get(HotdogProfileRecord, profile_id)
         if record is None or record.vendor_owner_user_id != user_id:
             return None
-        return HotdogProfile.model_validate(record)
+        return await self._profile(record)
 
     async def record_menu_ingestion(
         self,
@@ -431,7 +436,7 @@ class SqlAlchemyHotdogRepository(HotdogRepository):
         record.menu_excerpt = excerpt
         record.menu_checked_at = checked_at
         await self.session.flush()
-        return HotdogProfile.model_validate(record)
+        return await self._profile(record)
 
     async def list_menu_refresh_candidates(
         self,
@@ -457,7 +462,7 @@ class SqlAlchemyHotdogRepository(HotdogRepository):
             )
             .limit(limit)
         )
-        return self._profiles(await self.session.scalars(statement))
+        return await self._profiles(await self.session.scalars(statement))
 
     async def record_admin_menu_ingestion(
         self,
@@ -474,7 +479,7 @@ class SqlAlchemyHotdogRepository(HotdogRepository):
         record.menu_excerpt = excerpt
         record.menu_checked_at = checked_at
         await self.session.flush()
-        return HotdogProfile.model_validate(record)
+        return await self._profile(record)
 
     async def list_pending_vendor_submissions(self) -> list[HotdogProfile]:
         statement = (
@@ -483,7 +488,7 @@ class SqlAlchemyHotdogRepository(HotdogRepository):
             .where(HotdogProfileRecord.vendor_owner_user_id.is_not(None))
             .order_by(HotdogProfileRecord.created_at.asc(), HotdogProfileRecord.name.asc())
         )
-        return self._profiles(await self.session.scalars(statement))
+        return await self._profiles(await self.session.scalars(statement))
 
     async def approve_vendor_submission(
         self,
@@ -504,7 +509,7 @@ class SqlAlchemyHotdogRepository(HotdogRepository):
         record.last_verified_at = datetime.now(UTC)
         record.last_reviewed_at = record.last_verified_at
         await self.session.flush()
-        return HotdogProfile.model_validate(record)
+        return await self._profile(record)
 
     async def request_vendor_submission_changes(
         self,
@@ -548,11 +553,40 @@ class SqlAlchemyHotdogRepository(HotdogRepository):
         record.review_note = review_note.strip()
         record.last_reviewed_at = datetime.now(UTC)
         await self.session.flush()
-        return HotdogProfile.model_validate(record)
+        return await self._profile(record)
 
-    @staticmethod
-    def _profiles(records: Iterable[HotdogProfileRecord]) -> list[HotdogProfile]:
-        return [HotdogProfile.model_validate(record) for record in records]
+    async def _profile(self, record: HotdogProfileRecord) -> HotdogProfile:
+        profiles = await self._profiles([record])
+        return profiles[0]
+
+    async def _profiles(self, records: Iterable[HotdogProfileRecord]) -> list[HotdogProfile]:
+        materialized = list(records)
+        add_ons_by_profile = await self._add_ons_by_profile(
+            profile_ids=[record.id for record in materialized]
+        )
+        return [
+            HotdogProfile.model_validate(record).model_copy(
+                update={"add_ons": add_ons_by_profile.get(record.id, [])}
+            )
+            for record in materialized
+        ]
+
+    async def _add_ons_by_profile(
+        self,
+        *,
+        profile_ids: list[str],
+    ) -> dict[str, list[OrderAddOn]]:
+        if not profile_ids:
+            return {}
+        statement = (
+            select(OfferingAddOnRecord)
+            .where(OfferingAddOnRecord.profile_id.in_(profile_ids))
+            .order_by(OfferingAddOnRecord.created_at.asc(), OfferingAddOnRecord.name.asc())
+        )
+        add_ons: dict[str, list[OrderAddOn]] = {profile_id: [] for profile_id in profile_ids}
+        for record in await self.session.scalars(statement):
+            add_ons.setdefault(record.profile_id, []).append(OrderAddOn.model_validate(record))
+        return add_ons
 
     def _record_from_submission(
         self,
@@ -569,6 +603,26 @@ class SqlAlchemyHotdogRepository(HotdogRepository):
         )
         self._apply_submission(record, submission)
         return record
+
+    async def _replace_add_ons(
+        self,
+        *,
+        profile_id: str,
+        add_ons: list[OfferingAddOnCreate],
+    ) -> None:
+        await self.session.execute(
+            delete(OfferingAddOnRecord).where(OfferingAddOnRecord.profile_id == profile_id)
+        )
+        for add_on in add_ons:
+            self.session.add(
+                OfferingAddOnRecord(
+                    id=add_on.id or str(uuid4()),
+                    profile_id=profile_id,
+                    name=add_on.name,
+                    credit_cost=add_on.credit_cost,
+                )
+            )
+        await self.session.flush()
 
     def _apply_submission(
         self,

@@ -9,6 +9,7 @@ from sqlalchemy import (
     DateTime,
     event,
     Float,
+    ForeignKey,
     Index,
     Integer,
     String,
@@ -58,6 +59,25 @@ class HotdogProfileRecord(Base):
     last_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     last_reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class OfferingAddOnRecord(Base):
+    __tablename__ = "offering_add_ons"
+    __table_args__ = (Index("ix_offering_add_ons_profile", "profile_id"),)
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    profile_id: Mapped[str] = mapped_column(
+        String(36),
+        ForeignKey("hotdog_profiles.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    name: Mapped[str] = mapped_column(String(80), nullable=False)
+    credit_cost: Mapped[int] = mapped_column(Integer, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+        nullable=False,
+    )
 
 
 class SwipeEventRecord(Base):

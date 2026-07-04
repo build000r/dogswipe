@@ -28,6 +28,22 @@ class SwipeDecision(StrEnum):
     super_like = "super_like"
 
 
+class OrderAddOn(BaseModel):
+    model_config = ConfigDict(from_attributes=True, extra="forbid")
+
+    id: str = Field(min_length=1, max_length=64)
+    name: str = Field(min_length=1, max_length=80)
+    credit_cost: int = Field(ge=0, le=20)
+
+
+class OfferingAddOnCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    id: str | None = Field(default=None, min_length=1, max_length=64)
+    name: str = Field(min_length=1, max_length=80)
+    credit_cost: int = Field(ge=0, le=20)
+
+
 class HotdogProfile(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -53,6 +69,7 @@ class HotdogProfile(BaseModel):
     review_note: str | None = None
     last_verified_at: datetime | None = None
     last_reviewed_at: datetime | None = None
+    add_ons: list[OrderAddOn] = Field(default_factory=list)
 
     @computed_field  # type: ignore[prop-decorator]
     @property
@@ -93,14 +110,6 @@ class CravingPreferences(BaseModel):
     max_distance_miles: float = Field(default=10, ge=1, le=25)
     spicy_friendly: bool = True
     classic_only: bool = False
-
-
-class OrderAddOn(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    id: str = Field(min_length=1, max_length=64)
-    name: str = Field(min_length=1, max_length=80)
-    credit_cost: int = Field(ge=0, le=20)
 
 
 class OrderCreateRequest(BaseModel):
@@ -195,6 +204,7 @@ class VendorSubmissionRequest(BaseModel):
     image_url: str | None = Field(default=None, max_length=2048)
     menu_url: str | None = Field(default=None, max_length=2048)
     media_alt_text: str | None = Field(default=None, max_length=160)
+    add_ons: list[OfferingAddOnCreate] = Field(default_factory=list, max_length=20)
 
     @model_validator(mode="after")
     def coordinates_are_complete(self) -> Self:

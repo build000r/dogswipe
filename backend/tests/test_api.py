@@ -38,6 +38,19 @@ async def test_discovery_returns_ranked_profiles(async_client) -> None:
 
 
 @pytest.mark.asyncio
+async def test_discovery_returns_maker_defined_add_ons(async_client) -> None:
+    response = await async_client.get("/v1/discovery", params={"limit": 1})
+
+    assert response.status_code == 200
+    profile = response.json()["profiles"][0]
+    assert profile["id"] == "hotdog-coney"
+    assert profile["add_ons"] == [
+        {"id": "bacon", "name": "Bacon", "credit_cost": 1},
+        {"id": "extra-pickle", "name": "Extra Pickle", "credit_cost": 1},
+    ]
+
+
+@pytest.mark.asyncio
 async def test_discovery_uses_saved_distance_preference(async_client) -> None:
     headers = {"X-DogSwipe-User-ID": "distance-discovery-user"}
     await async_client.put(
@@ -454,6 +467,10 @@ async def test_vendor_submission_is_pending_and_user_scoped(async_client) -> Non
             "image_url": "https://cdn.example.com/boardwalk.jpg",
             "menu_url": "https://boardwalk.example.com/menu",
             "media_alt_text": "Classic hotdog on a paper tray",
+            "add_ons": [
+                {"id": "kraut", "name": "Sauerkraut", "credit_cost": 1},
+                {"name": "Onion Jam", "credit_cost": 2},
+            ],
         },
     )
 
@@ -468,6 +485,9 @@ async def test_vendor_submission_is_pending_and_user_scoped(async_client) -> Non
     assert profile["address_text"] == "100 Queen St W, Toronto, ON"
     assert profile["menu_url"] == "https://boardwalk.example.com/menu"
     assert profile["media_alt_text"] == "Classic hotdog on a paper tray"
+    assert profile["add_ons"][0] == {"id": "kraut", "name": "Sauerkraut", "credit_cost": 1}
+    assert profile["add_ons"][1]["name"] == "Onion Jam"
+    assert profile["add_ons"][1]["credit_cost"] == 2
 
     own_submissions = await async_client.get(
         "/v1/vendor/submissions",

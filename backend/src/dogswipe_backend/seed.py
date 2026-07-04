@@ -3,7 +3,7 @@ from __future__ import annotations
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .models import HotdogProfileRecord
+from .models import HotdogProfileRecord, OfferingAddOnRecord
 
 SAMPLE_PROFILE_ROWS: tuple[dict[str, object], ...] = (
     {
@@ -72,6 +72,21 @@ SAMPLE_PROFILE_ROWS: tuple[dict[str, object], ...] = (
     },
 )
 
+SAMPLE_ADD_ON_ROWS: tuple[dict[str, object], ...] = (
+    {
+        "id": "bacon",
+        "profile_id": "hotdog-coney",
+        "name": "Bacon",
+        "credit_cost": 1,
+    },
+    {
+        "id": "extra-pickle",
+        "profile_id": "hotdog-coney",
+        "name": "Extra Pickle",
+        "credit_cost": 1,
+    },
+)
+
 
 async def seed_sample_profiles(session: AsyncSession) -> int:
     sample_ids = [str(row["id"]) for row in SAMPLE_PROFILE_ROWS]
@@ -86,5 +101,19 @@ async def seed_sample_profiles(session: AsyncSession) -> int:
         if str(row["id"]) not in existing_ids
     ]
     session.add_all(records)
+    existing_add_on_ids = set(
+        await session.scalars(
+            select(OfferingAddOnRecord.id).where(
+                OfferingAddOnRecord.id.in_([str(row["id"]) for row in SAMPLE_ADD_ON_ROWS])
+            )
+        )
+    )
+    session.add_all(
+        [
+            OfferingAddOnRecord(**row)
+            for row in SAMPLE_ADD_ON_ROWS
+            if str(row["id"]) not in existing_add_on_ids
+        ]
+    )
     await session.flush()
     return len(records)

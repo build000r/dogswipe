@@ -33,6 +33,7 @@ def test_migrations_upgrade_and_downgrade(clear_settings, tmp_path, monkeypatch)
             "swipe_events",
             "user_preferences",
             "order_items",
+            "offering_add_ons",
         }.issubset(set(inspector.get_table_names()))
         assert {column["name"] for column in inspector.get_columns("hotdog_profiles")} == {
             "id",
@@ -78,6 +79,13 @@ def test_migrations_upgrade_and_downgrade(clear_settings, tmp_path, monkeypatch)
             "add_ons_json",
             "total_credits",
             "status",
+            "created_at",
+        }
+        assert {column["name"] for column in inspector.get_columns("offering_add_ons")} == {
+            "id",
+            "profile_id",
+            "name",
+            "credit_cost",
             "created_at",
         }
     finally:

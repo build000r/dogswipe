@@ -36,6 +36,7 @@ def _profile(
     menu_url: str | None = None,
     menu_excerpt: str | None = None,
     crave_score: float = 0.8,
+    add_ons: list[OrderAddOn] | None = None,
 ) -> HotdogProfile:
     return HotdogProfile(
         id=profile_id,
@@ -52,6 +53,12 @@ def _profile(
         menu_excerpt=menu_excerpt,
         crave_score=crave_score,
         availability_status="available",
+        add_ons=add_ons
+        if add_ons is not None
+        else [
+            OrderAddOn(id="bacon", name="Bacon", credit_cost=1),
+            OrderAddOn(id="extra-pickle", name="Extra Pickle", credit_cost=1),
+        ],
     )
 
 
@@ -180,6 +187,14 @@ class FakeRepository(HotdogRepository):
             media_alt_text=submission.media_alt_text,
             crave_score=0.5,
             availability_status="pending_review",
+            add_ons=[
+                OrderAddOn(
+                    id=add_on.id or f"submitted-add-on-{index}",
+                    name=add_on.name,
+                    credit_cost=add_on.credit_cost,
+                )
+                for index, add_on in enumerate(submission.add_ons, start=1)
+            ],
         )
         self.submissions_by_user.setdefault(user_id, []).append(profile)
         return profile
@@ -217,6 +232,14 @@ class FakeRepository(HotdogRepository):
                 media_alt_text=submission.media_alt_text,
                 crave_score=0.5,
                 availability_status="pending_review",
+                add_ons=[
+                    OrderAddOn(
+                        id=add_on.id or f"updated-add-on-{add_on_index}",
+                        name=add_on.name,
+                        credit_cost=add_on.credit_cost,
+                    )
+                    for add_on_index, add_on in enumerate(submission.add_ons, start=1)
+                ],
             )
             self.submissions_by_user[user_id][index] = updated
             return updated
@@ -324,6 +347,7 @@ class FakeRepository(HotdogRepository):
                     crave_score=crave_score,
                     availability_status="available",
                     review_note=None,
+                    add_ons=profile.add_ons,
                 )
                 self.submissions_by_user[user_id][index] = approved
                 return approved
@@ -381,6 +405,7 @@ class FakeRepository(HotdogRepository):
                     crave_score=profile.crave_score,
                     availability_status=availability_status,
                     review_note=review_note,
+                    add_ons=profile.add_ons,
                 )
                 self.submissions_by_user[user_id][index] = moderated
                 return moderated
