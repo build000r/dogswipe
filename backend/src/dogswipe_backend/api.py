@@ -171,6 +171,14 @@ def build_api_router() -> APIRouter:
     ) -> OrderResponse:
         return await service.create_order(user_id=user_id, request=request)
 
+    @v1.post("/orders/{order_id}/claim", response_model=OrderResponse)
+    async def claim_order(
+        order_id: str,
+        service: DogSwipeService = Depends(get_service),
+        user_id: str = Depends(get_current_user_id),
+    ) -> OrderResponse:
+        return await service.claim_order(user_id=user_id, order_id=order_id)
+
     @v1.get("/vendor/submissions", response_model=VendorSubmissionListResponse)
     async def vendor_submissions(
         service: DogSwipeService = Depends(get_service),

@@ -102,6 +102,14 @@ class HotdogRepository:
     ) -> OrderItem | None:
         raise NotImplementedError
 
+    async def claim_order(
+        self,
+        *,
+        order_id: str,
+        claimer_user_id: str,
+    ) -> OrderItem | None:
+        raise NotImplementedError
+
     async def submit_vendor_profile(
         self,
         *,
@@ -370,6 +378,43 @@ class SqlAlchemyHotdogRepository(HotdogRepository):
         if record is None or record.user_id != user_id:
             return None
         record.status = status.value
+        await self.session.flush()
+        return self._order(record)
+
+    async def claim_order(
+        self,
+        *,
+        order_id: str,
+        claimer_user_id: str,
+    ) -> OrderItem | None:
+        record = await self.session.scalar(
+            select(OrderRecord)
+            .where(OrderRecord.id == order_id)
+            .with_for_update()
+        )
+        if record is None:
+            return None
+
+        profile = await self.session.get(HotdogProfileRecord, record.profile_id)
+        if profile is not None and profile.vendor_owner_user_id == claimer_user_id:
+            raise PermissionError("Vendors cannot claim their own orders")
+        if record.status != OrderStatus.draft.value:
+            raise ValueError("Order is not claimable")
+
+        balance = await self.get_ledger_balance(user_id=claimer_user_id)
+        if balance < record.total_credits:
+            raise ValueError("Insufficient credits")
+
+        await self.create_ledger_entry(
+            user_id=claimer_user_id,
+            entry_type=CreditLedgerEntryType.spend,
+            amount=-record.total_credits,
+            order_ref=order_id,
+            idempotency_key=f"claim:{order_id}",
+            reason="Order claim",
+        )
+        record.user_id = claimer_user_id
+        record.status = OrderStatus.claimed.value
         await self.session.flush()
         return self._order(record)
 
