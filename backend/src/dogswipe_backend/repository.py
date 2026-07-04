@@ -6,7 +6,7 @@ from datetime import UTC, datetime
 from math import cos, radians
 from uuid import uuid4
 
-from sqlalchemy import Select, and_, delete, func as sa_func, or_, select
+from sqlalchemy import Select, and_, delete, func as sa_func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.elements import ColumnElement
 
@@ -387,11 +387,7 @@ class SqlAlchemyHotdogRepository(HotdogRepository):
         order_id: str,
         claimer_user_id: str,
     ) -> OrderItem | None:
-        record = await self.session.scalar(
-            select(OrderRecord)
-            .where(OrderRecord.id == order_id)
-            .with_for_update()
-        )
+        record = await self.session.get(OrderRecord, order_id)
         if record is None:
             return None
 
@@ -401,14 +397,21 @@ class SqlAlchemyHotdogRepository(HotdogRepository):
         if record.status != OrderStatus.draft.value:
             raise ValueError("Order is not claimable")
 
-        balance = await self.get_ledger_balance(user_id=claimer_user_id)
-        if balance < record.total_credits:
-            raise ValueError("Insufficient credits")
+        claim_result = await self.session.execute(
+            update(OrderRecord)
+            .where(OrderRecord.id == order_id)
+            .where(OrderRecord.status == OrderStatus.draft.value)
+            .values(
+                user_id=claimer_user_id,
+                status=OrderStatus.claimed.value,
+            )
+        )
+        if claim_result.rowcount != 1:
+            raise ValueError("Order is not claimable")
 
-        await self.create_ledger_entry(
+        await self._create_atomic_spend_entry(
             user_id=claimer_user_id,
-            entry_type=CreditLedgerEntryType.spend,
-            amount=-record.total_credits,
+            amount=record.total_credits,
             order_ref=order_id,
             idempotency_key=f"claim:{order_id}",
             reason="Order claim",
@@ -863,6 +866,8 @@ class SqlAlchemyHotdogRepository(HotdogRepository):
             await self.session.flush()
 
         balance_after = await self.get_ledger_balance(user_id=user_id) + amount
+        if entry_type == CreditLedgerEntryType.spend and balance_after < 0:
+            raise ValueError("Insufficient credits")
         record = CreditLedgerEntryRecord(
             user_id=user_id,
             entry_type=entry_type.value,
@@ -885,6 +890,62 @@ class SqlAlchemyHotdogRepository(HotdogRepository):
             )
         )
         return int(result or 0)
+
+    async def _create_atomic_spend_entry(
+        self,
+        *,
+        user_id: str,
+        amount: int,
+        order_ref: str,
+        idempotency_key: str,
+        reason: str,
+    ) -> CreditLedgerEntry:
+        if amount <= 0:
+            raise ValueError("Spend amount must be positive")
+        existing = await self.session.scalar(
+            select(CreditLedgerEntryRecord).where(
+                CreditLedgerEntryRecord.idempotency_key == idempotency_key
+            )
+        )
+        if existing is not None:
+            raise ValueError("credit ledger idempotency_key already exists")
+
+        account = await self.session.get(CreditAccountRecord, user_id)
+        if account is None:
+            account = CreditAccountRecord(user_id=user_id)
+            self.session.add(account)
+            await self.session.flush()
+
+        spend_result = await self.session.execute(
+            update(CreditAccountRecord)
+            .where(CreditAccountRecord.user_id == user_id)
+            .where(
+                CreditAccountRecord.lifetime_purchased
+                + CreditAccountRecord.lifetime_earned
+                - CreditAccountRecord.lifetime_spent
+                >= amount
+            )
+            .values(lifetime_spent=CreditAccountRecord.lifetime_spent + amount)
+        )
+        if spend_result.rowcount != 1:
+            raise ValueError("Insufficient credits")
+
+        signed_amount = -amount
+        balance_after = await self.get_ledger_balance(user_id=user_id) + signed_amount
+        if balance_after < 0:
+            raise ValueError("Insufficient credits")
+        record = CreditLedgerEntryRecord(
+            user_id=user_id,
+            entry_type=CreditLedgerEntryType.spend.value,
+            amount=signed_amount,
+            balance_after=balance_after,
+            order_ref=order_ref,
+            idempotency_key=idempotency_key,
+            reason=reason,
+        )
+        self.session.add(record)
+        await self.session.flush()
+        return CreditLedgerEntry.model_validate(record)
 
     async def get_credit_reconciliation_totals(self) -> tuple[int, int]:
         platform_float = await self.session.scalar(
