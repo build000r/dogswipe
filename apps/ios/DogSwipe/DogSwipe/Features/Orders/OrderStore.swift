@@ -47,6 +47,14 @@ struct OrderItem: Identifiable, Equatable {
     let totalCredits: Int
     let status: String
     let createdAt: String
+    let fulfillmentMode: String
+    let availableFrom: String?
+    let availableUntil: String?
+    let deliveryAddress: String?
+    let makerReadyConfirmedAt: String?
+    let makerHandoffConfirmedAt: String?
+    let claimerHandoffConfirmedAt: String?
+    let completedAt: String?
 
     init(order: DogSwipeOrder) {
         self.id = order.id
@@ -58,6 +66,14 @@ struct OrderItem: Identifiable, Equatable {
         self.totalCredits = order.totalCredits
         self.status = order.status
         self.createdAt = order.createdAt
+        self.fulfillmentMode = order.fulfillmentMode
+        self.availableFrom = order.availableFrom
+        self.availableUntil = order.availableUntil
+        self.deliveryAddress = order.deliveryAddress
+        self.makerReadyConfirmedAt = order.makerReadyConfirmedAt
+        self.makerHandoffConfirmedAt = order.makerHandoffConfirmedAt
+        self.claimerHandoffConfirmedAt = order.claimerHandoffConfirmedAt
+        self.completedAt = order.completedAt
     }
 
     var totalLabel: String {
@@ -82,6 +98,24 @@ struct OrderItem: Identifiable, Equatable {
 
     var isDraft: Bool { status == "draft" }
     var isClaimed: Bool { status == "claimed" }
+    var isReady: Bool { status == "ready" }
+    var isHandedOff: Bool { status == "handed_off" }
+    var isDelivered: Bool { status == "delivered" }
+    var isCompleted: Bool { status == "completed" }
+    var isPickup: Bool { fulfillmentMode == "pickup" }
+    var isDelivery: Bool { fulfillmentMode == "delivery" }
+
+    var fulfillmentLabel: String {
+        isDelivery ? "Delivery" : "Pickup"
+    }
+
+    var needsHandoffConfirmation: Bool {
+        isReady || isHandedOff || isDelivered
+    }
+
+    var bothConfirmed: Bool {
+        makerHandoffConfirmedAt != nil && claimerHandoffConfirmedAt != nil
+    }
 }
 
 struct ClaimConfirmation: Equatable {
@@ -96,6 +130,7 @@ final class OrderStore: ObservableObject {
     @Published private(set) var isLoading = false
     @Published private(set) var errorMessage: String?
     @Published private(set) var claimingOrderID: String?
+    @Published private(set) var confirmingOrderID: String?
     @Published var claimConfirmation: ClaimConfirmation?
 
     private let apiClient: DogSwipeAPIClient
@@ -173,6 +208,48 @@ final class OrderStore: ObservableObject {
             errorMessage = "Could not claim order."
         }
         claimingOrderID = nil
+    }
+
+    func confirmReady(_ item: OrderItem) async {
+        confirmingOrderID = item.id
+        errorMessage = nil
+        do {
+            let order = try await apiClient.confirmOrderReady(orderID: item.id)
+            upsert(OrderItem(order: order))
+        } catch let error as DogSwipeAPIError {
+            switch error {
+            case .invalidResponseStatus(403):
+                errorMessage = "Only the maker can mark an order ready."
+            case .invalidResponseStatus(409):
+                errorMessage = "This order cannot be marked ready."
+            default:
+                errorMessage = "Could not confirm order."
+            }
+        } catch {
+            errorMessage = "Could not confirm order."
+        }
+        confirmingOrderID = nil
+    }
+
+    func confirmHandoff(_ item: OrderItem) async {
+        confirmingOrderID = item.id
+        errorMessage = nil
+        do {
+            let order = try await apiClient.confirmOrderHandoff(orderID: item.id)
+            upsert(OrderItem(order: order))
+        } catch let error as DogSwipeAPIError {
+            switch error {
+            case .invalidResponseStatus(403):
+                errorMessage = "Only order participants can confirm hand-off."
+            case .invalidResponseStatus(409):
+                errorMessage = "Hand-off cannot be confirmed for this order."
+            default:
+                errorMessage = "Could not confirm hand-off."
+            }
+        } catch {
+            errorMessage = "Could not confirm hand-off."
+        }
+        confirmingOrderID = nil
     }
 
     private func upsert(_ item: OrderItem) {

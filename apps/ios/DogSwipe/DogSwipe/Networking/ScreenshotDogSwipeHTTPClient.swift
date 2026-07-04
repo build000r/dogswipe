@@ -90,6 +90,14 @@ struct ScreenshotDogSwipeHTTPClient: DogSwipeHTTPClient {
             where path.hasPrefix("/v1/orders/")
                 && path.hasSuffix("/claim"):
             return try encoder.encode(OrderResponse(order: ScreenshotHotdogs.claimedOrder))
+        case ("POST", _)
+            where path.hasPrefix("/v1/orders/")
+                && path.hasSuffix("/confirm-ready"):
+            return try encoder.encode(OrderResponse(order: ScreenshotHotdogs.readyOrder))
+        case ("POST", _)
+            where path.hasPrefix("/v1/orders/")
+                && path.hasSuffix("/confirm-hand-off"):
+            return try encoder.encode(OrderResponse(order: ScreenshotHotdogs.handedOffOrder))
         case ("GET", "/v1/wallet"):
             return try encoder.encode(ScreenshotWallet.walletResponse)
         case ("POST", "/v1/credits/purchase"):
@@ -147,8 +155,29 @@ private enum ScreenshotHotdogs {
                 DogSwipeOrderAddOn(id: "jalapenos", name: "Jalapenos", creditCost: 1)
             ],
             totalCredits: 8,
-            status: "claimed",
-            createdAt: "2026-05-06T13:40:00Z"
+            status: "ready",
+            createdAt: "2026-05-06T13:40:00Z",
+            fulfillmentMode: "pickup",
+            availableFrom: "2026-05-06T17:00:00Z",
+            availableUntil: "2026-05-06T19:00:00Z",
+            makerReadyConfirmedAt: "2026-05-06T16:45:00Z"
+        ),
+        DogSwipeOrder(
+            id: "screenshot-order-3",
+            profileID: kimchi.id,
+            hotdogName: kimchi.name,
+            vendorName: kimchi.vendorName,
+            baseCreditCost: kimchi.creditCost,
+            addOns: [
+                DogSwipeOrderAddOn(id: "sesame-crunch", name: "Sesame Crunch", creditCost: 1)
+            ],
+            totalCredits: 10,
+            status: "completed",
+            createdAt: "2026-05-05T12:00:00Z",
+            makerReadyConfirmedAt: "2026-05-05T12:30:00Z",
+            makerHandoffConfirmedAt: "2026-05-05T13:00:00Z",
+            claimerHandoffConfirmedAt: "2026-05-05T13:01:00Z",
+            completedAt: "2026-05-05T13:01:00Z"
         )
     ]
 
@@ -165,6 +194,43 @@ private enum ScreenshotHotdogs {
         totalCredits: 9,
         status: "claimed",
         createdAt: "2026-05-06T14:00:00Z"
+    )
+
+    static let readyOrder = DogSwipeOrder(
+        id: "screenshot-order-2",
+        profileID: chicago.id,
+        hotdogName: chicago.name,
+        vendorName: chicago.vendorName,
+        baseCreditCost: chicago.creditCost,
+        addOns: [
+            DogSwipeOrderAddOn(id: "jalapenos", name: "Jalapenos", creditCost: 1)
+        ],
+        totalCredits: 8,
+        status: "ready",
+        createdAt: "2026-05-06T13:40:00Z",
+        fulfillmentMode: "pickup",
+        availableFrom: "2026-05-06T17:00:00Z",
+        availableUntil: "2026-05-06T19:00:00Z",
+        makerReadyConfirmedAt: "2026-05-06T16:45:00Z"
+    )
+
+    static let handedOffOrder = DogSwipeOrder(
+        id: "screenshot-order-2",
+        profileID: chicago.id,
+        hotdogName: chicago.name,
+        vendorName: chicago.vendorName,
+        baseCreditCost: chicago.creditCost,
+        addOns: [
+            DogSwipeOrderAddOn(id: "jalapenos", name: "Jalapenos", creditCost: 1)
+        ],
+        totalCredits: 8,
+        status: "handed_off",
+        createdAt: "2026-05-06T13:40:00Z",
+        fulfillmentMode: "pickup",
+        availableFrom: "2026-05-06T17:00:00Z",
+        availableUntil: "2026-05-06T19:00:00Z",
+        makerReadyConfirmedAt: "2026-05-06T16:45:00Z",
+        claimerHandoffConfirmedAt: "2026-05-06T17:15:00Z"
     )
 
     static let createdOrder = DogSwipeOrder(

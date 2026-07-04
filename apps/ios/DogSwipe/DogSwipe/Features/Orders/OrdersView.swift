@@ -104,10 +104,12 @@ struct OrdersView: View {
             ForEach(orderStore.items) { item in
                 OrderCardView(
                     item: item,
-                    isClaiming: orderStore.claimingOrderID == item.id
-                ) {
-                    Task { await orderStore.claim(item) }
-                }
+                    isClaiming: orderStore.claimingOrderID == item.id,
+                    isConfirming: orderStore.confirmingOrderID == item.id,
+                    onClaim: { Task { await orderStore.claim(item) } },
+                    onConfirmReady: { Task { await orderStore.confirmReady(item) } },
+                    onConfirmHandoff: { Task { await orderStore.confirmHandoff(item) } }
+                )
             }
         }
     }
@@ -180,7 +182,10 @@ struct OrdersView: View {
 private struct OrderCardView: View {
     let item: OrderItem
     var isClaiming: Bool = false
+    var isConfirming: Bool = false
     var onClaim: (() -> Void)?
+    var onConfirmReady: (() -> Void)?
+    var onConfirmHandoff: (() -> Void)?
 
     var body: some View {
         VStack(alignment: .leading, spacing: .dsSpace3) {
@@ -216,21 +221,100 @@ private struct OrderCardView: View {
                     .foregroundStyle(Color.dsAccent)
             }
 
-            HStack(spacing: .dsSpace2) {
-                if item.isDraft {
-                    DogSwipeChip(text: "Draft", systemImage: "pencil.circle.fill", tint: Color.dsPrimarySoft)
-                    Spacer(minLength: .dsSpace1)
-                    claimButton
-                } else if item.isClaimed {
-                    DogSwipeChip(text: "Claimed", systemImage: "checkmark.seal.fill", tint: Color.dsRelish.opacity(0.15))
-                    Spacer(minLength: .dsSpace1)
-                } else {
-                    DogSwipeChip(text: item.statusLabel, systemImage: "clock.fill", tint: Color.dsPrimarySoft)
-                    Spacer(minLength: .dsSpace1)
-                }
+            if !item.isDraft {
+                fulfillmentRow
             }
+
+            statusRow
         }
         .dsCard()
+    }
+
+    @ViewBuilder
+    private var fulfillmentRow: some View {
+        HStack(spacing: .dsSpace2) {
+            Label(item.fulfillmentLabel, systemImage: item.isDelivery ? "shippingbox.fill" : "figure.walk")
+                .font(.caption.weight(.bold))
+                .foregroundStyle(Color.dsInk)
+
+            if let address = item.deliveryAddress, item.isDelivery {
+                Text(address)
+                    .font(.caption)
+                    .foregroundStyle(Color.dsMuted)
+                    .lineLimit(1)
+            }
+
+            if item.availableFrom != nil || item.availableUntil != nil {
+                Spacer()
+                Label(pickupWindowLabel, systemImage: "clock.fill")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(Color.dsPrimary)
+            }
+        }
+    }
+
+    private var pickupWindowLabel: String {
+        let formatter = ISO8601DateFormatter()
+        let timeFormatter = DateFormatter()
+        timeFormatter.dateFormat = "h:mm a"
+
+        var parts: [String] = []
+        if let from = item.availableFrom, let date = formatter.date(from: from) {
+            parts.append(timeFormatter.string(from: date))
+        }
+        if let until = item.availableUntil, let date = formatter.date(from: until) {
+            parts.append(timeFormatter.string(from: date))
+        }
+        guard !parts.isEmpty else { return "Anytime" }
+        return parts.joined(separator: " – ")
+    }
+
+    @ViewBuilder
+    private var statusRow: some View {
+        HStack(spacing: .dsSpace2) {
+            if item.isDraft {
+                DogSwipeChip(text: "Draft", systemImage: "pencil.circle.fill", tint: Color.dsPrimarySoft)
+                Spacer(minLength: .dsSpace1)
+                claimButton
+            } else if item.isClaimed {
+                DogSwipeChip(text: "Claimed", systemImage: "checkmark.seal.fill", tint: Color.dsRelish.opacity(0.15))
+                Spacer(minLength: .dsSpace1)
+                confirmReadyButton
+            } else if item.isReady {
+                DogSwipeChip(text: "Ready", systemImage: "checkmark.circle.fill", tint: Color.dsRelish.opacity(0.15))
+                Spacer(minLength: .dsSpace1)
+                confirmHandoffButton
+            } else if item.isHandedOff || item.isDelivered {
+                DogSwipeChip(
+                    text: item.isDelivered ? "Delivered" : "Handed Off",
+                    systemImage: item.isDelivered ? "shippingbox.fill" : "hand.thumbsup.fill",
+                    tint: Color.dsRelish.opacity(0.15)
+                )
+                handoffProgress
+                Spacer(minLength: .dsSpace1)
+                if !item.bothConfirmed {
+                    confirmHandoffButton
+                }
+            } else if item.isCompleted {
+                DogSwipeChip(text: "Completed", systemImage: "star.fill", tint: Color.dsRelish.opacity(0.22))
+                Spacer(minLength: .dsSpace1)
+            } else {
+                DogSwipeChip(text: item.statusLabel, systemImage: "clock.fill", tint: Color.dsPrimarySoft)
+                Spacer(minLength: .dsSpace1)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var handoffProgress: some View {
+        HStack(spacing: 4) {
+            Image(systemName: item.makerHandoffConfirmedAt != nil ? "checkmark.circle.fill" : "circle")
+                .font(.caption2)
+                .foregroundStyle(item.makerHandoffConfirmedAt != nil ? Color.dsRelish : Color.dsMuted)
+            Image(systemName: item.claimerHandoffConfirmedAt != nil ? "checkmark.circle.fill" : "circle")
+                .font(.caption2)
+                .foregroundStyle(item.claimerHandoffConfirmedAt != nil ? Color.dsRelish : Color.dsMuted)
+        }
     }
 
     private var claimButton: some View {
@@ -256,6 +340,56 @@ private struct OrderCardView: View {
         }
         .buttonStyle(.plain)
         .disabled(isClaiming)
+    }
+
+    private var confirmReadyButton: some View {
+        Button {
+            onConfirmReady?()
+        } label: {
+            HStack(spacing: .dsSpace1) {
+                if isConfirming {
+                    ProgressView()
+                        .controlSize(.mini)
+                        .tint(.white)
+                } else {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.caption2)
+                }
+                Text(isConfirming ? "Confirming…" : "Mark Ready")
+                    .font(.caption.weight(.bold))
+            }
+            .padding(.horizontal, .dsSpace3)
+            .padding(.vertical, .dsSpace2)
+            .foregroundStyle(.white)
+            .background(Color.dsPrimary, in: Capsule())
+        }
+        .buttonStyle(.plain)
+        .disabled(isConfirming)
+    }
+
+    private var confirmHandoffButton: some View {
+        Button {
+            onConfirmHandoff?()
+        } label: {
+            HStack(spacing: .dsSpace1) {
+                if isConfirming {
+                    ProgressView()
+                        .controlSize(.mini)
+                        .tint(.white)
+                } else {
+                    Image(systemName: "hand.thumbsup.fill")
+                        .font(.caption2)
+                }
+                Text(isConfirming ? "Confirming…" : "Confirm Hand-off")
+                    .font(.caption.weight(.bold))
+            }
+            .padding(.horizontal, .dsSpace3)
+            .padding(.vertical, .dsSpace2)
+            .foregroundStyle(.white)
+            .background(Color.dsRelish, in: Capsule())
+        }
+        .buttonStyle(.plain)
+        .disabled(isConfirming)
     }
 
     private var previewProfile: HotdogProfile {

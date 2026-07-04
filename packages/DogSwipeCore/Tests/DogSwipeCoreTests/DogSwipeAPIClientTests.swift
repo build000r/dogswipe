@@ -270,6 +270,112 @@ final class DogSwipeAPIClientTests: XCTestCase {
         XCTAssertNil(http.requests.first?.httpBody)
     }
 
+    func testConfirmOrderReadyEncodesBackendContract() async throws {
+        let http = MockHTTPClient()
+        http.nextData = """
+        {
+          "order": {
+            "id": "order-hotdog-coney",
+            "profile_id": "hotdog-coney",
+            "hotdog_name": "Coney Classic",
+            "vendor_name": "Franklin Cart",
+            "base_credit_cost": 7,
+            "add_ons": [{"id": "bacon", "name": "Bacon", "credit_cost": 2}],
+            "total_credits": 9,
+            "status": "ready",
+            "created_at": "2026-05-06T14:10:00Z",
+            "fulfillment_mode": "pickup",
+            "available_from": "2026-05-06T17:00:00Z",
+            "available_until": "2026-05-06T19:00:00Z",
+            "maker_ready_confirmed_at": "2026-05-06T16:45:00Z"
+          }
+        }
+        """.data(using: .utf8)!
+        let client = DogSwipeAPIClient(baseURL: URL(string: "http://localhost:8000")!, httpClient: http)
+
+        let order = try await client.confirmOrderReady(orderID: "order-hotdog-coney")
+
+        XCTAssertEqual(order.id, "order-hotdog-coney")
+        XCTAssertEqual(order.status, "ready")
+        XCTAssertEqual(order.fulfillmentMode, "pickup")
+        XCTAssertEqual(order.availableFrom, "2026-05-06T17:00:00Z")
+        XCTAssertEqual(order.availableUntil, "2026-05-06T19:00:00Z")
+        XCTAssertEqual(order.makerReadyConfirmedAt, "2026-05-06T16:45:00Z")
+        XCTAssertNil(order.makerHandoffConfirmedAt)
+        XCTAssertNil(order.claimerHandoffConfirmedAt)
+        XCTAssertNil(order.completedAt)
+        XCTAssertEqual(http.requests.first?.url?.path, "/v1/orders/order-hotdog-coney/confirm-ready")
+        XCTAssertEqual(http.requests.first?.httpMethod, "POST")
+        XCTAssertNil(http.requests.first?.httpBody)
+    }
+
+    func testConfirmOrderHandoffEncodesBackendContract() async throws {
+        let http = MockHTTPClient()
+        http.nextData = """
+        {
+          "order": {
+            "id": "order-hotdog-coney",
+            "profile_id": "hotdog-coney",
+            "hotdog_name": "Coney Classic",
+            "vendor_name": "Franklin Cart",
+            "base_credit_cost": 7,
+            "add_ons": [{"id": "bacon", "name": "Bacon", "credit_cost": 2}],
+            "total_credits": 9,
+            "status": "completed",
+            "created_at": "2026-05-06T14:10:00Z",
+            "fulfillment_mode": "pickup",
+            "maker_ready_confirmed_at": "2026-05-06T16:45:00Z",
+            "maker_handoff_confirmed_at": "2026-05-06T17:10:00Z",
+            "claimer_handoff_confirmed_at": "2026-05-06T17:11:00Z",
+            "completed_at": "2026-05-06T17:11:00Z"
+          }
+        }
+        """.data(using: .utf8)!
+        let client = DogSwipeAPIClient(baseURL: URL(string: "http://localhost:8000")!, httpClient: http)
+
+        let order = try await client.confirmOrderHandoff(orderID: "order-hotdog-coney")
+
+        XCTAssertEqual(order.id, "order-hotdog-coney")
+        XCTAssertEqual(order.status, "completed")
+        XCTAssertEqual(order.makerHandoffConfirmedAt, "2026-05-06T17:10:00Z")
+        XCTAssertEqual(order.claimerHandoffConfirmedAt, "2026-05-06T17:11:00Z")
+        XCTAssertEqual(order.completedAt, "2026-05-06T17:11:00Z")
+        XCTAssertTrue(order.isPickup)
+        XCTAssertFalse(order.isDelivery)
+        XCTAssertEqual(http.requests.first?.url?.path, "/v1/orders/order-hotdog-coney/confirm-hand-off")
+        XCTAssertEqual(http.requests.first?.httpMethod, "POST")
+        XCTAssertNil(http.requests.first?.httpBody)
+    }
+
+    func testOrderDecodesWithoutFulfillmentFields() async throws {
+        let http = MockHTTPClient()
+        http.nextData = """
+        {
+          "orders": [
+            {
+              "id": "order-legacy",
+              "profile_id": "hotdog-coney",
+              "hotdog_name": "Coney Classic",
+              "vendor_name": "Franklin Cart",
+              "base_credit_cost": 7,
+              "add_ons": [],
+              "total_credits": 7,
+              "status": "draft",
+              "created_at": "2026-05-06T14:10:00Z"
+            }
+          ]
+        }
+        """.data(using: .utf8)!
+        let client = DogSwipeAPIClient(baseURL: URL(string: "http://localhost:8000")!, httpClient: http)
+
+        let orders = try await client.orders()
+
+        XCTAssertEqual(orders.first?.fulfillmentMode, "pickup")
+        XCTAssertNil(orders.first?.availableFrom)
+        XCTAssertNil(orders.first?.makerReadyConfirmedAt)
+        XCTAssertNil(orders.first?.completedAt)
+    }
+
     func testWalletDecodesBackendContract() async throws {
         let http = MockHTTPClient()
         http.nextData = """

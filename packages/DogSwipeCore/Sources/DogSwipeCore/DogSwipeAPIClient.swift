@@ -148,6 +148,24 @@ public struct DogSwipeAPIClient: Sendable {
         return response.order
     }
 
+    @discardableResult
+    public func confirmOrderReady(orderID: String) async throws -> DogSwipeOrder {
+        let response: OrderResponse = try await send(
+            path: "/v1/orders/\(orderID)/confirm-ready",
+            method: "POST"
+        )
+        return response.order
+    }
+
+    @discardableResult
+    public func confirmOrderHandoff(orderID: String) async throws -> DogSwipeOrder {
+        let response: OrderResponse = try await send(
+            path: "/v1/orders/\(orderID)/confirm-hand-off",
+            method: "POST"
+        )
+        return response.order
+    }
+
     public func wallet() async throws -> WalletResponse {
         try await send(path: "/v1/wallet")
     }

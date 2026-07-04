@@ -242,6 +242,14 @@ public struct DogSwipeOrder: Identifiable, Codable, Equatable, Sendable {
     public let totalCredits: Int
     public let status: String
     public let createdAt: String
+    public let fulfillmentMode: String
+    public let availableFrom: String?
+    public let availableUntil: String?
+    public let deliveryAddress: String?
+    public let makerReadyConfirmedAt: String?
+    public let makerHandoffConfirmedAt: String?
+    public let claimerHandoffConfirmedAt: String?
+    public let completedAt: String?
 
     public init(
         id: String,
@@ -252,7 +260,15 @@ public struct DogSwipeOrder: Identifiable, Codable, Equatable, Sendable {
         addOns: [DogSwipeOrderAddOn],
         totalCredits: Int,
         status: String,
-        createdAt: String
+        createdAt: String,
+        fulfillmentMode: String = "pickup",
+        availableFrom: String? = nil,
+        availableUntil: String? = nil,
+        deliveryAddress: String? = nil,
+        makerReadyConfirmedAt: String? = nil,
+        makerHandoffConfirmedAt: String? = nil,
+        claimerHandoffConfirmedAt: String? = nil,
+        completedAt: String? = nil
     ) {
         self.id = id
         self.profileID = profileID
@@ -263,6 +279,35 @@ public struct DogSwipeOrder: Identifiable, Codable, Equatable, Sendable {
         self.totalCredits = totalCredits
         self.status = status
         self.createdAt = createdAt
+        self.fulfillmentMode = fulfillmentMode
+        self.availableFrom = availableFrom
+        self.availableUntil = availableUntil
+        self.deliveryAddress = deliveryAddress
+        self.makerReadyConfirmedAt = makerReadyConfirmedAt
+        self.makerHandoffConfirmedAt = makerHandoffConfirmedAt
+        self.claimerHandoffConfirmedAt = claimerHandoffConfirmedAt
+        self.completedAt = completedAt
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        profileID = try c.decode(String.self, forKey: .profileID)
+        hotdogName = try c.decode(String.self, forKey: .hotdogName)
+        vendorName = try c.decode(String.self, forKey: .vendorName)
+        baseCreditCost = try c.decode(Int.self, forKey: .baseCreditCost)
+        addOns = try c.decode([DogSwipeOrderAddOn].self, forKey: .addOns)
+        totalCredits = try c.decode(Int.self, forKey: .totalCredits)
+        status = try c.decode(String.self, forKey: .status)
+        createdAt = try c.decode(String.self, forKey: .createdAt)
+        fulfillmentMode = try c.decodeIfPresent(String.self, forKey: .fulfillmentMode) ?? "pickup"
+        availableFrom = try c.decodeIfPresent(String.self, forKey: .availableFrom)
+        availableUntil = try c.decodeIfPresent(String.self, forKey: .availableUntil)
+        deliveryAddress = try c.decodeIfPresent(String.self, forKey: .deliveryAddress)
+        makerReadyConfirmedAt = try c.decodeIfPresent(String.self, forKey: .makerReadyConfirmedAt)
+        makerHandoffConfirmedAt = try c.decodeIfPresent(String.self, forKey: .makerHandoffConfirmedAt)
+        claimerHandoffConfirmedAt = try c.decodeIfPresent(String.self, forKey: .claimerHandoffConfirmedAt)
+        completedAt = try c.decodeIfPresent(String.self, forKey: .completedAt)
     }
 
     public var totalLabel: String {
@@ -276,6 +321,9 @@ public struct DogSwipeOrder: Identifiable, Codable, Equatable, Sendable {
         return addOns.map(\.name).joined(separator: ", ")
     }
 
+    public var isPickup: Bool { fulfillmentMode == "pickup" }
+    public var isDelivery: Bool { fulfillmentMode == "delivery" }
+
     enum CodingKeys: String, CodingKey {
         case id
         case profileID = "profile_id"
@@ -286,6 +334,14 @@ public struct DogSwipeOrder: Identifiable, Codable, Equatable, Sendable {
         case totalCredits = "total_credits"
         case status
         case createdAt = "created_at"
+        case fulfillmentMode = "fulfillment_mode"
+        case availableFrom = "available_from"
+        case availableUntil = "available_until"
+        case deliveryAddress = "delivery_address"
+        case makerReadyConfirmedAt = "maker_ready_confirmed_at"
+        case makerHandoffConfirmedAt = "maker_handoff_confirmed_at"
+        case claimerHandoffConfirmedAt = "claimer_handoff_confirmed_at"
+        case completedAt = "completed_at"
     }
 }
 
