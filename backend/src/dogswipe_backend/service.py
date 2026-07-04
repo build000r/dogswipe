@@ -382,6 +382,59 @@ class DogSwipeService:
             )
         return OrderResponse(order=order)
 
+    async def confirm_order_ready(
+        self,
+        *,
+        user_id: str,
+        order_id: str,
+    ) -> OrderResponse:
+        try:
+            order = await self.repository.confirm_order_ready(order_id=order_id, user_id=user_id)
+        except PermissionError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=str(exc),
+            ) from exc
+        except ValueError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=str(exc),
+            ) from exc
+        if order is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Order not found",
+            )
+        return OrderResponse(order=order)
+
+    async def confirm_order_handoff(
+        self,
+        *,
+        user_id: str,
+        order_id: str,
+    ) -> OrderResponse:
+        try:
+            order = await self.repository.confirm_order_handoff(
+                order_id=order_id,
+                user_id=user_id,
+            )
+        except PermissionError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=str(exc),
+            ) from exc
+        except ValueError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=str(exc),
+            ) from exc
+        if order is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Order not found",
+            )
+        return OrderResponse(order=order)
+
     async def transition_order_status(
         self,
         *,

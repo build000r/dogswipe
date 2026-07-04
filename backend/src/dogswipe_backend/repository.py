@@ -110,6 +110,22 @@ class HotdogRepository:
     ) -> OrderItem | None:
         raise NotImplementedError
 
+    async def confirm_order_ready(
+        self,
+        *,
+        order_id: str,
+        user_id: str,
+    ) -> OrderItem | None:
+        raise NotImplementedError
+
+    async def confirm_order_handoff(
+        self,
+        *,
+        order_id: str,
+        user_id: str,
+    ) -> OrderItem | None:
+        raise NotImplementedError
+
     async def submit_vendor_profile(
         self,
         *,
@@ -418,6 +434,80 @@ class SqlAlchemyHotdogRepository(HotdogRepository):
         )
         record.user_id = claimer_user_id
         record.status = OrderStatus.claimed.value
+        await self.session.flush()
+        return self._order(record)
+
+    async def confirm_order_ready(
+        self,
+        *,
+        order_id: str,
+        user_id: str,
+    ) -> OrderItem | None:
+        record = await self.session.get(OrderRecord, order_id)
+        if record is None:
+            return None
+        profile = await self.session.get(HotdogProfileRecord, record.profile_id)
+        if profile is None or profile.vendor_owner_user_id != user_id:
+            raise PermissionError("Only the maker can confirm an order is ready")
+        if record.status != OrderStatus.claimed.value:
+            raise ValueError("Order is not ready-confirmable")
+
+        record.maker_ready_confirmed_at = datetime.now(UTC)
+        record.status = OrderStatus.ready.value
+        await self.session.flush()
+        return self._order(record)
+
+    async def confirm_order_handoff(
+        self,
+        *,
+        order_id: str,
+        user_id: str,
+    ) -> OrderItem | None:
+        record = await self.session.get(OrderRecord, order_id)
+        if record is None:
+            return None
+        profile = await self.session.get(HotdogProfileRecord, record.profile_id)
+        maker_user_id = profile.vendor_owner_user_id if profile is not None else None
+        if user_id not in {maker_user_id, record.user_id}:
+            raise PermissionError("Only order participants can confirm hand-off")
+        if record.status not in {
+            OrderStatus.ready.value,
+            OrderStatus.handed_off.value,
+            OrderStatus.delivered.value,
+        }:
+            raise ValueError("Order hand-off is not confirmable")
+
+        now = datetime.now(UTC)
+        if user_id == maker_user_id:
+            record.maker_handoff_confirmed_at = record.maker_handoff_confirmed_at or now
+        else:
+            record.claimer_handoff_confirmed_at = record.claimer_handoff_confirmed_at or now
+
+        if record.status == OrderStatus.ready.value:
+            record.status = (
+                OrderStatus.delivered.value
+                if record.fulfillment_mode == FulfillmentMode.delivery.value
+                else OrderStatus.handed_off.value
+            )
+
+        if (
+            record.maker_handoff_confirmed_at is not None
+            and record.claimer_handoff_confirmed_at is not None
+            and record.status != OrderStatus.completed.value
+        ):
+            if maker_user_id is None:
+                raise PermissionError("Order maker is not configured")
+            await self.create_ledger_entry(
+                user_id=maker_user_id,
+                entry_type=CreditLedgerEntryType.earn,
+                amount=record.total_credits,
+                order_ref=record.id,
+                idempotency_key=f"settle:{record.id}",
+                reason="Order completed",
+            )
+            record.status = OrderStatus.completed.value
+            record.completed_at = now
+
         await self.session.flush()
         return self._order(record)
 
@@ -818,6 +908,10 @@ class SqlAlchemyHotdogRepository(HotdogRepository):
             available_from=record.available_from,
             available_until=record.available_until,
             delivery_address=record.delivery_address,
+            maker_ready_confirmed_at=record.maker_ready_confirmed_at,
+            maker_handoff_confirmed_at=record.maker_handoff_confirmed_at,
+            claimer_handoff_confirmed_at=record.claimer_handoff_confirmed_at,
+            completed_at=record.completed_at,
             status=record.status,
             created_at=record.created_at,
         )

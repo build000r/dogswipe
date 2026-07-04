@@ -181,6 +181,22 @@ def build_api_router() -> APIRouter:
     ) -> OrderResponse:
         return await service.claim_order(user_id=user_id, order_id=order_id)
 
+    @v1.post("/orders/{order_id}/confirm-ready", response_model=OrderResponse)
+    async def confirm_order_ready(
+        order_id: str,
+        service: DogSwipeService = Depends(get_service),
+        user_id: str = Depends(get_current_user_id),
+    ) -> OrderResponse:
+        return await service.confirm_order_ready(user_id=user_id, order_id=order_id)
+
+    @v1.post("/orders/{order_id}/confirm-hand-off", response_model=OrderResponse)
+    async def confirm_order_handoff(
+        order_id: str,
+        service: DogSwipeService = Depends(get_service),
+        user_id: str = Depends(get_current_user_id),
+    ) -> OrderResponse:
+        return await service.confirm_order_handoff(user_id=user_id, order_id=order_id)
+
     @v1.get("/vendor/submissions", response_model=VendorSubmissionListResponse)
     async def vendor_submissions(
         service: DogSwipeService = Depends(get_service),

@@ -88,6 +88,10 @@ def test_migrations_upgrade_and_downgrade(clear_settings, tmp_path, monkeypatch)
             "available_from",
             "available_until",
             "delivery_address",
+            "maker_ready_confirmed_at",
+            "maker_handoff_confirmed_at",
+            "claimer_handoff_confirmed_at",
+            "completed_at",
             "status",
             "created_at",
         }

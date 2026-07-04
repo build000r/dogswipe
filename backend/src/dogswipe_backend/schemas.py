@@ -203,6 +203,10 @@ class OrderItem(BaseModel):
     available_from: datetime | None = None
     available_until: datetime | None = None
     delivery_address: str | None = None
+    maker_ready_confirmed_at: datetime | None = None
+    maker_handoff_confirmed_at: datetime | None = None
+    claimer_handoff_confirmed_at: datetime | None = None
+    completed_at: datetime | None = None
     status: OrderStatus
     created_at: datetime
 

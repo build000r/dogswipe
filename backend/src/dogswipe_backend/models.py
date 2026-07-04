@@ -196,6 +196,12 @@ class OrderRecord(Base):
     available_from: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     available_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     delivery_address: Mapped[str | None] = mapped_column(String(240))
+    maker_ready_confirmed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    maker_handoff_confirmed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    claimer_handoff_confirmed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True)
+    )
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="draft")
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
