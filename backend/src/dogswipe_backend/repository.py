@@ -22,6 +22,7 @@ from .schemas import (
     HotdogProfile,
     OrderAddOn,
     OrderItem,
+    OrderStatus,
     SwipeDecision,
     VendorSubmissionRequest,
 )
@@ -74,6 +75,18 @@ class HotdogRepository:
         raise NotImplementedError
 
     async def list_orders(self, *, user_id: str) -> list[OrderItem]:
+        raise NotImplementedError
+
+    async def get_order(self, *, user_id: str, order_id: str) -> OrderItem | None:
+        raise NotImplementedError
+
+    async def update_order_status(
+        self,
+        *,
+        user_id: str,
+        order_id: str,
+        status: OrderStatus,
+    ) -> OrderItem | None:
         raise NotImplementedError
 
     async def submit_vendor_profile(
@@ -277,7 +290,7 @@ class SqlAlchemyHotdogRepository(HotdogRepository):
             base_price_dollars=profile.price_dollars,
             add_ons_json=self._encode_order_add_ons(add_ons),
             total_dollars=round(total_dollars, 2),
-            status="draft",
+            status=OrderStatus.draft.value,
         )
         self.session.add(record)
         await self.session.flush()
@@ -290,6 +303,26 @@ class SqlAlchemyHotdogRepository(HotdogRepository):
             .order_by(OrderRecord.created_at.desc(), OrderRecord.id.desc())
         )
         return [self._order(record) for record in await self.session.scalars(statement)]
+
+    async def get_order(self, *, user_id: str, order_id: str) -> OrderItem | None:
+        record = await self.session.get(OrderRecord, order_id)
+        if record is None or record.user_id != user_id:
+            return None
+        return self._order(record)
+
+    async def update_order_status(
+        self,
+        *,
+        user_id: str,
+        order_id: str,
+        status: OrderStatus,
+    ) -> OrderItem | None:
+        record = await self.session.get(OrderRecord, order_id)
+        if record is None or record.user_id != user_id:
+            return None
+        record.status = status.value
+        await self.session.flush()
+        return self._order(record)
 
     async def submit_vendor_profile(
         self,

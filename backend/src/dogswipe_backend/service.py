@@ -25,12 +25,14 @@ from .schemas import (
     OrderCreateRequest,
     OrderListResponse,
     OrderResponse,
+    OrderStatus,
     SwipeRequest,
     SwipeResponse,
     VendorSubmissionListResponse,
     VendorSubmissionRequest,
     VendorSubmissionResponse,
     WalletResponse,
+    validate_order_status_transition,
 )
 
 EARTH_RADIUS_MILES = 3958.8
@@ -190,6 +192,39 @@ class DogSwipeService:
                 add_ons=add_ons,
             )
         )
+
+    async def transition_order_status(
+        self,
+        *,
+        user_id: str,
+        order_id: str,
+        target_status: OrderStatus,
+    ) -> OrderResponse:
+        order = await self.repository.get_order(user_id=user_id, order_id=order_id)
+        if order is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Order not found",
+            )
+        try:
+            next_status = validate_order_status_transition(order.status, target_status)
+        except ValueError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=str(exc),
+            ) from exc
+
+        updated = await self.repository.update_order_status(
+            user_id=user_id,
+            order_id=order_id,
+            status=next_status,
+        )
+        if updated is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Order not found",
+            )
+        return OrderResponse(order=updated)
 
     async def submit_vendor_profile(
         self,

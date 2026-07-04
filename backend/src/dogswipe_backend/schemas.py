@@ -110,6 +110,53 @@ class OrderCreateRequest(BaseModel):
     add_on_ids: list[str] = Field(default_factory=list, max_length=8)
 
 
+class OrderStatus(StrEnum):
+    draft = "draft"
+    claimed = "claimed"
+    ready = "ready"
+    handed_off = "handed_off"
+    delivered = "delivered"
+    completed = "completed"
+    reviewed = "reviewed"
+    canceled = "canceled"
+    disputed = "disputed"
+    refunded_credit = "refunded_credit"
+
+
+ALLOWED_TRANSITIONS: dict[OrderStatus, frozenset[OrderStatus]] = {
+    OrderStatus.draft: frozenset({OrderStatus.claimed, OrderStatus.canceled}),
+    OrderStatus.claimed: frozenset(
+        {OrderStatus.ready, OrderStatus.canceled, OrderStatus.disputed}
+    ),
+    OrderStatus.ready: frozenset(
+        {
+            OrderStatus.handed_off,
+            OrderStatus.delivered,
+            OrderStatus.canceled,
+            OrderStatus.disputed,
+        }
+    ),
+    OrderStatus.handed_off: frozenset({OrderStatus.completed, OrderStatus.disputed}),
+    OrderStatus.delivered: frozenset({OrderStatus.completed, OrderStatus.disputed}),
+    OrderStatus.completed: frozenset({OrderStatus.reviewed}),
+    OrderStatus.reviewed: frozenset(),
+    OrderStatus.canceled: frozenset(),
+    OrderStatus.disputed: frozenset({OrderStatus.refunded_credit, OrderStatus.completed}),
+    OrderStatus.refunded_credit: frozenset(),
+}
+
+
+def validate_order_status_transition(
+    current: str | OrderStatus,
+    target: str | OrderStatus,
+) -> OrderStatus:
+    current_status = OrderStatus(current)
+    target_status = OrderStatus(target)
+    if target_status not in ALLOWED_TRANSITIONS[current_status]:
+        raise ValueError(f"Cannot transition order from {current_status} to {target_status}")
+    return target_status
+
+
 class OrderItem(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -120,7 +167,7 @@ class OrderItem(BaseModel):
     base_price_dollars: float = Field(ge=0)
     add_ons: list[OrderAddOn]
     total_dollars: float = Field(ge=0)
-    status: str
+    status: OrderStatus
     created_at: datetime
 
 
