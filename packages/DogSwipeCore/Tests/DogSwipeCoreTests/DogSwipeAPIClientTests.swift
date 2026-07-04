@@ -376,6 +376,106 @@ final class DogSwipeAPIClientTests: XCTestCase {
         XCTAssertNil(orders.first?.completedAt)
     }
 
+    func testCreateReviewEncodesBackendContract() async throws {
+        let http = MockHTTPClient()
+        http.nextData = """
+        {
+          "review": {
+            "id": "review-1",
+            "order_id": "order-hotdog-coney",
+            "rater_user_id": "user-1",
+            "ratee_user_id": "vendor-1",
+            "direction": "giver_reviews_receiver",
+            "rating": 5,
+            "text": "Great hot dog!",
+            "created_at": "2026-07-04T12:00:00Z"
+          }
+        }
+        """.data(using: .utf8)!
+        let client = DogSwipeAPIClient(baseURL: URL(string: "http://localhost:8000")!, httpClient: http)
+
+        let review = try await client.createReview(
+            ReviewCreateRequest(
+                orderID: "order-hotdog-coney",
+                rateeUserID: "vendor-1",
+                direction: .giverReviewsReceiver,
+                rating: 5,
+                text: "Great hot dog!"
+            )
+        )
+
+        XCTAssertEqual(review.id, "review-1")
+        XCTAssertEqual(review.orderID, "order-hotdog-coney")
+        XCTAssertEqual(review.direction, .giverReviewsReceiver)
+        XCTAssertEqual(review.rating, 5)
+        XCTAssertEqual(review.text, "Great hot dog!")
+        XCTAssertEqual(review.starsLabel, "★★★★★")
+        XCTAssertEqual(http.requests.first?.url?.path, "/v1/reviews")
+        XCTAssertEqual(http.requests.first?.httpMethod, "POST")
+        let body = String(data: http.requests.first!.httpBody!, encoding: .utf8)!
+        XCTAssertTrue(body.contains("\"order_id\":\"order-hotdog-coney\""))
+        XCTAssertTrue(body.contains("\"ratee_user_id\":\"vendor-1\""))
+        XCTAssertTrue(body.contains("\"direction\":\"giver_reviews_receiver\""))
+        XCTAssertTrue(body.contains("\"rating\":5"))
+        XCTAssertTrue(body.contains("\"text\":\"Great hot dog!\""))
+    }
+
+    func testDiscoveryDecodesReputationFields() async throws {
+        let http = MockHTTPClient()
+        http.nextData = """
+        {
+          "profiles": [
+            {
+              "id": "hotdog-coney",
+              "name": "Coney Classic",
+              "style": "Chili dog",
+              "credit_cost": 7,
+              "signature_notes": "Beef frank with chili.",
+              "distance_miles": 1.2,
+              "vendor_name": "Franklin Cart",
+              "crave_score": 0.91,
+              "reputation_rating": 4.7,
+              "reputation_review_count": 23
+            }
+          ]
+        }
+        """.data(using: .utf8)!
+        let client = DogSwipeAPIClient(baseURL: URL(string: "http://localhost:8000")!, httpClient: http)
+
+        let profiles = try await client.discovery(limit: 10)
+
+        XCTAssertEqual(profiles.first?.reputationRating, 4.7)
+        XCTAssertEqual(profiles.first?.reputationReviewCount, 23)
+        XCTAssertEqual(profiles.first?.reputationLabel, "4.7 (23)")
+    }
+
+    func testDiscoveryDecodesWithoutReputationFields() async throws {
+        let http = MockHTTPClient()
+        http.nextData = """
+        {
+          "profiles": [
+            {
+              "id": "hotdog-new",
+              "name": "New Dog",
+              "style": "Classic",
+              "credit_cost": 5,
+              "signature_notes": "Plain frank.",
+              "distance_miles": 0.5,
+              "vendor_name": "New Cart",
+              "crave_score": 0.5
+            }
+          ]
+        }
+        """.data(using: .utf8)!
+        let client = DogSwipeAPIClient(baseURL: URL(string: "http://localhost:8000")!, httpClient: http)
+
+        let profiles = try await client.discovery(limit: 10)
+
+        XCTAssertNil(profiles.first?.reputationRating)
+        XCTAssertEqual(profiles.first?.reputationReviewCount, 0)
+        XCTAssertNil(profiles.first?.reputationLabel)
+    }
+
     func testWalletDecodesBackendContract() async throws {
         let http = MockHTTPClient()
         http.nextData = """

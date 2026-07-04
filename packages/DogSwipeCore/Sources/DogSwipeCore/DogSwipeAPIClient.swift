@@ -166,6 +166,16 @@ public struct DogSwipeAPIClient: Sendable {
         return response.order
     }
 
+    @discardableResult
+    public func createReview(_ request: ReviewCreateRequest) async throws -> DogSwipeReview {
+        let response: ReviewResponse = try await send(
+            path: "/v1/reviews",
+            method: "POST",
+            body: request
+        )
+        return response.review
+    }
+
     public func wallet() async throws -> WalletResponse {
         try await send(path: "/v1/wallet")
     }

@@ -98,6 +98,8 @@ struct ScreenshotDogSwipeHTTPClient: DogSwipeHTTPClient {
             where path.hasPrefix("/v1/orders/")
                 && path.hasSuffix("/confirm-hand-off"):
             return try encoder.encode(OrderResponse(order: ScreenshotHotdogs.handedOffOrder))
+        case ("POST", "/v1/reviews"):
+            return try encoder.encode(ScreenshotReviews.reviewResponse)
         case ("GET", "/v1/wallet"):
             return try encoder.encode(ScreenshotWallet.walletResponse)
         case ("POST", "/v1/credits/purchase"):
@@ -280,7 +282,9 @@ private enum ScreenshotHotdogs {
         addOns: [
             DogSwipeOrderAddOn(id: "bacon", name: "Bacon", creditCost: 2),
             DogSwipeOrderAddOn(id: "extra-pickle", name: "Extra Pickle", creditCost: 1)
-        ]
+        ],
+        reputationRating: 4.7,
+        reputationReviewCount: 23
     )
 
     static let kimchi = HotdogProfile(
@@ -305,7 +309,9 @@ private enum ScreenshotHotdogs {
         addOns: [
             DogSwipeOrderAddOn(id: "sesame-crunch", name: "Sesame Crunch", creditCost: 1),
             DogSwipeOrderAddOn(id: "extra-kimchi", name: "Extra Kimchi", creditCost: 2)
-        ]
+        ],
+        reputationRating: 4.3,
+        reputationReviewCount: 11
     )
 
     static let chicago = HotdogProfile(
@@ -478,9 +484,26 @@ private enum ScreenshotHotdogs {
             reviewNote: reviewNote ?? profile.reviewNote,
             lastVerifiedAt: lastVerifiedAt ?? profile.lastVerifiedAt,
             lastReviewedAt: lastReviewedAt ?? profile.lastReviewedAt,
-            addOns: profile.addOns
+            addOns: profile.addOns,
+            reputationRating: profile.reputationRating,
+            reputationReviewCount: profile.reputationReviewCount
         )
     }
+}
+
+private enum ScreenshotReviews {
+    static let reviewResponse = ReviewResponse(
+        review: DogSwipeReview(
+            id: "review-screenshot-1",
+            orderID: "screenshot-order-3",
+            raterUserID: "screenshot-user",
+            rateeUserID: "screenshot-vendor",
+            direction: .giverReviewsReceiver,
+            rating: 5,
+            text: "Amazing kimchi crunch, perfect spice level!",
+            createdAt: "2026-05-05T14:00:00Z"
+        )
+    )
 }
 
 private enum ScreenshotWallet {

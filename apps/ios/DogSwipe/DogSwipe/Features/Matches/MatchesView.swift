@@ -362,7 +362,12 @@ private struct MatchRowView: View {
                     Text(profile.vendorName)
                         .font(.subheadline)
                         .foregroundStyle(Color.dsMuted)
-                    Text("\(String(format: "%.1f mi", profile.distanceMiles)) • \(profile.walkingTimeLabel) walk")
+                    HStack(spacing: .dsSpace1) {
+                        Text("\(String(format: "%.1f mi", profile.distanceMiles)) • \(profile.walkingTimeLabel) walk")
+                        if let rep = profile.reputationLabel {
+                            Text("• ★ \(rep)")
+                        }
+                    }
                         .font(.caption)
                         .foregroundStyle(Color.dsMuted)
                 }

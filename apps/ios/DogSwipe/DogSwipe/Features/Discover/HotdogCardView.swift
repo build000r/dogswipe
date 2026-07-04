@@ -182,6 +182,9 @@ struct HotdogCardView: View {
     }
 
     private var ratingLabel: String {
+        if let rating = profile.reputationRating, profile.reputationReviewCount > 0 {
+            return String(format: "%.1f", rating)
+        }
         let rating = min(4.9, 3.9 + profile.craveScore)
         return String(format: "%.1f", rating)
     }

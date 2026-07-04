@@ -3,6 +3,7 @@ import SwiftUI
 
 struct OrdersView: View {
     @ObservedObject private var orderStore: OrderStore
+    @State private var reviewingOrder: OrderItem?
 
     @MainActor
     init(orderStore: OrderStore? = nil) {
@@ -106,9 +107,20 @@ struct OrdersView: View {
                     item: item,
                     isClaiming: orderStore.claimingOrderID == item.id,
                     isConfirming: orderStore.confirmingOrderID == item.id,
+                    hasReviewed: orderStore.hasReviewed(orderID: item.id),
+                    submittedReview: orderStore.submittedReviews[item.id],
                     onClaim: { Task { await orderStore.claim(item) } },
                     onConfirmReady: { Task { await orderStore.confirmReady(item) } },
-                    onConfirmHandoff: { Task { await orderStore.confirmHandoff(item) } }
+                    onConfirmHandoff: { Task { await orderStore.confirmHandoff(item) } },
+                    onLeaveReview: { reviewingOrder = item }
+                )
+            }
+            .sheet(item: $reviewingOrder) { order in
+                ReviewSheet(
+                    orderID: order.id,
+                    hotdogName: order.hotdogName,
+                    vendorName: order.vendorName,
+                    orderStore: orderStore
                 )
             }
         }
@@ -183,9 +195,12 @@ private struct OrderCardView: View {
     let item: OrderItem
     var isClaiming: Bool = false
     var isConfirming: Bool = false
+    var hasReviewed: Bool = false
+    var submittedReview: DogSwipeReview?
     var onClaim: (() -> Void)?
     var onConfirmReady: (() -> Void)?
     var onConfirmHandoff: (() -> Void)?
+    var onLeaveReview: (() -> Void)?
 
     var body: some View {
         VStack(alignment: .leading, spacing: .dsSpace3) {
@@ -226,8 +241,33 @@ private struct OrderCardView: View {
             }
 
             statusRow
+
+            if let review = submittedReview {
+                submittedReviewRow(review)
+            }
         }
         .dsCard()
+    }
+
+    private func submittedReviewRow(_ review: DogSwipeReview) -> some View {
+        VStack(alignment: .leading, spacing: .dsSpace1) {
+            HStack(spacing: .dsSpace1) {
+                Text(review.starsLabel)
+                    .font(.caption)
+                Text("Your review")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(Color.dsPrimary)
+            }
+            if let text = review.text, !text.isEmpty {
+                Text(text)
+                    .font(.caption)
+                    .foregroundStyle(Color.dsMuted)
+                    .lineLimit(2)
+            }
+        }
+        .padding(.dsSpace2)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.dsPrimarySoft.opacity(0.5), in: RoundedRectangle(cornerRadius: .dsRadius2, style: .continuous))
     }
 
     @ViewBuilder
@@ -295,9 +335,16 @@ private struct OrderCardView: View {
                 if !item.bothConfirmed {
                     confirmHandoffButton
                 }
-            } else if item.isCompleted {
-                DogSwipeChip(text: "Completed", systemImage: "star.fill", tint: Color.dsRelish.opacity(0.22))
+            } else if item.isCompleted || item.isReviewed {
+                DogSwipeChip(
+                    text: item.isReviewed ? "Reviewed" : "Completed",
+                    systemImage: item.isReviewed ? "text.bubble.fill" : "star.fill",
+                    tint: Color.dsRelish.opacity(0.22)
+                )
                 Spacer(minLength: .dsSpace1)
+                if item.canReview && !hasReviewed {
+                    leaveReviewButton
+                }
             } else {
                 DogSwipeChip(text: item.statusLabel, systemImage: "clock.fill", tint: Color.dsPrimarySoft)
                 Spacer(minLength: .dsSpace1)
@@ -390,6 +437,24 @@ private struct OrderCardView: View {
         }
         .buttonStyle(.plain)
         .disabled(isConfirming)
+    }
+
+    private var leaveReviewButton: some View {
+        Button {
+            onLeaveReview?()
+        } label: {
+            HStack(spacing: .dsSpace1) {
+                Image(systemName: "star.bubble.fill")
+                    .font(.caption2)
+                Text("Leave Review")
+                    .font(.caption.weight(.bold))
+            }
+            .padding(.horizontal, .dsSpace3)
+            .padding(.vertical, .dsSpace2)
+            .foregroundStyle(.white)
+            .background(Color.dsPrimary, in: Capsule())
+        }
+        .buttonStyle(.plain)
     }
 
     private var previewProfile: HotdogProfile {

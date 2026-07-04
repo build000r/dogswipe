@@ -102,6 +102,7 @@ struct OrderItem: Identifiable, Equatable {
     var isHandedOff: Bool { status == "handed_off" }
     var isDelivered: Bool { status == "delivered" }
     var isCompleted: Bool { status == "completed" }
+    var isReviewed: Bool { status == "reviewed" }
     var isPickup: Bool { fulfillmentMode == "pickup" }
     var isDelivery: Bool { fulfillmentMode == "delivery" }
 
@@ -115,6 +116,10 @@ struct OrderItem: Identifiable, Equatable {
 
     var bothConfirmed: Bool {
         makerHandoffConfirmedAt != nil && claimerHandoffConfirmedAt != nil
+    }
+
+    var canReview: Bool {
+        isCompleted || isDelivered || isReviewed
     }
 }
 
@@ -131,6 +136,7 @@ final class OrderStore: ObservableObject {
     @Published private(set) var errorMessage: String?
     @Published private(set) var claimingOrderID: String?
     @Published private(set) var confirmingOrderID: String?
+    @Published private(set) var submittedReviews: [String: DogSwipeReview] = [:]
     @Published var claimConfirmation: ClaimConfirmation?
 
     private let apiClient: DogSwipeAPIClient
@@ -250,6 +256,29 @@ final class OrderStore: ObservableObject {
             errorMessage = "Could not confirm hand-off."
         }
         confirmingOrderID = nil
+    }
+
+    func submitReview(request: ReviewCreateRequest) async {
+        errorMessage = nil
+        do {
+            let review = try await apiClient.createReview(request)
+            submittedReviews[request.orderID] = review
+        } catch let error as DogSwipeAPIError {
+            switch error {
+            case .invalidResponseStatus(409):
+                errorMessage = "You already reviewed this order."
+            case .invalidResponseStatus(403):
+                errorMessage = "You cannot review this order."
+            default:
+                errorMessage = "Could not submit review."
+            }
+        } catch {
+            errorMessage = "Could not submit review."
+        }
+    }
+
+    func hasReviewed(orderID: String) -> Bool {
+        submittedReviews[orderID] != nil
     }
 
     private func upsert(_ item: OrderItem) {

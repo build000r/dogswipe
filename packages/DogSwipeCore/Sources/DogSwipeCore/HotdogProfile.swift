@@ -27,6 +27,8 @@ public struct HotdogProfile: Identifiable, Codable, Equatable, Sendable {
     public let lastVerifiedAt: String?
     public let lastReviewedAt: String?
     public let addOns: [DogSwipeOrderAddOn]
+    public let reputationRating: Double?
+    public let reputationReviewCount: Int
 
     public init(
         id: String,
@@ -54,7 +56,9 @@ public struct HotdogProfile: Identifiable, Codable, Equatable, Sendable {
         reviewNote: String? = nil,
         lastVerifiedAt: String? = nil,
         lastReviewedAt: String? = nil,
-        addOns: [DogSwipeOrderAddOn] = []
+        addOns: [DogSwipeOrderAddOn] = [],
+        reputationRating: Double? = nil,
+        reputationReviewCount: Int = 0
     ) {
         self.id = id
         self.name = name
@@ -82,6 +86,8 @@ public struct HotdogProfile: Identifiable, Codable, Equatable, Sendable {
         self.lastVerifiedAt = lastVerifiedAt
         self.lastReviewedAt = lastReviewedAt
         self.addOns = addOns
+        self.reputationRating = reputationRating
+        self.reputationReviewCount = reputationReviewCount
     }
 
     public var creditLabel: String {
@@ -95,6 +101,11 @@ public struct HotdogProfile: Identifiable, Codable, Equatable, Sendable {
     public var walkingTimeLabel: String {
         let minutes = walkingTimeMinutes ?? max(1, Int(((distanceMiles / 3) * 60).rounded()))
         return "\(minutes) min"
+    }
+
+    public var reputationLabel: String? {
+        guard let rating = reputationRating, reputationReviewCount > 0 else { return nil }
+        return String(format: "%.1f (%d)", rating, reputationReviewCount)
     }
 
     public var menuHighlightLabels: [String] {
@@ -148,6 +159,8 @@ public struct HotdogProfile: Identifiable, Codable, Equatable, Sendable {
         case lastVerifiedAt = "last_verified_at"
         case lastReviewedAt = "last_reviewed_at"
         case addOns = "add_ons"
+        case reputationRating = "reputation_rating"
+        case reputationReviewCount = "reputation_review_count"
     }
 
     public init(from decoder: Decoder) throws {
@@ -178,6 +191,8 @@ public struct HotdogProfile: Identifiable, Codable, Equatable, Sendable {
         lastVerifiedAt = try c.decodeIfPresent(String.self, forKey: .lastVerifiedAt)
         lastReviewedAt = try c.decodeIfPresent(String.self, forKey: .lastReviewedAt)
         addOns = try c.decodeIfPresent([DogSwipeOrderAddOn].self, forKey: .addOns) ?? []
+        reputationRating = try c.decodeIfPresent(Double.self, forKey: .reputationRating)
+        reputationReviewCount = try c.decodeIfPresent(Int.self, forKey: .reputationReviewCount) ?? 0
     }
 }
 
