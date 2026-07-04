@@ -15,6 +15,7 @@ from .schemas import (
     AdminMenuRefreshRequest,
     AdminMenuRefreshResponse,
     AdminModerationRequest,
+    AdminOrderDisputeQueueResponse,
     AdminModerationResponse,
     AdminReviewQueueResponse,
     CravingPreferences,
@@ -30,6 +31,8 @@ from .schemas import (
     MenuIngestionResponse,
     OrderAddOn,
     OrderCreateRequest,
+    OrderDisputeRequest,
+    OrderDisputeResolutionRequest,
     OrderListResponse,
     OrderResponse,
     OrderStatus,
@@ -423,6 +426,63 @@ class DogSwipeService:
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=str(exc),
             ) from exc
+        except ValueError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=str(exc),
+            ) from exc
+        if order is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Order not found",
+            )
+        return OrderResponse(order=order)
+
+    async def dispute_order(
+        self,
+        *,
+        user_id: str,
+        order_id: str,
+        request: OrderDisputeRequest,
+    ) -> OrderResponse:
+        try:
+            order = await self.repository.dispute_order(
+                order_id=order_id,
+                user_id=user_id,
+                reason=request.reason,
+            )
+        except PermissionError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=str(exc),
+            ) from exc
+        except ValueError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=str(exc),
+            ) from exc
+        if order is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Order not found",
+            )
+        return OrderResponse(order=order)
+
+    async def admin_disputed_orders(self) -> AdminOrderDisputeQueueResponse:
+        return AdminOrderDisputeQueueResponse(orders=await self.repository.list_disputed_orders())
+
+    async def resolve_dispute(
+        self,
+        *,
+        order_id: str,
+        request: OrderDisputeResolutionRequest,
+    ) -> OrderResponse:
+        try:
+            order = await self.repository.resolve_dispute(
+                order_id=order_id,
+                resolution=request.resolution,
+                reason=request.reason,
+            )
         except ValueError as exc:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,

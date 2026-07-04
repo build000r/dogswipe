@@ -28,6 +28,7 @@ from .schemas import (
     FulfillmentMode,
     HotdogProfile,
     OrderAddOn,
+    OrderDisputeResolution,
     OrderItem,
     OrderStatus,
     OfferingAddOnCreate,
@@ -123,6 +124,27 @@ class HotdogRepository:
         *,
         order_id: str,
         user_id: str,
+    ) -> OrderItem | None:
+        raise NotImplementedError
+
+    async def dispute_order(
+        self,
+        *,
+        order_id: str,
+        user_id: str,
+        reason: str | None = None,
+    ) -> OrderItem | None:
+        raise NotImplementedError
+
+    async def list_disputed_orders(self) -> list[OrderItem]:
+        raise NotImplementedError
+
+    async def resolve_dispute(
+        self,
+        *,
+        order_id: str,
+        resolution: OrderDisputeResolution,
+        reason: str | None = None,
     ) -> OrderItem | None:
         raise NotImplementedError
 
@@ -508,6 +530,72 @@ class SqlAlchemyHotdogRepository(HotdogRepository):
             record.status = OrderStatus.completed.value
             record.completed_at = now
 
+        await self.session.flush()
+        return self._order(record)
+
+    async def dispute_order(
+        self,
+        *,
+        order_id: str,
+        user_id: str,
+        reason: str | None = None,
+    ) -> OrderItem | None:
+        record = await self.session.get(OrderRecord, order_id)
+        if record is None:
+            return None
+        profile = await self.session.get(HotdogProfileRecord, record.profile_id)
+        maker_user_id = profile.vendor_owner_user_id if profile is not None else None
+        if user_id not in {maker_user_id, record.user_id}:
+            raise PermissionError("Only order participants can dispute an order")
+        if record.status not in {
+            OrderStatus.claimed.value,
+            OrderStatus.ready.value,
+            OrderStatus.handed_off.value,
+            OrderStatus.delivered.value,
+        }:
+            raise ValueError("Order is not disputable")
+
+        record.status = OrderStatus.disputed.value
+        record.disputed_at = datetime.now(UTC)
+        record.disputed_by_user_id = user_id
+        record.dispute_reason = self._blank_to_none(reason)
+        await self.session.flush()
+        return self._order(record)
+
+    async def list_disputed_orders(self) -> list[OrderItem]:
+        statement = (
+            select(OrderRecord)
+            .where(OrderRecord.status == OrderStatus.disputed.value)
+            .order_by(OrderRecord.disputed_at.asc(), OrderRecord.created_at.asc())
+        )
+        return [self._order(record) for record in await self.session.scalars(statement)]
+
+    async def resolve_dispute(
+        self,
+        *,
+        order_id: str,
+        resolution: OrderDisputeResolution,
+        reason: str | None = None,
+    ) -> OrderItem | None:
+        record = await self.session.get(OrderRecord, order_id)
+        if record is None:
+            return None
+        if record.status != OrderStatus.disputed.value:
+            raise ValueError("Order is not under dispute")
+        if resolution != OrderDisputeResolution.refund_credit:
+            raise ValueError("Unsupported dispute resolution")
+
+        await self.create_ledger_entry(
+            user_id=record.user_id,
+            entry_type=CreditLedgerEntryType.refund_credit,
+            amount=record.total_credits,
+            order_ref=record.id,
+            idempotency_key=f"refund:{record.id}",
+            reason=self._blank_to_none(reason) or "Dispute resolved with credit refund",
+        )
+        record.status = OrderStatus.refunded_credit.value
+        record.dispute_resolved_at = datetime.now(UTC)
+        record.dispute_resolution_note = self._blank_to_none(reason)
         await self.session.flush()
         return self._order(record)
 
@@ -912,6 +1000,11 @@ class SqlAlchemyHotdogRepository(HotdogRepository):
             maker_handoff_confirmed_at=record.maker_handoff_confirmed_at,
             claimer_handoff_confirmed_at=record.claimer_handoff_confirmed_at,
             completed_at=record.completed_at,
+            disputed_at=record.disputed_at,
+            disputed_by_user_id=record.disputed_by_user_id,
+            dispute_reason=record.dispute_reason,
+            dispute_resolved_at=record.dispute_resolved_at,
+            dispute_resolution_note=record.dispute_resolution_note,
             status=record.status,
             created_at=record.created_at,
         )

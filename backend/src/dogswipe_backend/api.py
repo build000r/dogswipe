@@ -14,6 +14,7 @@ from .schemas import (
     AdminMenuRefreshResponse,
     AdminModerationRequest,
     AdminModerationResponse,
+    AdminOrderDisputeQueueResponse,
     AdminReviewQueueResponse,
     CravingPreferences,
     CreditPurchaseRequest,
@@ -24,6 +25,8 @@ from .schemas import (
     MatchResponse,
     MenuIngestionResponse,
     OrderCreateRequest,
+    OrderDisputeRequest,
+    OrderDisputeResolutionRequest,
     OrderListResponse,
     OrderResponse,
     SwipeRequest,
@@ -197,6 +200,15 @@ def build_api_router() -> APIRouter:
     ) -> OrderResponse:
         return await service.confirm_order_handoff(user_id=user_id, order_id=order_id)
 
+    @v1.post("/orders/{order_id}/dispute", response_model=OrderResponse)
+    async def dispute_order(
+        order_id: str,
+        request: OrderDisputeRequest,
+        service: DogSwipeService = Depends(get_service),
+        user_id: str = Depends(get_current_user_id),
+    ) -> OrderResponse:
+        return await service.dispute_order(user_id=user_id, order_id=order_id, request=request)
+
     @v1.get("/vendor/submissions", response_model=VendorSubmissionListResponse)
     async def vendor_submissions(
         service: DogSwipeService = Depends(get_service),
@@ -250,6 +262,24 @@ def build_api_router() -> APIRouter:
     ) -> AdminReviewQueueResponse:
         del admin_user_id
         return await service.admin_review_queue()
+
+    @v1.get("/admin/orders/disputes", response_model=AdminOrderDisputeQueueResponse)
+    async def admin_order_disputes(
+        service: DogSwipeService = Depends(get_service),
+        admin_user_id: str = Depends(get_current_admin_user_id),
+    ) -> AdminOrderDisputeQueueResponse:
+        del admin_user_id
+        return await service.admin_disputed_orders()
+
+    @v1.post("/admin/orders/{order_id}/resolve-dispute", response_model=OrderResponse)
+    async def resolve_order_dispute(
+        order_id: str,
+        request: OrderDisputeResolutionRequest,
+        service: DogSwipeService = Depends(get_service),
+        admin_user_id: str = Depends(get_current_admin_user_id),
+    ) -> OrderResponse:
+        del admin_user_id
+        return await service.resolve_dispute(order_id=order_id, request=request)
 
     @v1.post("/admin/vendor/menus/refresh", response_model=AdminMenuRefreshResponse)
     async def refresh_vendor_menus(

@@ -202,6 +202,11 @@ class OrderRecord(Base):
         DateTime(timezone=True)
     )
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    disputed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    disputed_by_user_id: Mapped[str | None] = mapped_column(String(128))
+    dispute_reason: Mapped[str | None] = mapped_column(Text)
+    dispute_resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    dispute_resolution_note: Mapped[str | None] = mapped_column(Text)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="draft")
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),

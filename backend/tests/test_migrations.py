@@ -92,6 +92,11 @@ def test_migrations_upgrade_and_downgrade(clear_settings, tmp_path, monkeypatch)
             "maker_handoff_confirmed_at",
             "claimer_handoff_confirmed_at",
             "completed_at",
+            "disputed_at",
+            "disputed_by_user_id",
+            "dispute_reason",
+            "dispute_resolved_at",
+            "dispute_resolution_note",
             "status",
             "created_at",
         }

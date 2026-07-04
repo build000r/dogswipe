@@ -207,6 +207,11 @@ class OrderItem(BaseModel):
     maker_handoff_confirmed_at: datetime | None = None
     claimer_handoff_confirmed_at: datetime | None = None
     completed_at: datetime | None = None
+    disputed_at: datetime | None = None
+    disputed_by_user_id: str | None = None
+    dispute_reason: str | None = None
+    dispute_resolved_at: datetime | None = None
+    dispute_resolution_note: str | None = None
     status: OrderStatus
     created_at: datetime
 
@@ -216,6 +221,27 @@ class OrderResponse(BaseModel):
 
 
 class OrderListResponse(BaseModel):
+    orders: list[OrderItem]
+
+
+class OrderDisputeRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    reason: str | None = Field(default=None, max_length=1000)
+
+
+class OrderDisputeResolution(StrEnum):
+    refund_credit = "refund_credit"
+
+
+class OrderDisputeResolutionRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    resolution: OrderDisputeResolution = OrderDisputeResolution.refund_credit
+    reason: str | None = Field(default=None, max_length=1000)
+
+
+class AdminOrderDisputeQueueResponse(BaseModel):
     orders: list[OrderItem]
 
 
