@@ -78,13 +78,15 @@ class DogSwipeService:
         latitude: float | None = None,
         longitude: float | None = None,
         menu_query: str | None = None,
+        category: str | None = None,
     ) -> DiscoveryResponse:
         preferences = await self.repository.get_preferences(user_id=user_id)
         max_distance_miles = max(preferences.max_distance_miles, 1)
         location = self._location_from_coordinates(latitude, longitude)
         normalized_menu_query = self._normalize_menu_query(menu_query)
+        normalized_category = self._normalize_category(category)
         profiles = await self.repository.list_available_profiles(
-            limit=self._profile_fetch_limit(location, normalized_menu_query),
+            limit=self._profile_fetch_limit(location, normalized_menu_query, normalized_category),
             max_distance_miles=max_distance_miles,
             latitude=latitude,
             longitude=longitude,
@@ -93,6 +95,7 @@ class DogSwipeService:
             self._profiles_with_location_distance(profiles, location),
             preferences,
             normalized_menu_query,
+            normalized_category,
         )
         return DiscoveryResponse(profiles=ranked[: self._clamped_discovery_limit(limit)])
 
@@ -280,8 +283,13 @@ class DogSwipeService:
     def _profile_fetch_limit(
         location: tuple[float, float] | None,
         normalized_menu_query: str | None,
+        normalized_category: str | None,
     ) -> int:
-        if location is not None or normalized_menu_query is not None:
+        if (
+            location is not None
+            or normalized_menu_query is not None
+            or normalized_category is not None
+        ):
             return 200
         return 50
 
@@ -301,6 +309,7 @@ class DogSwipeService:
         profiles: list[HotdogProfile],
         preferences: CravingPreferences,
         normalized_menu_query: str | None,
+        normalized_category: str | None,
     ) -> list[HotdogProfile]:
         return sorted(
             (
@@ -308,6 +317,7 @@ class DogSwipeService:
                 for profile in profiles
                 if self._is_eligible(profile, preferences)
                 and self._matches_menu_query(profile, normalized_menu_query)
+                and self._matches_category(profile, normalized_category)
             ),
             key=lambda profile: self._score(profile, preferences, normalized_menu_query),
             reverse=True,
@@ -640,6 +650,12 @@ class DogSwipeService:
         return all(term in search_text for term in terms)
 
     @staticmethod
+    def _matches_category(profile: HotdogProfile, category: str | None) -> bool:
+        if category is None:
+            return True
+        return profile.category.lower() == category
+
+    @staticmethod
     def _menu_query_score(profile: HotdogProfile, menu_query: str) -> float:
         terms = DogSwipeService._query_terms(menu_query)
         if not terms:
@@ -675,6 +691,13 @@ class DogSwipeService:
         if not normalized:
             return None
         return normalized[:MENU_QUERY_MAX_LENGTH]
+
+    @staticmethod
+    def _normalize_category(category: str | None) -> str | None:
+        if category is None:
+            return None
+        normalized = category.strip().lower()
+        return normalized or None
 
     @staticmethod
     def _query_terms(menu_query: str) -> list[str]:

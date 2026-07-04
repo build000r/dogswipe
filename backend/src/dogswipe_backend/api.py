@@ -65,6 +65,7 @@ def build_api_router() -> APIRouter:
         latitude: float | None = Query(default=None, ge=-90, le=90),
         longitude: float | None = Query(default=None, ge=-180, le=180),
         menu_query: str | None = Query(default=None, max_length=64),
+        category: str | None = Query(default=None, min_length=1, max_length=32),
         service: DogSwipeService = Depends(get_service),
         user_id: str = Depends(get_current_user_id),
     ) -> DiscoveryResponse:
@@ -79,6 +80,7 @@ def build_api_router() -> APIRouter:
             latitude=latitude,
             longitude=longitude,
             menu_query=menu_query,
+            category=category,
         )
 
     @v1.post("/swipes", response_model=SwipeResponse)
