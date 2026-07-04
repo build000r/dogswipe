@@ -1,12 +1,12 @@
 # DogSwipe
 
-DogSwipe is a production-oriented monorepo for a swipe-first iOS app for finding local hotdogs, backed by a Sweet Potato/SPAPS-aligned FastAPI service.
+DogSwipe is a swipe-first iOS app for discovering neighborly offerings and claiming them with closed-loop community credits — a local barter economy, not a marketplace. Hotdogs are the flagship category; the catalog is category-agnostic. Backed by a Sweet Potato/SPAPS-aligned FastAPI service.
 
 Public repo: <https://github.com/build000r/dogswipe>
 
 ## What It Does
 
-DogSwipe turns "where should I get a hotdog right now?" into a fast swipe loop. The app presents nearby hotdog cards with the item style, price, vendor, distance, menu signals, and crave score; users can search bounded menu snapshots for craving terms, and high-signal likes become saved matches. The iOS surface is intentionally a Tinder-style street-vendor pack: cream cards, mustard/red controls, product-first hotdog art, and a match/order detail instead of a venue directory.
+DogSwipe turns "what are neighbors making nearby?" into a fast swipe loop backed by a closed-loop credit economy. Neighbors post small offerings (a hotdog, homemade coffee, baked goods, extra produce); other neighbors swipe through high-signal cards ranked by craving fit and proximity, and claims settle in community credits — never cash. Credits are bought 1:1 with dollars, spent only on others' offerings, and can never be withdrawn. The iOS surface is intentionally a Tinder-style street-vendor pack: cream cards, mustard/red controls, product-first hotdog art, and a claim/wallet detail instead of a venue directory.
 
 The repo is intentionally split into three testable surfaces:
 
@@ -16,28 +16,45 @@ The repo is intentionally split into three testable surfaces:
 | Swift domain package | `packages/DogSwipeCore` | Matching, swipe state, API contracts, and domain models with fast `swift test` coverage |
 | Python backend | `backend` | FastAPI + PostgreSQL starter using `spaps-server-quickstart` contracts |
 
+## Economic Model
+
+Credits are the only currency in DogSwipe. They are a deliberate one-way street into the community:
+
+| Rule | Detail |
+| --- | --- |
+| Buy in at par | Credits purchased 1:1 with dollars through a real payment rail. The only place real money enters. |
+| No cash-out, ever | Credits can **never** be withdrawn to dollars — not by a buyer, not by a maker. This is the defining constraint. |
+| Spend only on others | Credits are spent on other people's offerings, never self-dealt, never redeemed for fiat. |
+| Append-only ledger | Every purchase and spend is a signed, append-only entry. Balances are derived, never hand-edited. |
+| Float as liability | The platform holds pooled dollars behind outstanding credits as a community liability, not revenue. |
+
+Tokenomics dials (demurrage, starter grants, anti-hoarding) are deferred. The invariants above are permanent.
+
 ## Current Product Contract
 
 | Surface | Implemented behavior |
 | --- | --- |
-| Discovery | `GET /v1/discovery` returns available `HotdogProfile` records filtered by the user's saved max-distance/classic preferences and ranked by crave/distance fit; optional `latitude`/`longitude` query params recompute card distance from the user's current location, and optional `menu_query` filters against hotdog names, vendors, notes, menu excerpts, and derived menu highlights; responses include deterministic walking-time estimates and menu highlights, and iOS cards can preview a live MapKit walking route before opening Apple Maps directions from coordinates or address text. |
+| Discovery | `GET /v1/discovery` returns available offerings (hotdogs as flagship, any `category`) filtered by the user's saved preferences and ranked by crave/distance fit; optional `latitude`/`longitude` query params recompute distance from the user's current location, and optional `menu_query` filters against names, vendors, notes, excerpts, and derived highlights; responses include deterministic walking-time estimates and menu highlights, and iOS cards can preview a live MapKit walking route before opening Apple Maps directions from coordinates or address text. |
 | Swipe state | Swift package owns deterministic deck advancement, undo, and positive-signal tracking. |
-| Matches | `POST /v1/swipes` records likes/passes/super-likes; `GET /v1/matches` returns high-crave liked hotdogs and can accept the same optional `latitude`/`longitude` query params so saved bites keep current distance, walking-time, route-preview, and directions context. The match detail lets users select add-ons and save the hotdog as a backend-owned order draft with visible confirmation and a real bag count. |
-| Orders | `POST /v1/orders` creates a user-scoped draft from an orderable hotdog profile and canonical server add-ons; `GET /v1/orders` returns the current user's durable drafts for the iOS My Orders tab. Clients send only `profile_id` and bounded `add_on_ids`; the backend snapshots hotdog name, vendor, base price, add-ons, and total. |
+| Matches | `POST /v1/swipes` records likes/passes/super-likes; `GET /v1/matches` returns high-fit liked offerings with optional `latitude`/`longitude` for live distance, walking-time, route-preview, and directions context. The match detail shows credit cost, maker-defined add-ons, and turns a positive swipe into a claim. |
+| Wallet | `GET /v1/wallet` returns the user's credit account: balance, lifetime purchased/earned/spent. The wallet is first-class — balance, buy-credits flow (1:1 par), and ledger history. There is no withdraw/cash-out affordance anywhere; its absence is intentional and explained in-product. |
+| Claims/Orders | `POST /v1/orders` creates a claim from an offering, spending credits atomically; the maker is credited; an append-only ledger records both sides. `GET /v1/orders` returns the current user's claims. Hand-off is mutually confirmed before the order completes and becomes review-eligible. |
+| Two-way reviews | After a confirmed hand-off, giver and receiver can review each other. Aggregate reputation surfaces in discovery. Reviews are gated to completed claims to limit gaming. |
 | Preferences | `GET /v1/preferences` and `PUT /v1/preferences` persist user-scoped craving controls under the same backend-owned identity boundary; the backend discovery route and Swift local deck scorer both consume the same contract. |
-| Vendor submissions | `POST /v1/vendor/submissions` stores vendor-owned hotdog listings with optional coordinates and pickup address text as `pending_review`; the iOS Vendor form can resolve a pickup address into coordinates before submission; `GET /v1/vendor/submissions` returns only the current user's submissions; `PUT /v1/vendor/submissions/{id}` lets owners resubmit change-requested drafts; `POST /v1/vendor/submissions/{id}/ingest-menu` records an owner-scoped menu URL snapshot status/excerpt. |
-| Admin review | Configured admins can list `GET /v1/admin/vendor/submissions`, approve reviewed hotdogs into discovery, reject bad listings, request vendor edits with review notes, or refresh stale vendor menu snapshots in bounded batches with `POST /v1/admin/vendor/menus/refresh`. |
+| Maker submissions | `POST /v1/vendor/submissions` stores maker-owned offerings with optional coordinates and pickup address text as `pending_review`; the iOS form can resolve a pickup address into coordinates before submission; `GET /v1/vendor/submissions` returns only the current user's submissions; `PUT /v1/vendor/submissions/{id}` lets owners resubmit change-requested drafts; `POST /v1/vendor/submissions/{id}/ingest-menu` records an owner-scoped menu URL snapshot status/excerpt. |
+| Admin review | Configured admins can list `GET /v1/admin/vendor/submissions`, approve reviewed offerings into discovery, reject bad listings, request maker edits with review notes, or refresh stale menu snapshots in bounded batches with `POST /v1/admin/vendor/menus/refresh`. Admin ledger corrections are audited, append-only entries (e.g. a disputed hand-off refunds credits, never cash). |
 | Auth boundary | User-scoped backend routes derive identity from SPAPS auth when enabled, with a local-only header fallback while auth is disabled. |
 | iOS transport | The Profile tab can request SPAPS magic links with a publishable key, handle `dogswipe://auth` or configured HTTPS universal-link returns, store access/refresh JWTs in Keychain, and send only the access bearer to the DogSwipe API. |
-| iOS analytics | SwiftUI surfaces emit a small no-PII event contract for screen views, discovery swipes, auth actions, and match/order CTAs. |
+| iOS analytics | SwiftUI surfaces emit a small no-PII event contract for screen views, discovery swipes, auth actions, and claim/credit/review CTAs. Credit amounts may be counted; no payment-card or PII data is emitted. |
 
-Hotdog profile payloads use this snake_case backend contract:
+Offering profile payloads use this snake_case backend contract (hotdog flagship shown):
 
 ```json
 {
   "id": "hotdog-chicago",
   "name": "Chicago Classic",
   "style": "Chicago style",
+  "category": "hotdog",
   "price_dollars": 6.49,
   "signature_notes": "All-beef dog, mustard, relish, onions, tomato, sport peppers, pickle spear, celery salt.",
   "distance_miles": 0.3,
@@ -60,6 +77,8 @@ Hotdog profile payloads use this snake_case backend contract:
   "last_reviewed_at": null
 }
 ```
+
+> `price_dollars` is a legacy display field from the pre-credit era. In the barter economy, offerings are priced in **credits**; the credit cost field is part of the wallet/ledger beads. Dollar pricing does not surface to users.
 
 Craving preferences use the same snake_case API contract:
 
@@ -181,12 +200,18 @@ The placement decision is `NEW REPO`: this app owns a durable product boundary r
 
 ## Current Scope
 
-The current app can load local hotdog profiles, render cream/red/mustard swipe cards with a local Chicago-style product visual when no image URL is available, request and verify SPAPS magic links including native `dogswipe://auth` and configured HTTPS universal-link returns, store access/refresh JWTs in Keychain, record swipes, persist shared craving controls that filter/rank discovery, use CoreLocation-backed coordinates for live distance ranking across discovery and saved matches, search bounded menu snapshots from the Discover screen, show deterministic walking-time estimates, preview live MapKit walking routes through visible Live walk/Directions controls on discovery cards and match rows, surface menu highlights from bounded snapshots, open Apple Maps directions from coordinates or pickup address text, select match add-ons, save a matched hotdog as a durable backend order draft, list current user drafts in My Orders, resolve vendor pickup addresses into coordinates, submit and revise vendor-owned hotdog listings, refresh bounded menu URL snapshots as a vendor, refresh stale vendor menu snapshots as an admin or optional background worker, approve/reject/request edits as an admin, fetch matches and orders through the shared Swift API client, and emit a no-PII iOS analytics contract for screen/swipe/auth/match/order events. The iOS target includes a hotdog-specific AppIcon catalog, accent color, `PrivacyInfo.xcprivacy` declaration for auth email and precise location use, associated-domains entitlement plumbing, a deployable Apple app-site association template, and deterministic screenshot-mode fixtures for UI smoke/screenshots. Backend migrations are managed through Alembic up to `0009`, local Docker development can auto-create and seed the starter data with explicit local-only flags, `spaps.app.json` declares the public SPAPS application slug without storing keys, `make spaps-registration-payload` renders the supported Sweet Potato app-registration body, CI enforces the core quality gates, and production deploy artifacts are ready for a concrete skillbox target.
+The current app loads local offerings (hotdogs as flagship, category-agnostic catalog), renders cream/red/mustard swipe cards with a local Chicago-style product visual when no image URL is available, requests and verifies SPAPS magic links including native `dogswipe://auth` and configured HTTPS universal-link returns, stores access/refresh JWTs in Keychain, records swipes, persists shared craving controls that filter/rank discovery, uses CoreLocation-backed coordinates for live distance ranking across discovery and saved matches, searches bounded menu snapshots from the Discover screen, shows deterministic walking-time estimates, previews live MapKit walking routes through visible Live walk/Directions controls on discovery cards and match rows, surfaces menu highlights from bounded snapshots, opens Apple Maps directions from coordinates or pickup address text, selects match add-ons, and creates backend-owned order drafts with visible confirmation and a real count. Makers can submit and revise offerings with optional coordinates, resolve pickup addresses into coordinates on-device, and refresh bounded menu URL snapshots; configured admins can approve/reject/request edits and refresh stale menu snapshots.
+
+The barter-credit economy is under active build: the backend owns a credit-account entity (`GET /v1/wallet`), an append-only credit ledger, and an order state machine for the claim lifecycle (draft → claimed → ready → handed_off → delivered → completed → reviewed, plus canceled/disputed/refunded_credit). The iOS wallet, claim, and review surfaces are next. Credits are non-withdrawable by design — there is no cash-out endpoint and never will be.
+
+The iOS target includes a hotdog-specific AppIcon catalog, accent color, `PrivacyInfo.xcprivacy` declaration for auth email and precise location use, associated-domains entitlement plumbing, a deployable Apple app-site association template, and deterministic screenshot-mode fixtures for UI smoke/screenshots. Backend migrations are managed through Alembic, local Docker development can auto-create and seed the starter data with explicit local-only flags, `spaps.app.json` declares the public SPAPS application slug without storing keys, `make spaps-registration-payload` renders the supported Sweet Potato app-registration body, CI enforces the core quality gates, and production deploy artifacts are ready for a concrete skillbox target.
 
 ## Known Limits
 
+- **Credits are non-withdrawable by design.** There is no cash-out path — not for buyers, not for makers. This is a permanent invariant of the closed-loop economy, not a missing feature.
+- **Compliance review gates public launch.** A closed-loop credit system redeemable across unaffiliated makers may implicate money-transmitter or stored-value regulation. A bounded legal/compliance review is recorded in [docs/COMPLIANCE_REVIEW.md](docs/COMPLIANCE_REVIEW.md) and must be addressed before public release.
 - Production SPAPS auth origin alignment is live for `https://dogswipe.buildooor.com`, and App Store Connect accepted DogSwipe version `0.1.0` build `2` as `VALID`; full native auth proof still needs that TestFlight build exercising the universal-link return on a physical device.
-- Broad crawler-based menu indexing beyond bounded snapshot search, full turn-by-turn navigation or route persistence beyond lightweight MapKit previews, and payment/fulfillment order management beyond durable draft capture are future slices.
+- Broad crawler-based menu indexing beyond bounded snapshot search, full turn-by-turn navigation or route persistence beyond lightweight MapKit previews, variable/speculative credit pricing, demurrage, and real-time chat are future slices or explicit non-goals.
 
 ## About Contributions
 
