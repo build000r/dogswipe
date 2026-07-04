@@ -18,6 +18,7 @@ from .schemas import (
     CravingPreferences,
     CreditPurchaseRequest,
     CreditPurchaseResponse,
+    CreditReconciliationResponse,
     CreditWebhookResponse,
     DiscoveryResponse,
     MatchResponse,
@@ -146,6 +147,14 @@ def build_api_router() -> APIRouter:
             payload=await request.body(),
             stripe_signature=stripe_signature,
         )
+
+    @v1.get("/credits/reconciliation", response_model=CreditReconciliationResponse)
+    async def credit_reconciliation(
+        service: DogSwipeService = Depends(get_service),
+        admin_user_id: str = Depends(get_current_admin_user_id),
+    ) -> CreditReconciliationResponse:
+        del admin_user_id
+        return await service.credit_reconciliation()
 
     @v1.get("/orders", response_model=OrderListResponse)
     async def orders(

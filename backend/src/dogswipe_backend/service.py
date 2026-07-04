@@ -21,6 +21,7 @@ from .schemas import (
     CreditLedgerEntryType,
     CreditPurchaseRequest,
     CreditPurchaseResponse,
+    CreditReconciliationResponse,
     CreditWebhookResponse,
     DiscoveryResponse,
     FulfillmentMode,
@@ -241,6 +242,14 @@ class DogSwipeService:
             raise
 
         return CreditWebhookResponse(received=True, credited=True)
+
+    async def credit_reconciliation(self) -> CreditReconciliationResponse:
+        platform_float, outstanding_credits = await self.repository.get_credit_reconciliation_totals()
+        return CreditReconciliationResponse(
+            platform_float=platform_float,
+            outstanding_credits=outstanding_credits,
+            float_covers_outstanding=platform_float >= outstanding_credits,
+        )
 
     @staticmethod
     def _location_from_coordinates(

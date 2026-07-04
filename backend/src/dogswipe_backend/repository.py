@@ -208,6 +208,9 @@ class HotdogRepository:
     async def get_ledger_balance(self, *, user_id: str) -> int:
         raise NotImplementedError
 
+    async def get_credit_reconciliation_totals(self) -> tuple[int, int]:
+        raise NotImplementedError
+
     async def create_review(
         self,
         *,
@@ -796,6 +799,9 @@ class SqlAlchemyHotdogRepository(HotdogRepository):
         idempotency_key: str | None = None,
         reason: str | None = None,
     ) -> CreditLedgerEntry:
+        if entry_type == CreditLedgerEntryType.purchase and amount < 0:
+            raise ValueError("purchase ledger entries cannot be negative")
+
         if idempotency_key is not None:
             existing = await self.session.scalar(
                 select(CreditLedgerEntryRecord).where(
@@ -834,6 +840,17 @@ class SqlAlchemyHotdogRepository(HotdogRepository):
             )
         )
         return int(result or 0)
+
+    async def get_credit_reconciliation_totals(self) -> tuple[int, int]:
+        platform_float = await self.session.scalar(
+            select(sa_func.coalesce(sa_func.sum(CreditLedgerEntryRecord.amount), 0))
+            .where(CreditLedgerEntryRecord.entry_type == CreditLedgerEntryType.purchase.value)
+            .where(CreditLedgerEntryRecord.amount > 0)
+        )
+        outstanding_credits = await self.session.scalar(
+            select(sa_func.coalesce(sa_func.sum(CreditLedgerEntryRecord.amount), 0))
+        )
+        return int(platform_float or 0), int(outstanding_credits or 0)
 
     async def create_review(
         self,

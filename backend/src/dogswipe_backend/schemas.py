@@ -337,6 +337,12 @@ class CreditWebhookResponse(BaseModel):
     duplicate: bool = False
 
 
+class CreditReconciliationResponse(BaseModel):
+    platform_float: int = Field(ge=0)
+    outstanding_credits: int
+    float_covers_outstanding: bool
+
+
 class CreditLedgerEntryType(StrEnum):
     purchase = "purchase"
     spend = "spend"
