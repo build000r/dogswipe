@@ -1,0 +1,333 @@
+<!-- mmdx
+{
+  "entry": "main",
+  "shortLink": { "username": "buildooor", "slug": "" },
+  "links": [
+    { "from": "main", "label": "Open proof status", "to": "proof-status", "title": "Open proof status" },
+    { "from": "main", "label": "Open primary flows", "to": "primary-flows", "title": "Open primary flows" },
+    { "from": "main", "label": "Open lifecycle", "to": "lifecycle", "title": "Open lifecycle" },
+    { "from": "main", "label": "Open ERD", "to": "erd", "title": "Open data model" },
+    { "from": "main", "label": "Open next move", "to": "next-move", "title": "Open next move" }
+  ]
+}
+-->
+
+## chart main DogSwipe Barter Credit Reality Check
+```mermaid
+flowchart LR
+  thesis["DogSwipe pivot<br/>closed-loop barter credits"]:::gray
+  backend["GREEN backend economy implemented<br/>wallet ledger purchase claim handoff dispute reviews"]:::green
+  proof["Open proof status"]:::green
+  flows["Open primary flows"]:::green
+  lifecycle["Open lifecycle"]:::green
+  erd["Open ERD"]:::green
+  ios["YELLOW iOS demo fixture coverage remains<br/>dogswipe-bc-ios-surfaces-zsw.6"]:::yellow
+  live["RED live Stripe webhook/payment ops and compliance launch proof not in repo"]:::red
+  next["Open next move"]:::yellow
+
+  thesis --> backend
+  backend --> proof
+  backend --> flows
+  backend --> lifecycle
+  backend --> erd
+  backend --> ios
+  backend --> live
+  ios --> next
+  live --> next
+
+  classDef green fill:#dff7df,stroke:#20833a,stroke-width:2px,color:#0f2f18
+  classDef yellow fill:#fff3bf,stroke:#b7791f,stroke-width:2px,color:#3a2a00
+  classDef red fill:#ffd6d6,stroke:#c53030,stroke-width:2px,color:#3a0505
+  classDef gray fill:#eef2f7,stroke:#64748b,stroke-width:1px,color:#111827
+```
+
+## chart epic-gantt Barter Credit Epic Status
+```mermaid
+gantt
+  title DogSwipe barter-credit status as of 2026-07-04
+  dateFormat YYYY-MM-DD
+  section GREEN backend closed loop
+  GREEN wallet account migration 0010 and tests :done, 2026-07-04, 1d
+  GREEN catalog credits categories add-ons tags migrations 0011 0015 0016 0017 :done, 2026-07-04, 1d
+  GREEN ledger purchase no-cash-out migrations 0014 and tests :done, 2026-07-04, 1d
+  GREEN fulfillment claim handoff dispute migrations 0012 0018 0019 0020 :done, 2026-07-04, 1d
+  GREEN reviews reputation migration 0013 and tests :done, 2026-07-04, 1d
+  section YELLOW covered gaps
+  YELLOW deterministic iOS credit screenshots dogswipe-bc-ios-surfaces-zsw.6 :active, 2026-07-05, 2d
+  section RED uncovered launch gates
+  RED live Stripe end-to-end and compliance launch proof :crit, 2026-07-06, 2d
+```
+
+## chart epic-map Barter Economy Dependency Map
+```mermaid
+flowchart TD
+  wallet["GREEN wallet account<br/>0010 test_wallet.py"]:::green
+  ledger["GREEN append-only ledger<br/>0014 test_credit_ledger.py test_ledger_correctness.py"]:::green
+  purchase["GREEN Stripe purchase rail<br/>test_credit_purchase.py"]:::green
+  nocash["GREEN no cash-out invariant<br/>test_credit_reconciliation.py"]:::green
+  catalog["GREEN categorized offerings<br/>0011 0015 0016 0017<br/>test_catalog_generalization.py"]:::green
+  fulfillment["GREEN atomic claim and handoff<br/>0012 0018 0019<br/>test_order_claim.py test_order_handoff.py"]:::green
+  disputes["GREEN dispute credit refunds<br/>0020 test_order_disputes.py"]:::green
+  reviews["GREEN two-way reviews reputation<br/>0013 test_reviews.py test_review_gating_proving.py"]:::green
+  iosfixtures["YELLOW screenshot/demo fixtures<br/>dogswipe-bc-ios-surfaces-zsw.6"]:::yellow
+  liveops["RED production Stripe and compliance proof<br/>no covering backend bead"]:::red
+
+  wallet --> ledger
+  purchase --> ledger
+  ledger --> nocash
+  catalog --> fulfillment
+  ledger --> fulfillment
+  fulfillment --> disputes
+  fulfillment --> reviews
+  reviews --> catalog
+  catalog --> iosfixtures
+  purchase --> liveops
+  nocash --> liveops
+
+  classDef green fill:#dff7df,stroke:#20833a,stroke-width:2px,color:#0f2f18
+  classDef yellow fill:#fff3bf,stroke:#b7791f,stroke-width:2px,color:#3a2a00
+  classDef red fill:#ffd6d6,stroke:#c53030,stroke-width:2px,color:#3a0505
+```
+
+## chart primary-flows Primary Barter Flows
+```mermaid
+flowchart TD
+  buyer["Neighbor claimer"]:::gray
+  maker["Neighbor maker"]:::gray
+  wallet["GREEN GET wallet auto-provisions credit account"]:::green
+  buy["GREEN POST credits purchase creates Stripe Checkout session"]:::green
+  webhook["GREEN POST credits webhook idempotently mints purchase credits"]:::green
+  discover["GREEN discovery returns category credit_cost tags reputation add-ons"]:::green
+  order["GREEN POST orders snapshots credit_cost and selected add-ons"]:::green
+  claim["GREEN POST orders claim atomically debits spend ledger"]:::green
+  ready["GREEN maker confirm-ready claimed to ready"]:::green
+  handoff["GREEN both parties confirm hand-off before completed"]:::green
+  settle["GREEN maker earns credits through append-only earn entry"]:::green
+  dispute["GREEN disputed order resolves with refund_credit only"]:::green
+  review["GREEN completed or delivered order allows two-way review"]:::green
+  nofiat["GREEN no payout withdrawal or negative purchase path"]:::green
+
+  buyer --> wallet --> buy --> webhook --> discover --> order --> claim
+  maker --> discover
+  claim --> ready --> handoff --> settle --> review
+  claim --> dispute --> nofiat
+  webhook --> nofiat
+
+  classDef green fill:#dff7df,stroke:#20833a,stroke-width:2px,color:#0f2f18
+  classDef gray fill:#eef2f7,stroke:#64748b,stroke-width:1px,color:#111827
+```
+
+## chart lifecycle Credit Claim Lifecycle
+```mermaid
+stateDiagram-v2
+  [*] --> draft: POST /v1/orders
+  draft --> claimed: GREEN claim debit spend ledger
+  claimed --> ready: GREEN maker confirms ready
+  ready --> handed_off: GREEN pickup hand-off confirmed
+  ready --> delivered: GREEN delivery confirmed
+  handed_off --> completed: GREEN both parties confirmed
+  delivered --> completed: GREEN both parties confirmed
+  completed --> reviewed: GREEN review direction recorded
+  claimed --> disputed: GREEN either participant disputes
+  ready --> disputed: GREEN either participant disputes
+  handed_off --> disputed: GREEN either participant disputes
+  delivered --> disputed: GREEN either participant disputes
+  disputed --> refunded_credit: GREEN admin resolves credit refund only
+  draft --> canceled
+  claimed --> canceled
+  completed --> [*]
+  reviewed --> [*]
+  refunded_credit --> [*]
+
+  note right of claimed
+    GREEN: claim creates spend ledger entry
+    Tests: test_order_claim.py and test_fulfillment_lifecycle_proving.py
+  end note
+  note right of completed
+    GREEN: maker settlement creates earn ledger entry exactly once
+    Tests: test_order_handoff.py
+  end note
+  note right of refunded_credit
+    GREEN: refunds credits only, never fiat
+    Tests: test_order_disputes.py
+  end note
+```
+
+## chart architecture-boundary Runtime Boundary
+```mermaid
+flowchart LR
+  subgraph Backend["FastAPI backend"]
+    api["GREEN /v1 routes<br/>wallet credits orders reviews discovery"]:::green
+    service["GREEN DogSwipeService<br/>validation and Stripe webhook handling"]:::green
+    repo["GREEN SqlAlchemy repository<br/>atomic ledger and order mutations"]:::green
+    migrations["GREEN Alembic 0010-0020"]:::green
+    tests["GREEN backend pytest 190 passed in Wave 5"]:::green
+  end
+
+  subgraph External["External systems"]
+    stripe["GREEN Stripe library integration<br/>mocked in tests"]:::green
+    stripeLive["RED live Stripe dashboard webhook secret and replay proof not in repo"]:::red
+    spaps["GRAY SPAPS identity boundary existing app contract"]:::gray
+  end
+
+  subgraph Client["Client surfaces"]
+    ios["YELLOW iOS barter demo fixtures remain open<br/>dogswipe-bc-ios-surfaces-zsw.6"]:::yellow
+  end
+
+  api --> service --> repo --> migrations
+  service --> stripe
+  stripe --> stripeLive
+  spaps --> api
+  api --> ios
+  tests --> api
+  tests --> repo
+
+  classDef green fill:#dff7df,stroke:#20833a,stroke-width:2px,color:#0f2f18
+  classDef yellow fill:#fff3bf,stroke:#b7791f,stroke-width:2px,color:#3a2a00
+  classDef red fill:#ffd6d6,stroke:#c53030,stroke-width:2px,color:#3a0505
+  classDef gray fill:#eef2f7,stroke:#64748b,stroke-width:1px,color:#111827
+```
+
+## chart proof-status Proof Status
+```mermaid
+flowchart TD
+  migrations["GREEN migrations 0010-0020 exist<br/>test_migrations.py"]:::green
+  wallet["GREEN wallet and ledger<br/>test_wallet.py test_credit_ledger.py test_ledger_correctness.py"]:::green
+  purchase["GREEN purchase rail idempotency<br/>test_credit_purchase.py"]:::green
+  nocash["GREEN reconciliation and no cash-out<br/>test_credit_reconciliation.py"]:::green
+  catalog["GREEN catalog generalization<br/>test_catalog_category.py test_catalog_generalization.py"]:::green
+  claim["GREEN atomic claim and lifecycle<br/>test_order_claim.py test_fulfillment_lifecycle_proving.py"]:::green
+  handoff["GREEN mutual handoff and settlement<br/>test_order_handoff.py"]:::green
+  dispute["GREEN dispute and credit refund<br/>test_order_disputes.py"]:::green
+  review["GREEN review gating and reputation<br/>test_reviews.py test_review_gating_proving.py"]:::green
+  latest["GREEN latest backend proof<br/>Wave 5 pytest 190 passed"]:::green
+  iosdemo["YELLOW deterministic iOS screenshots need refresh<br/>dogswipe-bc-ios-surfaces-zsw.6"]:::yellow
+  liveops["RED live Stripe webhook replay and compliance approval not proven"]:::red
+
+  migrations --> wallet --> purchase --> nocash
+  catalog --> claim --> handoff --> dispute --> review --> latest
+  latest --> iosdemo
+  latest --> liveops
+
+  classDef green fill:#dff7df,stroke:#20833a,stroke-width:2px,color:#0f2f18
+  classDef yellow fill:#fff3bf,stroke:#b7791f,stroke-width:2px,color:#3a2a00
+  classDef red fill:#ffd6d6,stroke:#c53030,stroke-width:2px,color:#3a0505
+```
+
+## chart drift Docs Code Beads Drift
+```mermaid
+flowchart TD
+  docs["Docs say barter-credit closed loop"]:::gray
+  code["GREEN code now matches backend economy promise"]:::green
+  oldprice["GREEN legacy price_dollars replaced by credit_cost<br/>0015 and catalog tests"]:::green
+  status["GREEN this tokenomics stack refreshed"]:::green
+  iosopen["YELLOW open bead covers iOS demo fixture drift<br/>dogswipe-bc-ios-surfaces-zsw.6"]:::yellow
+  statusbead["YELLOW docs-status bead remains open until this commit lands<br/>dogswipe-bc-docs-status-y4h.2"]:::yellow
+  livegap["RED launch/compliance/live Stripe proof absent from repo evidence"]:::red
+
+  docs --> code --> oldprice --> status
+  status --> iosopen
+  status --> statusbead
+  code --> livegap
+
+  classDef green fill:#dff7df,stroke:#20833a,stroke-width:2px,color:#0f2f18
+  classDef yellow fill:#fff3bf,stroke:#b7791f,stroke-width:2px,color:#3a2a00
+  classDef red fill:#ffd6d6,stroke:#c53030,stroke-width:2px,color:#3a0505
+  classDef gray fill:#eef2f7,stroke:#64748b,stroke-width:1px,color:#111827
+```
+
+## chart next-move Next Move
+```mermaid
+flowchart LR
+  done["GREEN backend barter-credit beads closed and proof-backed"]:::green
+  demo["YELLOW update deterministic iOS screenshots<br/>dogswipe-bc-ios-surfaces-zsw.6"]:::yellow
+  launch["RED create explicit bead for live Stripe replay plus compliance launch gate"]:::red
+  verify["GREEN after docs commit rerun mmdx preflight and backend-test when code changes"]:::green
+
+  done --> demo --> launch --> verify
+
+  classDef green fill:#dff7df,stroke:#20833a,stroke-width:2px,color:#0f2f18
+  classDef yellow fill:#fff3bf,stroke:#b7791f,stroke-width:2px,color:#3a2a00
+  classDef red fill:#ffd6d6,stroke:#c53030,stroke-width:2px,color:#3a0505
+```
+
+## chart erd Barter Credit ERD
+```mermaid
+erDiagram
+  IDENTITY ||--o| CREDIT_ACCOUNTS : owns
+  IDENTITY ||--o{ CREDIT_LEDGER : has_entries
+  IDENTITY ||--o{ HOTDOG_PROFILES : owns_offerings
+  IDENTITY ||--o{ ORDERS : claims
+  IDENTITY ||--o{ REVIEWS : rates
+  IDENTITY ||--o{ REVIEWS : receives
+  HOTDOG_PROFILES ||--o{ OFFERING_ADD_ONS : defines
+  HOTDOG_PROFILES ||--o{ ORDERS : snapshots
+  ORDERS ||--o{ CREDIT_LEDGER : spend_earn_refund_refs
+  ORDERS ||--o{ REVIEWS : receives_two_directions
+
+  IDENTITY {
+    string user_id
+  }
+  CREDIT_ACCOUNTS {
+    string user_id PK
+    int lifetime_purchased
+    int lifetime_earned
+    int lifetime_spent
+    datetime created_at
+    datetime updated_at
+  }
+  CREDIT_LEDGER {
+    string id PK
+    string user_id
+    string entry_type
+    int amount
+    int balance_after
+    string order_ref
+    string purchase_ref
+    string idempotency_key UK
+    text reason
+    datetime created_at
+  }
+  HOTDOG_PROFILES {
+    string id PK
+    string category
+    text tags_json
+    int credit_cost
+    string vendor_owner_user_id
+    string fulfillment_mode
+    datetime available_from
+    datetime available_until
+    float delivery_radius_miles
+  }
+  OFFERING_ADD_ONS {
+    string id PK
+    string profile_id FK
+    string name
+    int credit_cost
+    datetime created_at
+  }
+  ORDERS {
+    string id PK
+    string user_id
+    string profile_id
+    int base_credit_cost
+    text add_ons_json
+    int total_credits
+    string status
+    datetime maker_ready_confirmed_at
+    datetime maker_handoff_confirmed_at
+    datetime claimer_handoff_confirmed_at
+    datetime disputed_at
+    datetime dispute_resolved_at
+  }
+  REVIEWS {
+    string id PK
+    string order_id
+    string rater_user_id
+    string ratee_user_id
+    string direction UK
+    int rating
+    text text
+    datetime created_at
+  }
+```
