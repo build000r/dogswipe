@@ -239,6 +239,107 @@ final class DogSwipeAPIClientTests: XCTestCase {
         XCTAssertTrue(body.contains("\"add_on_ids\":[\"bacon\"]"))
     }
 
+    func testWalletDecodesBackendContract() async throws {
+        let http = MockHTTPClient()
+        http.nextData = """
+        {
+          "account": {
+            "user_id": "user-1",
+            "lifetime_purchased": 50,
+            "lifetime_earned": 12,
+            "lifetime_spent": 23,
+            "created_at": "2026-04-01T10:00:00Z",
+            "updated_at": "2026-07-03T14:30:00Z"
+          },
+          "entries": [
+            {
+              "id": "ledger-1",
+              "user_id": "user-1",
+              "entry_type": "purchase",
+              "amount": 25,
+              "balance_after": 39,
+              "purchase_ref": "cs_test_1",
+              "reason": "Bought 25 credits",
+              "created_at": "2026-07-03T14:30:00Z"
+            },
+            {
+              "id": "ledger-2",
+              "user_id": "user-1",
+              "entry_type": "spend",
+              "amount": 9,
+              "balance_after": 14,
+              "order_ref": "order-kimchi",
+              "reason": "Kimchi Crunch order",
+              "created_at": "2026-07-02T18:15:00Z"
+            }
+          ]
+        }
+        """.data(using: .utf8)!
+        let client = DogSwipeAPIClient(baseURL: URL(string: "http://localhost:8000")!, httpClient: http)
+
+        let response = try await client.wallet()
+
+        XCTAssertEqual(response.account.userID, "user-1")
+        XCTAssertEqual(response.account.balance, 39)
+        XCTAssertEqual(response.account.balanceLabel, "39 credits")
+        XCTAssertEqual(response.account.lifetimePurchased, 50)
+        XCTAssertEqual(response.account.lifetimeEarned, 12)
+        XCTAssertEqual(response.account.lifetimeSpent, 23)
+        XCTAssertEqual(response.entries.count, 2)
+        XCTAssertEqual(response.entries[0].entryType, .purchase)
+        XCTAssertEqual(response.entries[0].amountLabel, "+25")
+        XCTAssertEqual(response.entries[1].entryType, .spend)
+        XCTAssertEqual(response.entries[1].amountLabel, "-9")
+        XCTAssertEqual(http.requests.first?.url?.path, "/v1/wallet")
+        XCTAssertEqual(http.requests.first?.httpMethod, "GET")
+    }
+
+    func testWalletDecodesWithoutEntries() async throws {
+        let http = MockHTTPClient()
+        http.nextData = """
+        {
+          "account": {
+            "user_id": "user-1",
+            "lifetime_purchased": 10,
+            "lifetime_earned": 0,
+            "lifetime_spent": 0,
+            "created_at": "2026-04-01T10:00:00Z",
+            "updated_at": "2026-04-01T10:00:00Z"
+          }
+        }
+        """.data(using: .utf8)!
+        let client = DogSwipeAPIClient(baseURL: URL(string: "http://localhost:8000")!, httpClient: http)
+
+        let response = try await client.wallet()
+
+        XCTAssertEqual(response.account.balance, 10)
+        XCTAssertTrue(response.entries.isEmpty)
+    }
+
+    func testPurchaseCreditsEncodesBackendContract() async throws {
+        let http = MockHTTPClient()
+        http.nextData = """
+        {
+          "checkout_session_id": "cs_test_123",
+          "checkout_url": "https://checkout.stripe.com/pay/cs_test_123",
+          "amount_cents": 1000,
+          "credits": 10
+        }
+        """.data(using: .utf8)!
+        let client = DogSwipeAPIClient(baseURL: URL(string: "http://localhost:8000")!, httpClient: http)
+
+        let response = try await client.purchaseCredits(amountCents: 1000)
+
+        XCTAssertEqual(response.checkoutSessionID, "cs_test_123")
+        XCTAssertEqual(response.checkoutURL, "https://checkout.stripe.com/pay/cs_test_123")
+        XCTAssertEqual(response.amountCents, 1000)
+        XCTAssertEqual(response.credits, 10)
+        XCTAssertEqual(http.requests.first?.url?.path, "/v1/credits/purchase")
+        XCTAssertEqual(http.requests.first?.httpMethod, "POST")
+        let body = String(data: http.requests.first!.httpBody!, encoding: .utf8)!
+        XCTAssertTrue(body.contains("\"amount_cents\":1000"))
+    }
+
     func testPreferencesDecodeBackendContract() async throws {
         let http = MockHTTPClient()
         http.nextData = """

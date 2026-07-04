@@ -26,6 +26,7 @@ final class DogSwipeAnalytics {
         case orders
         case vendor
         case review
+        case wallet
         case profile
     }
 

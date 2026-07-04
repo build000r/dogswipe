@@ -5,6 +5,7 @@ private enum RootTab: String, Hashable {
     case discover
     case matches
     case orders
+    case wallet
     case vendor
     case review
     case profile
@@ -90,6 +91,12 @@ struct RootView: View {
                     Label("Orders", systemImage: "bag.fill")
                 }
                 .tag(RootTab.orders)
+
+            WalletView(store: WalletStore(apiClient: apiClient))
+                .tabItem {
+                    Label("Wallet", systemImage: "creditcard.fill")
+                }
+                .tag(RootTab.wallet)
 
             VendorView(store: vendorSubmissionStore)
                 .tabItem {

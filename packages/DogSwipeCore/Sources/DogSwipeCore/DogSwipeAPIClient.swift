@@ -139,6 +139,19 @@ public struct DogSwipeAPIClient: Sendable {
         return response.order
     }
 
+    public func wallet() async throws -> WalletResponse {
+        try await send(path: "/v1/wallet")
+    }
+
+    @discardableResult
+    public func purchaseCredits(amountCents: Int) async throws -> CreditPurchaseResponse {
+        try await send(
+            path: "/v1/credits/purchase",
+            method: "POST",
+            body: CreditPurchaseRequest(amountCents: amountCents)
+        )
+    }
+
     public func vendorSubmissions() async throws -> [HotdogProfile] {
         let response: VendorSubmissionListResponse = try await send(path: "/v1/vendor/submissions")
         return response.submissions

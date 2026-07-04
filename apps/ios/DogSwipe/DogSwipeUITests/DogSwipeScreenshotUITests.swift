@@ -70,6 +70,18 @@ final class DogSwipeScreenshotUITests: XCTestCase {
         )
     }
 
+    func test05WalletScreenshot() {
+        captureScreenshot(
+            tab: "wallet",
+            screenIdentifier: "dogswipe.wallet.screen",
+            requiredElements: [
+                .staticText("Wallet"),
+                .staticText("Balance")
+            ],
+            screenshotName: "05-wallet"
+        )
+    }
+
     func test06DiscoverCardSwipesAdvanceDeck() {
         launch(tab: "discover")
         waitFor(identifier: "dogswipe.discover.screen", timeout: 20, screenshotName: "06-discover-swipe")

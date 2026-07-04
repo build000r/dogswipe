@@ -86,6 +86,10 @@ struct ScreenshotDogSwipeHTTPClient: DogSwipeHTTPClient {
             return try encoder.encode(
                 AdminModerationResponse(profile: ScreenshotHotdogs.rejectedSubmission)
             )
+        case ("GET", "/v1/wallet"):
+            return try encoder.encode(ScreenshotWallet.walletResponse)
+        case ("POST", "/v1/credits/purchase"):
+            return try encoder.encode(ScreenshotWallet.purchaseResponse)
         case ("POST", "/api/auth/magic-link"):
             return Data(#"{"success":true,"data":{}}"#.utf8)
         case ("POST", "/api/auth/verify-magic-link"), ("POST", "/api/auth/refresh"):
@@ -392,4 +396,84 @@ private enum ScreenshotHotdogs {
             addOns: profile.addOns
         )
     }
+}
+
+private enum ScreenshotWallet {
+    static let walletResponse = WalletResponse(
+        account: CreditAccount(
+            userID: "screenshot-user",
+            lifetimePurchased: 50,
+            lifetimeEarned: 12,
+            lifetimeSpent: 23,
+            createdAt: "2026-04-01T10:00:00Z",
+            updatedAt: "2026-07-03T14:30:00Z"
+        ),
+        entries: [
+            CreditLedgerEntry(
+                id: "ledger-1",
+                userID: "screenshot-user",
+                entryType: .purchase,
+                amount: 25,
+                balanceAfter: 39,
+                purchaseRef: "cs_test_1",
+                reason: "Bought 25 credits",
+                createdAt: "2026-07-03T14:30:00Z"
+            ),
+            CreditLedgerEntry(
+                id: "ledger-2",
+                userID: "screenshot-user",
+                entryType: .spend,
+                amount: 9,
+                balanceAfter: 14,
+                orderRef: "order-kimchi",
+                reason: "Kimchi Crunch order",
+                createdAt: "2026-07-02T18:15:00Z"
+            ),
+            CreditLedgerEntry(
+                id: "ledger-3",
+                userID: "screenshot-user",
+                entryType: .earn,
+                amount: 7,
+                balanceAfter: 23,
+                reason: "Sold Coney Classic",
+                createdAt: "2026-07-01T12:00:00Z"
+            ),
+            CreditLedgerEntry(
+                id: "ledger-4",
+                userID: "screenshot-user",
+                entryType: .purchase,
+                amount: 25,
+                balanceAfter: 16,
+                purchaseRef: "cs_test_0",
+                reason: "Bought 25 credits",
+                createdAt: "2026-06-28T09:00:00Z"
+            ),
+            CreditLedgerEntry(
+                id: "ledger-5",
+                userID: "screenshot-user",
+                entryType: .spend,
+                amount: 7,
+                balanceAfter: -9,
+                orderRef: "order-garden",
+                reason: "Garden Snap order",
+                createdAt: "2026-06-25T19:45:00Z"
+            ),
+            CreditLedgerEntry(
+                id: "ledger-6",
+                userID: "screenshot-user",
+                entryType: .earn,
+                amount: 5,
+                balanceAfter: -2,
+                reason: "Sold Boardwalk Snap",
+                createdAt: "2026-06-20T11:30:00Z"
+            )
+        ]
+    )
+
+    static let purchaseResponse = CreditPurchaseResponse(
+        checkoutSessionID: "cs_test_screenshot",
+        checkoutURL: "https://checkout.stripe.com/pay/cs_test_screenshot",
+        amountCents: 1000,
+        credits: 10
+    )
 }
