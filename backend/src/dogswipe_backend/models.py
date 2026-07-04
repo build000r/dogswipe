@@ -34,7 +34,7 @@ class HotdogProfileRecord(Base):
         default="hotdog",
         server_default="hotdog",
     )
-    price_dollars: Mapped[float] = mapped_column(Float, nullable=False)
+    credit_cost: Mapped[int] = mapped_column(Integer, nullable=False)
     signature_notes: Mapped[str] = mapped_column(String(120), nullable=False)
     distance_miles: Mapped[float] = mapped_column(Float, nullable=False)
     latitude: Mapped[float | None] = mapped_column(Float)
@@ -154,9 +154,9 @@ class OrderRecord(Base):
     profile_id: Mapped[str] = mapped_column(String(36), nullable=False)
     hotdog_name: Mapped[str] = mapped_column(String(80), nullable=False)
     vendor_name: Mapped[str] = mapped_column(String(160), nullable=False)
-    base_price_dollars: Mapped[float] = mapped_column(Float, nullable=False)
+    base_credit_cost: Mapped[int] = mapped_column(Integer, nullable=False)
     add_ons_json: Mapped[str] = mapped_column(Text, nullable=False, default="[]")
-    total_dollars: Mapped[float] = mapped_column(Float, nullable=False)
+    total_credits: Mapped[int] = mapped_column(Integer, nullable=False)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="draft")
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),

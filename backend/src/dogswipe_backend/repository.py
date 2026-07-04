@@ -311,15 +311,15 @@ class SqlAlchemyHotdogRepository(HotdogRepository):
         profile: HotdogProfile,
         add_ons: list[OrderAddOn],
     ) -> OrderItem:
-        total_dollars = profile.price_dollars + sum(add_on.price_dollars for add_on in add_ons)
+        total_credits = profile.credit_cost + sum(add_on.credit_cost for add_on in add_ons)
         record = OrderRecord(
             user_id=user_id,
             profile_id=profile.id,
             hotdog_name=profile.name,
             vendor_name=profile.vendor_name,
-            base_price_dollars=profile.price_dollars,
+            base_credit_cost=profile.credit_cost,
             add_ons_json=self._encode_order_add_ons(add_ons),
-            total_dollars=round(total_dollars, 2),
+            total_credits=total_credits,
             status=OrderStatus.draft.value,
         )
         self.session.add(record)
@@ -578,7 +578,7 @@ class SqlAlchemyHotdogRepository(HotdogRepository):
         record.name = submission.name
         record.style = submission.style
         record.category = submission.category
-        record.price_dollars = submission.price_dollars
+        record.credit_cost = submission.credit_cost
         record.signature_notes = submission.signature_notes
         record.distance_miles = submission.distance_miles
         record.latitude = submission.latitude
@@ -621,9 +621,9 @@ class SqlAlchemyHotdogRepository(HotdogRepository):
             profile_id=record.profile_id,
             hotdog_name=record.hotdog_name,
             vendor_name=record.vendor_name,
-            base_price_dollars=record.base_price_dollars,
+            base_credit_cost=record.base_credit_cost,
             add_ons=cls._decode_order_add_ons(record.add_ons_json),
-            total_dollars=record.total_dollars,
+            total_credits=record.total_credits,
             status=record.status,
             created_at=record.created_at,
         )

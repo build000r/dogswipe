@@ -35,7 +35,7 @@ class HotdogProfile(BaseModel):
     name: str
     style: str
     category: str = Field(default="hotdog", min_length=1, max_length=32)
-    price_dollars: float = Field(ge=0)
+    credit_cost: int = Field(ge=0)
     signature_notes: str
     distance_miles: float = Field(ge=0)
     latitude: float | None = Field(default=None, ge=-90, le=90)
@@ -100,7 +100,7 @@ class OrderAddOn(BaseModel):
 
     id: str = Field(min_length=1, max_length=64)
     name: str = Field(min_length=1, max_length=80)
-    price_dollars: float = Field(ge=0, le=20)
+    credit_cost: int = Field(ge=0, le=20)
 
 
 class OrderCreateRequest(BaseModel):
@@ -164,9 +164,9 @@ class OrderItem(BaseModel):
     profile_id: str
     hotdog_name: str
     vendor_name: str
-    base_price_dollars: float = Field(ge=0)
+    base_credit_cost: int = Field(ge=0)
     add_ons: list[OrderAddOn]
-    total_dollars: float = Field(ge=0)
+    total_credits: int = Field(ge=0)
     status: OrderStatus
     created_at: datetime
 
@@ -185,7 +185,7 @@ class VendorSubmissionRequest(BaseModel):
     name: str = Field(min_length=1, max_length=80)
     style: str = Field(min_length=1, max_length=120)
     category: str = Field(default="hotdog", min_length=1, max_length=32)
-    price_dollars: float = Field(ge=0, le=50)
+    credit_cost: int = Field(ge=0, le=50)
     signature_notes: str = Field(min_length=1, max_length=120)
     distance_miles: float = Field(ge=0, le=25)
     latitude: float | None = Field(default=None, ge=-90, le=90)

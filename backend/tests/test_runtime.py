@@ -59,7 +59,7 @@ async def test_refresh_stale_menus_once_uses_configured_batch(database) -> None:
             submission=VendorSubmissionRequest(
                 name="Runtime Snap",
                 style="Classic cart dog",
-                price_dollars=6.25,
+                credit_cost=6,
                 signature_notes="Mustard, relish, and onion.",
                 distance_miles=1.8,
                 vendor_name="Runtime Cart",

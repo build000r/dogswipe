@@ -39,7 +39,7 @@ async def test_repository_records_swipes_only_for_swipeable_profiles(database) -
             submission=VendorSubmissionRequest(
                 name="Pending Swipe",
                 style="Classic cart dog",
-                price_dollars=6.25,
+                credit_cost=6,
                 signature_notes="Mustard, relish, and onion.",
                 distance_miles=1.8,
                 vendor_name="Swipe Cart",
@@ -94,16 +94,16 @@ async def test_repository_creates_user_scoped_order_snapshot(database) -> None:
             user_id="order-owner",
             profile=profile,
             add_ons=[
-                OrderAddOn(id="bacon", name="Bacon", price_dollars=1),
-                OrderAddOn(id="extra-pickle", name="Extra Pickle", price_dollars=0.5),
+                OrderAddOn(id="bacon", name="Bacon", credit_cost=1),
+                OrderAddOn(id="extra-pickle", name="Extra Pickle", credit_cost=1),
             ],
         )
 
         assert order.profile_id == "hotdog-coney"
         assert order.hotdog_name == profile.name
         assert order.vendor_name == profile.vendor_name
-        assert order.base_price_dollars == profile.price_dollars
-        assert order.total_dollars == profile.price_dollars + 1.5
+        assert order.base_credit_cost == profile.credit_cost
+        assert order.total_credits == profile.credit_cost + 2
         assert [add_on.id for add_on in order.add_ons] == ["bacon", "extra-pickle"]
         assert await repository.list_orders(user_id="other-user") == []
         assert [saved.id for saved in await repository.list_orders(user_id="order-owner")] == [
@@ -120,7 +120,7 @@ async def test_repository_approves_pending_vendor_submission_once(database) -> N
             submission=VendorSubmissionRequest(
                 name="Repository Snap",
                 style="Classic cart dog",
-                price_dollars=6.25,
+                credit_cost=6,
                 signature_notes="Mustard, relish, and onion.",
                 distance_miles=1.8,
                 vendor_name="Repository Cart",
@@ -171,7 +171,7 @@ async def test_repository_gets_vendor_submission_only_for_owner(database) -> Non
             submission=VendorSubmissionRequest(
                 name="Owned Submission",
                 style="Classic cart dog",
-                price_dollars=6.25,
+                credit_cost=6,
                 signature_notes="Mustard, relish, and onion.",
                 distance_miles=1.8,
                 vendor_name="Owner Cart",
@@ -205,7 +205,7 @@ async def test_repository_requests_changes_and_accepts_owner_resubmission(databa
             submission=VendorSubmissionRequest(
                 name="Needs Menu",
                 style="Classic cart dog",
-                price_dollars=6.25,
+                credit_cost=6,
                 signature_notes="Mustard, relish, and onion.",
                 distance_miles=1.8,
                 vendor_name="Revision Cart",
@@ -222,7 +222,7 @@ async def test_repository_requests_changes_and_accepts_owner_resubmission(databa
             submission=VendorSubmissionRequest(
                 name="Needs Menu",
                 style="Classic cart dog",
-                price_dollars=6.25,
+                credit_cost=6,
                 signature_notes="Mustard, relish, and onion.",
                 distance_miles=1.8,
                 vendor_name="Revision Cart",
@@ -252,7 +252,7 @@ async def test_repository_rejects_pending_submission_as_terminal(database) -> No
             submission=VendorSubmissionRequest(
                 name="Bad Listing",
                 style="Classic cart dog",
-                price_dollars=6.25,
+                credit_cost=6,
                 signature_notes="Mustard, relish, and onion.",
                 distance_miles=1.8,
                 vendor_name="Reject Cart",
@@ -274,7 +274,7 @@ async def test_repository_rejects_pending_submission_as_terminal(database) -> No
             submission=VendorSubmissionRequest(
                 name="Bad Listing",
                 style="Classic cart dog",
-                price_dollars=6.25,
+                credit_cost=6,
                 signature_notes="Mustard, relish, and onion.",
                 distance_miles=1.8,
                 vendor_name="Reject Cart",
@@ -291,7 +291,7 @@ async def test_repository_records_menu_ingestion_for_owner(database) -> None:
             submission=VendorSubmissionRequest(
                 name="Menu Snap",
                 style="Classic cart dog",
-                price_dollars=6.25,
+                credit_cost=6,
                 signature_notes="Mustard, relish, and onion.",
                 distance_miles=1.8,
                 vendor_name="Menu Cart",
@@ -330,7 +330,7 @@ async def test_repository_lists_stale_menu_refresh_candidates(database) -> None:
             submission=VendorSubmissionRequest(
                 name="Stale Menu",
                 style="Classic cart dog",
-                price_dollars=6.25,
+                credit_cost=6,
                 signature_notes="Mustard, relish, and onion.",
                 distance_miles=1.8,
                 vendor_name="Stale Cart",
@@ -342,7 +342,7 @@ async def test_repository_lists_stale_menu_refresh_candidates(database) -> None:
             submission=VendorSubmissionRequest(
                 name="Fresh Menu",
                 style="Classic cart dog",
-                price_dollars=6.25,
+                credit_cost=6,
                 signature_notes="Mustard, relish, and onion.",
                 distance_miles=1.8,
                 vendor_name="Fresh Cart",
@@ -354,7 +354,7 @@ async def test_repository_lists_stale_menu_refresh_candidates(database) -> None:
             submission=VendorSubmissionRequest(
                 name="Rejected Menu",
                 style="Classic cart dog",
-                price_dollars=6.25,
+                credit_cost=6,
                 signature_notes="Mustard, relish, and onion.",
                 distance_miles=1.8,
                 vendor_name="Rejected Cart",
@@ -398,7 +398,7 @@ async def test_repository_records_admin_menu_ingestion(database) -> None:
             submission=VendorSubmissionRequest(
                 name="Admin Menu",
                 style="Classic cart dog",
-                price_dollars=6.25,
+                credit_cost=6,
                 signature_notes="Mustard, relish, and onion.",
                 distance_miles=1.8,
                 vendor_name="Admin Cart",

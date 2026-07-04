@@ -41,7 +41,7 @@ def _profile(
         id=profile_id,
         name=name,
         style=style,
-        price_dollars=1,
+        credit_cost=1,
         signature_notes=signature_notes,
         distance_miles=distance_miles,
         latitude=latitude,
@@ -146,9 +146,9 @@ class FakeRepository(HotdogRepository):
             profile_id=profile.id,
             hotdog_name=profile.name,
             vendor_name=profile.vendor_name,
-            base_price_dollars=profile.price_dollars,
+            base_credit_cost=profile.credit_cost,
             add_ons=add_ons,
-            total_dollars=profile.price_dollars + sum(add_on.price_dollars for add_on in add_ons),
+            total_credits=profile.credit_cost + sum(add_on.credit_cost for add_on in add_ons),
             status="draft",
             created_at=datetime(2026, 5, 6),
         )
@@ -168,7 +168,7 @@ class FakeRepository(HotdogRepository):
             id="submitted-hotdog",
             name=submission.name,
             style=submission.style,
-            price_dollars=submission.price_dollars,
+            credit_cost=submission.credit_cost,
             signature_notes=submission.signature_notes,
             distance_miles=submission.distance_miles,
             latitude=submission.latitude,
@@ -205,7 +205,7 @@ class FakeRepository(HotdogRepository):
                 id=profile.id,
                 name=submission.name,
                 style=submission.style,
-                price_dollars=submission.price_dollars,
+                credit_cost=submission.credit_cost,
                 signature_notes=submission.signature_notes,
                 distance_miles=submission.distance_miles,
                 latitude=submission.latitude,
@@ -311,7 +311,7 @@ class FakeRepository(HotdogRepository):
                     id=profile.id,
                     name=profile.name,
                     style=profile.style,
-                    price_dollars=profile.price_dollars,
+                    credit_cost=profile.credit_cost,
                     signature_notes=profile.signature_notes,
                     distance_miles=profile.distance_miles,
                     latitude=profile.latitude,
@@ -368,7 +368,7 @@ class FakeRepository(HotdogRepository):
                     id=profile.id,
                     name=profile.name,
                     style=profile.style,
-                    price_dollars=profile.price_dollars,
+                    credit_cost=profile.credit_cost,
                     signature_notes=profile.signature_notes,
                     distance_miles=profile.distance_miles,
                     latitude=profile.latitude,
@@ -452,10 +452,10 @@ async def test_create_order_uses_canonical_add_on_prices() -> None:
 
     assert response.order.profile_id == "hotdog-test"
     assert response.order.add_ons == [
-        OrderAddOn(id="bacon", name="Bacon", price_dollars=1),
-        OrderAddOn(id="extra-pickle", name="Extra Pickle", price_dollars=0.5),
+        OrderAddOn(id="bacon", name="Bacon", credit_cost=1),
+        OrderAddOn(id="extra-pickle", name="Extra Pickle", credit_cost=1),
     ]
-    assert response.order.total_dollars == 2.5
+    assert response.order.total_credits == 3
 
 
 @pytest.mark.asyncio
@@ -612,7 +612,7 @@ async def test_vendor_submission_round_trips_through_repository() -> None:
     request = VendorSubmissionRequest(
         name="Submitted Snap",
         style="Classic cart dog",
-        price_dollars=6,
+        credit_cost=6,
         signature_notes="Mustard and onion",
         distance_miles=2,
         vendor_name="Submit Cart",
@@ -644,7 +644,7 @@ async def test_vendor_can_ingest_menu_snapshot() -> None:
         submission=VendorSubmissionRequest(
             name="Boardwalk Snap",
             style="Classic cart dog",
-            price_dollars=6,
+            credit_cost=6,
             signature_notes="Mustard and onion",
             distance_miles=2,
             vendor_name="Submit Cart",
@@ -675,7 +675,7 @@ async def test_menu_ingestion_records_missing_menu_url_without_fetch() -> None:
         submission=VendorSubmissionRequest(
             name="No Menu Snap",
             style="Classic cart dog",
-            price_dollars=6,
+            credit_cost=6,
             signature_notes="Mustard and onion",
             distance_miles=2,
             vendor_name="Submit Cart",
@@ -743,7 +743,7 @@ async def test_admin_approval_promotes_pending_submission() -> None:
         submission=VendorSubmissionRequest(
             name="Submitted Snap",
             style="Classic cart dog",
-            price_dollars=6,
+            credit_cost=6,
             signature_notes="Mustard and onion",
             distance_miles=2,
             vendor_name="Submit Cart",
@@ -770,7 +770,7 @@ async def test_admin_can_request_changes_and_vendor_can_resubmit() -> None:
         submission=VendorSubmissionRequest(
             name="Needs Work",
             style="Classic cart dog",
-            price_dollars=6,
+            credit_cost=6,
             signature_notes="Mustard and onion",
             distance_miles=2,
             vendor_name="Submit Cart",
@@ -787,7 +787,7 @@ async def test_admin_can_request_changes_and_vendor_can_resubmit() -> None:
         submission=VendorSubmissionRequest(
             name="Needs Work",
             style="Classic cart dog",
-            price_dollars=6,
+            credit_cost=6,
             signature_notes="Mustard and onion",
             distance_miles=2,
             vendor_name="Submit Cart",
@@ -811,7 +811,7 @@ async def test_admin_can_reject_pending_submission() -> None:
         submission=VendorSubmissionRequest(
             name="Bad Snap",
             style="Classic cart dog",
-            price_dollars=6,
+            credit_cost=6,
             signature_notes="Mustard and onion",
             distance_miles=2,
             vendor_name="Submit Cart",

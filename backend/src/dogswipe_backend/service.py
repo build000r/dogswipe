@@ -42,10 +42,10 @@ MENU_QUERY_MAX_LENGTH = 64
 ORDER_ADD_ONS: dict[str, OrderAddOn] = {
     add_on.id: add_on
     for add_on in [
-        OrderAddOn(id="bacon", name="Bacon", price_dollars=1.00),
-        OrderAddOn(id="jalapenos", name="Jalapenos", price_dollars=0.75),
-        OrderAddOn(id="cheese-sauce", name="Cheese Sauce", price_dollars=1.25),
-        OrderAddOn(id="extra-pickle", name="Extra Pickle", price_dollars=0.50),
+        OrderAddOn(id="bacon", name="Bacon", credit_cost=1),
+        OrderAddOn(id="jalapenos", name="Jalapenos", credit_cost=1),
+        OrderAddOn(id="cheese-sauce", name="Cheese Sauce", credit_cost=1),
+        OrderAddOn(id="extra-pickle", name="Extra Pickle", credit_cost=1),
     ]
 }
 

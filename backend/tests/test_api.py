@@ -222,7 +222,7 @@ async def test_pending_submission_swipe_never_becomes_match(
         json={
             "name": "Pending Snap",
             "style": "Classic cart dog",
-            "price_dollars": 6.25,
+            "credit_cost": 6,
             "signature_notes": "Mustard, relish, and onion.",
             "distance_miles": 1.8,
             "vendor_name": "Pending Cart",
@@ -271,8 +271,8 @@ async def test_create_order_snapshots_profile_and_add_ons(async_client) -> None:
     assert order["profile_id"] == "hotdog-coney"
     assert order["hotdog_name"] == "Coney Classic"
     assert order["vendor_name"] == "Franklin Cart"
-    assert order["base_price_dollars"] == 6.5
-    assert order["total_dollars"] == 8.0
+    assert order["base_credit_cost"] == 6
+    assert order["total_credits"] == 8
     assert order["status"] == "draft"
     assert [add_on["id"] for add_on in order["add_ons"]] == ["bacon", "extra-pickle"]
     assert "user_id" not in order
@@ -444,7 +444,7 @@ async def test_vendor_submission_is_pending_and_user_scoped(async_client) -> Non
         json={
             "name": "Boardwalk Snap",
             "style": "Classic cart dog",
-            "price_dollars": 6.25,
+            "credit_cost": 6,
             "signature_notes": "Griddled bun, beef frank, mustard, relish, and onion.",
             "distance_miles": 1.8,
             "latitude": 43.6532,
@@ -490,7 +490,7 @@ async def test_vendor_submission_does_not_enter_discovery_until_available(async_
         json={
             "name": "Hidden Review Dog",
             "style": "Test dog",
-            "price_dollars": 5,
+            "credit_cost": 5,
             "signature_notes": "Pending item",
             "distance_miles": 1,
             "vendor_name": "Review Cart",
@@ -512,7 +512,7 @@ async def test_vendor_submission_rejects_client_supplied_user_id(async_client) -
             "user_id": "forged",
             "name": "Forged Dog",
             "style": "Classic",
-            "price_dollars": 5,
+            "credit_cost": 5,
             "signature_notes": "Should fail",
             "distance_miles": 1,
             "vendor_name": "Forgery Cart",
@@ -530,7 +530,7 @@ async def test_vendor_can_record_missing_menu_ingestion(async_client) -> None:
         json={
             "name": "Menu Pending Snap",
             "style": "Classic cart dog",
-            "price_dollars": 6.25,
+            "credit_cost": 6,
             "signature_notes": "Mustard, relish, and onion.",
             "distance_miles": 1.8,
             "vendor_name": "Menu Cart",
@@ -571,7 +571,7 @@ async def test_admin_can_approve_vendor_submission(
         json={
             "name": "Approved Snap",
             "style": "Classic cart dog",
-            "price_dollars": 6.25,
+            "credit_cost": 6,
             "signature_notes": "Mustard, relish, and onion.",
             "distance_miles": 1.8,
             "vendor_name": "Approval Cart",
@@ -627,7 +627,7 @@ async def test_admin_can_refresh_stale_vendor_menus(
         json={
             "name": "Refresh Snap",
             "style": "Classic cart dog",
-            "price_dollars": 6.25,
+            "credit_cost": 6,
             "signature_notes": "Mustard, relish, and onion.",
             "distance_miles": 1.8,
             "vendor_name": "Refresh Cart",
@@ -669,7 +669,7 @@ async def test_admin_can_request_changes_and_vendor_can_resubmit(
         json={
             "name": "Edit Snap",
             "style": "Classic cart dog",
-            "price_dollars": 6.25,
+            "credit_cost": 6,
             "signature_notes": "Mustard, relish, and onion.",
             "distance_miles": 1.8,
             "vendor_name": "Edit Cart",
@@ -709,7 +709,7 @@ async def test_admin_can_request_changes_and_vendor_can_resubmit(
         json={
             "name": "Edited Snap",
             "style": "Classic cart dog",
-            "price_dollars": 6.5,
+            "credit_cost": 6,
             "signature_notes": "Mustard, relish, onion, and celery salt.",
             "distance_miles": 1.9,
             "vendor_name": "Edit Cart",
@@ -747,7 +747,7 @@ async def test_admin_can_reject_vendor_submission(
         json={
             "name": "Rejected Snap",
             "style": "Classic cart dog",
-            "price_dollars": 6.25,
+            "credit_cost": 6,
             "signature_notes": "Mustard, relish, and onion.",
             "distance_miles": 1.8,
             "vendor_name": "Reject Cart",
@@ -776,7 +776,7 @@ async def test_admin_can_reject_vendor_submission(
         json={
             "name": "Rejected Snap",
             "style": "Classic cart dog",
-            "price_dollars": 6.25,
+            "credit_cost": 6,
             "signature_notes": "Mustard, relish, and onion.",
             "distance_miles": 1.8,
             "vendor_name": "Reject Cart",
@@ -793,7 +793,7 @@ async def test_vendor_submission_update_is_owner_scoped(async_client) -> None:
         json={
             "name": "Owner Snap",
             "style": "Classic cart dog",
-            "price_dollars": 6.25,
+            "credit_cost": 6,
             "signature_notes": "Mustard, relish, and onion.",
             "distance_miles": 1.8,
             "vendor_name": "Owner Cart",
@@ -807,7 +807,7 @@ async def test_vendor_submission_update_is_owner_scoped(async_client) -> None:
         json={
             "name": "Forged Edit",
             "style": "Classic cart dog",
-            "price_dollars": 6.25,
+            "credit_cost": 6,
             "signature_notes": "Mustard, relish, and onion.",
             "distance_miles": 1.8,
             "vendor_name": "Owner Cart",
