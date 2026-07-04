@@ -18,6 +18,7 @@ from .schemas import (
     AdminReviewQueueResponse,
     CravingPreferences,
     DiscoveryResponse,
+    FulfillmentMode,
     HotdogProfile,
     MatchResponse,
     MenuIngestionResponse,
@@ -177,6 +178,8 @@ class DogSwipeService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Hotdog profile not found",
             )
+        self._ensure_available_now(profile, now=datetime.now(UTC))
+        self._validate_fulfillment_request(profile=profile, request=request)
         add_ons = self._order_add_ons(
             add_on_ids=request.add_on_ids,
             available_add_ons=profile.add_ons,
@@ -186,6 +189,8 @@ class DogSwipeService:
                 user_id=user_id,
                 profile=profile,
                 add_ons=add_ons,
+                fulfillment_mode=request.fulfillment_mode,
+                delivery_address=request.delivery_address,
             )
         )
 
@@ -488,6 +493,65 @@ class DogSwipeService:
     @staticmethod
     def _query_terms(menu_query: str) -> list[str]:
         return re.findall(r"[a-z0-9]+", menu_query.lower())
+
+    @staticmethod
+    def _ensure_available_now(profile: HotdogProfile, *, now: datetime) -> None:
+        available_from = DogSwipeService._comparable_datetime(profile.available_from)
+        available_until = DogSwipeService._comparable_datetime(profile.available_until)
+        comparable_now = DogSwipeService._comparable_datetime(now)
+        if available_from is not None and comparable_now < available_from:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Offering is not available yet",
+            )
+        if available_until is not None and comparable_now > available_until:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Offering is no longer available",
+            )
+
+    @staticmethod
+    def _validate_fulfillment_request(
+        *,
+        profile: HotdogProfile,
+        request: OrderCreateRequest,
+    ) -> None:
+        if request.fulfillment_mode == FulfillmentMode.pickup:
+            return
+        if profile.fulfillment_mode != FulfillmentMode.delivery:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail="Offering does not support delivery",
+            )
+        if request.delivery_latitude is None or request.delivery_longitude is None:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail="Delivery coordinates are required",
+            )
+        if (
+            profile.latitude is not None
+            and profile.longitude is not None
+            and profile.delivery_radius_miles is not None
+        ):
+            distance_miles = DogSwipeService._haversine_miles(
+                latitude=request.delivery_latitude,
+                longitude=request.delivery_longitude,
+                target_latitude=profile.latitude,
+                target_longitude=profile.longitude,
+            )
+            if distance_miles > profile.delivery_radius_miles:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                    detail="Delivery address is outside the offering radius",
+                )
+
+    @staticmethod
+    def _comparable_datetime(value: datetime | None) -> datetime | None:
+        if value is None:
+            return None
+        if value.tzinfo is None:
+            return value.replace(tzinfo=UTC)
+        return value.astimezone(UTC)
 
     @staticmethod
     def _order_add_ons(

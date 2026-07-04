@@ -44,6 +44,11 @@ class OfferingAddOnCreate(BaseModel):
     credit_cost: int = Field(ge=0, le=20)
 
 
+class FulfillmentMode(StrEnum):
+    pickup = "pickup"
+    delivery = "delivery"
+
+
 class HotdogProfile(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -59,6 +64,11 @@ class HotdogProfile(BaseModel):
     longitude: float | None = Field(default=None, ge=-180, le=180)
     vendor_name: str
     address_text: str | None = None
+    available_from: datetime | None = None
+    available_until: datetime | None = None
+    fulfillment_mode: FulfillmentMode = FulfillmentMode.pickup
+    delivery_radius_miles: float | None = Field(default=None, ge=0, le=100)
+    delivery_address: str | None = None
     image_url: str | None = None
     menu_url: str | None = None
     menu_status: str | None = None
@@ -118,6 +128,16 @@ class OrderCreateRequest(BaseModel):
 
     profile_id: str = Field(min_length=1, max_length=64)
     add_on_ids: list[str] = Field(default_factory=list, max_length=8)
+    fulfillment_mode: FulfillmentMode = FulfillmentMode.pickup
+    delivery_latitude: float | None = Field(default=None, ge=-90, le=90)
+    delivery_longitude: float | None = Field(default=None, ge=-180, le=180)
+    delivery_address: str | None = Field(default=None, max_length=240)
+
+    @model_validator(mode="after")
+    def delivery_coordinates_are_complete(self) -> Self:
+        if (self.delivery_latitude is None) != (self.delivery_longitude is None):
+            raise ValueError("delivery_latitude and delivery_longitude must be provided together")
+        return self
 
 
 class OrderStatus(StrEnum):
@@ -177,6 +197,10 @@ class OrderItem(BaseModel):
     base_credit_cost: int = Field(ge=0)
     add_ons: list[OrderAddOn]
     total_credits: int = Field(ge=0)
+    fulfillment_mode: FulfillmentMode
+    available_from: datetime | None = None
+    available_until: datetime | None = None
+    delivery_address: str | None = None
     status: OrderStatus
     created_at: datetime
 
@@ -203,6 +227,11 @@ class VendorSubmissionRequest(BaseModel):
     longitude: float | None = Field(default=None, ge=-180, le=180)
     vendor_name: str = Field(min_length=1, max_length=160)
     address_text: str | None = Field(default=None, max_length=240)
+    available_from: datetime | None = None
+    available_until: datetime | None = None
+    fulfillment_mode: FulfillmentMode = FulfillmentMode.pickup
+    delivery_radius_miles: float | None = Field(default=None, ge=0, le=100)
+    delivery_address: str | None = Field(default=None, max_length=240)
     image_url: str | None = Field(default=None, max_length=2048)
     menu_url: str | None = Field(default=None, max_length=2048)
     media_alt_text: str | None = Field(default=None, max_length=160)
@@ -212,6 +241,8 @@ class VendorSubmissionRequest(BaseModel):
     def coordinates_are_complete(self) -> Self:
         if (self.latitude is None) != (self.longitude is None):
             raise ValueError("latitude and longitude must be provided together")
+        if self.available_from and self.available_until and self.available_from >= self.available_until:
+            raise ValueError("available_from must be before available_until")
         return self
 
 

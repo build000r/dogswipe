@@ -16,6 +16,7 @@ from dogswipe_backend.schemas import (
     OrderAddOn,
     OrderCreateRequest,
     OrderItem,
+    FulfillmentMode,
     SwipeDecision,
     SwipeRequest,
     VendorSubmissionRequest,
@@ -34,6 +35,11 @@ def _profile(
     latitude: float | None = None,
     longitude: float | None = None,
     address_text: str | None = None,
+    available_from: datetime | None = None,
+    available_until: datetime | None = None,
+    fulfillment_mode: FulfillmentMode = FulfillmentMode.pickup,
+    delivery_radius_miles: float | None = None,
+    delivery_address: str | None = None,
     menu_url: str | None = None,
     menu_excerpt: str | None = None,
     crave_score: float = 0.8,
@@ -52,6 +58,11 @@ def _profile(
         longitude=longitude,
         vendor_name="Test Cart",
         address_text=address_text,
+        available_from=available_from,
+        available_until=available_until,
+        fulfillment_mode=fulfillment_mode,
+        delivery_radius_miles=delivery_radius_miles,
+        delivery_address=delivery_address,
         menu_url=menu_url,
         menu_excerpt=menu_excerpt,
         crave_score=crave_score,
@@ -151,6 +162,8 @@ class FakeRepository(HotdogRepository):
         user_id: str,
         profile: HotdogProfile,
         add_ons: list[OrderAddOn],
+        fulfillment_mode: FulfillmentMode = FulfillmentMode.pickup,
+        delivery_address: str | None = None,
     ) -> OrderItem:
         order = OrderItem(
             id=f"order-{len(self.orders_by_user.get(user_id, [])) + 1}",
@@ -160,6 +173,10 @@ class FakeRepository(HotdogRepository):
             base_credit_cost=profile.credit_cost,
             add_ons=add_ons,
             total_credits=profile.credit_cost + sum(add_on.credit_cost for add_on in add_ons),
+            fulfillment_mode=fulfillment_mode,
+            available_from=profile.available_from,
+            available_until=profile.available_until,
+            delivery_address=delivery_address,
             status="draft",
             created_at=datetime(2026, 5, 6),
         )
@@ -186,6 +203,11 @@ class FakeRepository(HotdogRepository):
             longitude=submission.longitude,
             vendor_name=submission.vendor_name,
             address_text=submission.address_text,
+            available_from=submission.available_from,
+            available_until=submission.available_until,
+            fulfillment_mode=submission.fulfillment_mode,
+            delivery_radius_miles=submission.delivery_radius_miles,
+            delivery_address=submission.delivery_address,
             image_url=submission.image_url,
             menu_url=submission.menu_url,
             media_alt_text=submission.media_alt_text,
@@ -232,6 +254,11 @@ class FakeRepository(HotdogRepository):
                 longitude=submission.longitude,
                 vendor_name=submission.vendor_name,
                 address_text=submission.address_text,
+                available_from=submission.available_from,
+                available_until=submission.available_until,
+                fulfillment_mode=submission.fulfillment_mode,
+                delivery_radius_miles=submission.delivery_radius_miles,
+                delivery_address=submission.delivery_address,
                 image_url=submission.image_url,
                 menu_url=submission.menu_url,
                 media_alt_text=submission.media_alt_text,
@@ -347,6 +374,11 @@ class FakeRepository(HotdogRepository):
                     longitude=profile.longitude,
                     vendor_name=profile.vendor_name,
                     address_text=profile.address_text,
+                    available_from=profile.available_from,
+                    available_until=profile.available_until,
+                    fulfillment_mode=profile.fulfillment_mode,
+                    delivery_radius_miles=profile.delivery_radius_miles,
+                    delivery_address=profile.delivery_address,
                     image_url=profile.image_url,
                     menu_url=profile.menu_url,
                     media_alt_text=profile.media_alt_text,
@@ -406,6 +438,11 @@ class FakeRepository(HotdogRepository):
                     longitude=profile.longitude,
                     vendor_name=profile.vendor_name,
                     address_text=profile.address_text,
+                    available_from=profile.available_from,
+                    available_until=profile.available_until,
+                    fulfillment_mode=profile.fulfillment_mode,
+                    delivery_radius_miles=profile.delivery_radius_miles,
+                    delivery_address=profile.delivery_address,
                     image_url=profile.image_url,
                     menu_url=profile.menu_url,
                     media_alt_text=profile.media_alt_text,
@@ -550,6 +587,87 @@ async def test_create_order_rejects_unknown_add_on() -> None:
         )
 
     assert exc_info.value.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_create_order_rejects_unavailable_window() -> None:
+    repository = FakeRepository()
+    repository.available_profiles = [
+        _profile(
+            "future-hotdog",
+            available_from=datetime(2099, 5, 7),
+            available_until=datetime(2099, 5, 8),
+        )
+    ]
+    service = DogSwipeService(repository)
+
+    with pytest.raises(HTTPException) as exc_info:
+        await service.create_order(
+            user_id="order-service-user",
+            request=OrderCreateRequest(profile_id="future-hotdog", add_on_ids=[]),
+        )
+
+    assert exc_info.value.status_code == 409
+
+
+@pytest.mark.asyncio
+async def test_create_order_rejects_delivery_outside_radius() -> None:
+    repository = FakeRepository()
+    repository.available_profiles = [
+        _profile(
+            "delivery-hotdog",
+            latitude=43.6532,
+            longitude=-79.3832,
+            fulfillment_mode=FulfillmentMode.delivery,
+            delivery_radius_miles=1,
+        )
+    ]
+    service = DogSwipeService(repository)
+
+    with pytest.raises(HTTPException) as exc_info:
+        await service.create_order(
+            user_id="order-service-user",
+            request=OrderCreateRequest(
+                profile_id="delivery-hotdog",
+                add_on_ids=[],
+                fulfillment_mode=FulfillmentMode.delivery,
+                delivery_latitude=43.9,
+                delivery_longitude=-79.6,
+                delivery_address="Far away",
+            ),
+        )
+
+    assert exc_info.value.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_create_order_accepts_delivery_inside_radius() -> None:
+    repository = FakeRepository()
+    repository.available_profiles = [
+        _profile(
+            "delivery-hotdog",
+            latitude=43.6532,
+            longitude=-79.3832,
+            fulfillment_mode=FulfillmentMode.delivery,
+            delivery_radius_miles=2,
+        )
+    ]
+    service = DogSwipeService(repository)
+
+    response = await service.create_order(
+        user_id="order-service-user",
+        request=OrderCreateRequest(
+            profile_id="delivery-hotdog",
+            add_on_ids=[],
+            fulfillment_mode=FulfillmentMode.delivery,
+            delivery_latitude=43.6539,
+            delivery_longitude=-79.3843,
+            delivery_address="100 Queen St W",
+        ),
+    )
+
+    assert response.order.fulfillment_mode == FulfillmentMode.delivery
+    assert response.order.delivery_address == "100 Queen St W"
 
 
 @pytest.mark.asyncio

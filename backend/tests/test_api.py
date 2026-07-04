@@ -35,6 +35,9 @@ async def test_discovery_returns_ranked_profiles(async_client) -> None:
     profiles = response.json()["profiles"]
     assert [profile["id"] for profile in profiles] == ["hotdog-coney", "hotdog-kimchi"]
     assert profiles[0]["crave_score"] > profiles[1]["crave_score"]
+    assert profiles[0]["fulfillment_mode"] == "pickup"
+    assert "available_from" in profiles[0]
+    assert "available_until" in profiles[0]
 
 
 @pytest.mark.asyncio
@@ -286,6 +289,9 @@ async def test_create_order_snapshots_profile_and_add_ons(async_client) -> None:
     assert order["vendor_name"] == "Franklin Cart"
     assert order["base_credit_cost"] == 6
     assert order["total_credits"] == 8
+    assert order["fulfillment_mode"] == "pickup"
+    assert "available_from" in order
+    assert "available_until" in order
     assert order["status"] == "draft"
     assert [add_on["id"] for add_on in order["add_ons"]] == ["bacon", "extra-pickle"]
     assert "user_id" not in order

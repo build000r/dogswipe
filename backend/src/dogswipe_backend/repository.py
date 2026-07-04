@@ -25,6 +25,7 @@ from .schemas import (
     CreditAccount,
     CreditLedgerEntry,
     CreditLedgerEntryType,
+    FulfillmentMode,
     HotdogProfile,
     OrderAddOn,
     OrderItem,
@@ -80,6 +81,8 @@ class HotdogRepository:
         user_id: str,
         profile: HotdogProfile,
         add_ons: list[OrderAddOn],
+        fulfillment_mode: FulfillmentMode = FulfillmentMode.pickup,
+        delivery_address: str | None = None,
     ) -> OrderItem:
         raise NotImplementedError
 
@@ -313,6 +316,8 @@ class SqlAlchemyHotdogRepository(HotdogRepository):
         user_id: str,
         profile: HotdogProfile,
         add_ons: list[OrderAddOn],
+        fulfillment_mode: FulfillmentMode = FulfillmentMode.pickup,
+        delivery_address: str | None = None,
     ) -> OrderItem:
         total_credits = profile.credit_cost + sum(add_on.credit_cost for add_on in add_ons)
         record = OrderRecord(
@@ -323,6 +328,10 @@ class SqlAlchemyHotdogRepository(HotdogRepository):
             base_credit_cost=profile.credit_cost,
             add_ons_json=self._encode_order_add_ons(add_ons),
             total_credits=total_credits,
+            fulfillment_mode=fulfillment_mode.value,
+            available_from=profile.available_from,
+            available_until=profile.available_until,
+            delivery_address=delivery_address,
             status=OrderStatus.draft.value,
         )
         self.session.add(record)
@@ -643,6 +652,11 @@ class SqlAlchemyHotdogRepository(HotdogRepository):
         record.longitude = submission.longitude
         record.vendor_name = submission.vendor_name
         record.address_text = self._blank_to_none(submission.address_text)
+        record.available_from = submission.available_from
+        record.available_until = submission.available_until
+        record.fulfillment_mode = submission.fulfillment_mode.value
+        record.delivery_radius_miles = submission.delivery_radius_miles
+        record.delivery_address = self._blank_to_none(submission.delivery_address)
         record.image_url = self._blank_to_none(submission.image_url)
         record.menu_url = self._blank_to_none(submission.menu_url)
         record.media_alt_text = self._blank_to_none(submission.media_alt_text)
@@ -700,6 +714,10 @@ class SqlAlchemyHotdogRepository(HotdogRepository):
             base_credit_cost=record.base_credit_cost,
             add_ons=cls._decode_order_add_ons(record.add_ons_json),
             total_credits=record.total_credits,
+            fulfillment_mode=record.fulfillment_mode,
+            available_from=record.available_from,
+            available_until=record.available_until,
+            delivery_address=record.delivery_address,
             status=record.status,
             created_at=record.created_at,
         )

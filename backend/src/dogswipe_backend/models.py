@@ -43,6 +43,16 @@ class HotdogProfileRecord(Base):
     longitude: Mapped[float | None] = mapped_column(Float)
     vendor_name: Mapped[str] = mapped_column(String(160), nullable=False)
     address_text: Mapped[str | None] = mapped_column(String(240))
+    available_from: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    available_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    fulfillment_mode: Mapped[str] = mapped_column(
+        String(16),
+        nullable=False,
+        default="pickup",
+        server_default="pickup",
+    )
+    delivery_radius_miles: Mapped[float | None] = mapped_column(Float)
+    delivery_address: Mapped[str | None] = mapped_column(String(240))
     image_url: Mapped[str | None] = mapped_column(Text)
     menu_url: Mapped[str | None] = mapped_column(Text)
     menu_status: Mapped[str | None] = mapped_column(String(32))
@@ -178,6 +188,14 @@ class OrderRecord(Base):
     base_credit_cost: Mapped[int] = mapped_column(Integer, nullable=False)
     add_ons_json: Mapped[str] = mapped_column(Text, nullable=False, default="[]")
     total_credits: Mapped[int] = mapped_column(Integer, nullable=False)
+    fulfillment_mode: Mapped[str] = mapped_column(
+        String(16),
+        nullable=False,
+        default="pickup",
+    )
+    available_from: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    available_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    delivery_address: Mapped[str | None] = mapped_column(String(240))
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="draft")
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
