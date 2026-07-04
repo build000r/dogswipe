@@ -202,3 +202,23 @@ class AdminMenuRefreshResponse(BaseModel):
     refreshed_count: int
     failed_count: int
     profiles: list[HotdogProfile]
+
+
+class CreditAccount(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    user_id: str
+    lifetime_purchased: int = Field(ge=0)
+    lifetime_earned: int = Field(ge=0)
+    lifetime_spent: int = Field(ge=0)
+    created_at: datetime
+    updated_at: datetime
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def balance(self) -> int:
+        return self.lifetime_purchased + self.lifetime_earned - self.lifetime_spent
+
+
+class WalletResponse(BaseModel):
+    account: CreditAccount

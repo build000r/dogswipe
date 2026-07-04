@@ -30,6 +30,7 @@ from .schemas import (
     VendorSubmissionListResponse,
     VendorSubmissionRequest,
     VendorSubmissionResponse,
+    WalletResponse,
 )
 
 EARTH_RADIUS_MILES = 3958.8
@@ -115,6 +116,10 @@ class DogSwipeService:
         preferences: CravingPreferences,
     ) -> CravingPreferences:
         return await self.repository.upsert_preferences(user_id=user_id, preferences=preferences)
+
+    async def wallet(self, *, user_id: str) -> WalletResponse:
+        account = await self.repository.get_or_create_credit_account(user_id=user_id)
+        return WalletResponse(account=account)
 
     @staticmethod
     def _location_from_coordinates(

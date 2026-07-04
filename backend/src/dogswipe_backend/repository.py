@@ -9,9 +9,16 @@ from sqlalchemy import Select, and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.elements import ColumnElement
 
-from .models import HotdogProfileRecord, OrderRecord, SwipeEventRecord, UserPreferenceRecord
+from .models import (
+    CreditAccountRecord,
+    HotdogProfileRecord,
+    OrderRecord,
+    SwipeEventRecord,
+    UserPreferenceRecord,
+)
 from .schemas import (
     CravingPreferences,
+    CreditAccount,
     HotdogProfile,
     OrderAddOn,
     OrderItem,
@@ -151,6 +158,12 @@ class HotdogRepository:
         profile_id: str,
         review_note: str,
     ) -> HotdogProfile | None:
+        raise NotImplementedError
+
+    async def get_credit_account(self, *, user_id: str) -> CreditAccount | None:
+        raise NotImplementedError
+
+    async def get_or_create_credit_account(self, *, user_id: str) -> CreditAccount:
         raise NotImplementedError
 
 
@@ -550,6 +563,20 @@ class SqlAlchemyHotdogRepository(HotdogRepository):
             status=record.status,
             created_at=record.created_at,
         )
+
+    async def get_credit_account(self, *, user_id: str) -> CreditAccount | None:
+        record = await self.session.get(CreditAccountRecord, user_id)
+        if record is None:
+            return None
+        return CreditAccount.model_validate(record)
+
+    async def get_or_create_credit_account(self, *, user_id: str) -> CreditAccount:
+        record = await self.session.get(CreditAccountRecord, user_id)
+        if record is None:
+            record = CreditAccountRecord(user_id=user_id)
+            self.session.add(record)
+            await self.session.flush()
+        return CreditAccount.model_validate(record)
 
     @staticmethod
     def _distance_candidate_filter(

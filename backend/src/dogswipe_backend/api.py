@@ -27,6 +27,7 @@ from .schemas import (
     VendorSubmissionListResponse,
     VendorSubmissionRequest,
     VendorSubmissionResponse,
+    WalletResponse,
 )
 from .service import DogSwipeService
 from .settings import get_settings
@@ -116,6 +117,13 @@ def build_api_router() -> APIRouter:
         user_id: str = Depends(get_current_user_id),
     ) -> CravingPreferences:
         return await service.update_preferences(user_id=user_id, preferences=request)
+
+    @v1.get("/wallet", response_model=WalletResponse)
+    async def wallet(
+        service: DogSwipeService = Depends(get_service),
+        user_id: str = Depends(get_current_user_id),
+    ) -> WalletResponse:
+        return await service.wallet(user_id=user_id)
 
     @v1.get("/orders", response_model=OrderListResponse)
     async def orders(
