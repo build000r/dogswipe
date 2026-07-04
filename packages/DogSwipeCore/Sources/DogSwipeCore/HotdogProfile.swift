@@ -4,6 +4,8 @@ public struct HotdogProfile: Identifiable, Codable, Equatable, Sendable {
     public let id: String
     public let name: String
     public let style: String
+    public let category: String
+    public let tags: [String]
     public let creditCost: Int
     public let signatureNotes: String
     public let distanceMiles: Double
@@ -24,11 +26,14 @@ public struct HotdogProfile: Identifiable, Codable, Equatable, Sendable {
     public let reviewNote: String?
     public let lastVerifiedAt: String?
     public let lastReviewedAt: String?
+    public let addOns: [DogSwipeOrderAddOn]
 
     public init(
         id: String,
         name: String,
         style: String,
+        category: String = "hotdog",
+        tags: [String] = [],
         creditCost: Int,
         signatureNotes: String,
         distanceMiles: Double,
@@ -48,11 +53,14 @@ public struct HotdogProfile: Identifiable, Codable, Equatable, Sendable {
         availabilityStatus: AvailabilityStatus = .available,
         reviewNote: String? = nil,
         lastVerifiedAt: String? = nil,
-        lastReviewedAt: String? = nil
+        lastReviewedAt: String? = nil,
+        addOns: [DogSwipeOrderAddOn] = []
     ) {
         self.id = id
         self.name = name
         self.style = style
+        self.category = category
+        self.tags = tags
         self.creditCost = creditCost
         self.signatureNotes = signatureNotes
         self.distanceMiles = distanceMiles
@@ -73,10 +81,15 @@ public struct HotdogProfile: Identifiable, Codable, Equatable, Sendable {
         self.reviewNote = reviewNote
         self.lastVerifiedAt = lastVerifiedAt
         self.lastReviewedAt = lastReviewedAt
+        self.addOns = addOns
     }
 
     public var creditLabel: String {
         "\(creditCost) credits"
+    }
+
+    public var categoryLabel: String {
+        category.prefix(1).uppercased() + category.dropFirst()
     }
 
     public var walkingTimeLabel: String {
@@ -112,6 +125,8 @@ public struct HotdogProfile: Identifiable, Codable, Equatable, Sendable {
         case id
         case name
         case style
+        case category
+        case tags
         case creditCost = "credit_cost"
         case signatureNotes = "signature_notes"
         case distanceMiles = "distance_miles"
@@ -132,6 +147,37 @@ public struct HotdogProfile: Identifiable, Codable, Equatable, Sendable {
         case reviewNote = "review_note"
         case lastVerifiedAt = "last_verified_at"
         case lastReviewedAt = "last_reviewed_at"
+        case addOns = "add_ons"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        name = try c.decode(String.self, forKey: .name)
+        style = try c.decode(String.self, forKey: .style)
+        category = try c.decodeIfPresent(String.self, forKey: .category) ?? "hotdog"
+        tags = try c.decodeIfPresent([String].self, forKey: .tags) ?? []
+        creditCost = try c.decode(Int.self, forKey: .creditCost)
+        signatureNotes = try c.decode(String.self, forKey: .signatureNotes)
+        distanceMiles = try c.decode(Double.self, forKey: .distanceMiles)
+        latitude = try c.decodeIfPresent(Double.self, forKey: .latitude)
+        longitude = try c.decodeIfPresent(Double.self, forKey: .longitude)
+        walkingTimeMinutes = try c.decodeIfPresent(Int.self, forKey: .walkingTimeMinutes)
+        vendorName = try c.decode(String.self, forKey: .vendorName)
+        addressText = try c.decodeIfPresent(String.self, forKey: .addressText)
+        imageURL = try c.decodeIfPresent(URL.self, forKey: .imageURL)
+        menuURL = try c.decodeIfPresent(URL.self, forKey: .menuURL)
+        menuStatus = try c.decodeIfPresent(String.self, forKey: .menuStatus)
+        menuExcerpt = try c.decodeIfPresent(String.self, forKey: .menuExcerpt)
+        menuHighlights = try c.decodeIfPresent([String].self, forKey: .menuHighlights)
+        menuCheckedAt = try c.decodeIfPresent(String.self, forKey: .menuCheckedAt)
+        mediaAltText = try c.decodeIfPresent(String.self, forKey: .mediaAltText)
+        craveScore = try c.decode(Double.self, forKey: .craveScore)
+        availabilityStatus = try c.decodeIfPresent(AvailabilityStatus.self, forKey: .availabilityStatus) ?? .available
+        reviewNote = try c.decodeIfPresent(String.self, forKey: .reviewNote)
+        lastVerifiedAt = try c.decodeIfPresent(String.self, forKey: .lastVerifiedAt)
+        lastReviewedAt = try c.decodeIfPresent(String.self, forKey: .lastReviewedAt)
+        addOns = try c.decodeIfPresent([DogSwipeOrderAddOn].self, forKey: .addOns) ?? []
     }
 }
 
@@ -451,6 +497,7 @@ public extension HotdogProfile {
             id: "hotdog-coney",
             name: "Coney Classic",
             style: "Chili dog",
+            category: "hotdog",
             creditCost: 7,
             signatureNotes: "Beef frank, snap casing, chili, onion, and yellow mustard.",
             distanceMiles: 1.2,
@@ -460,12 +507,17 @@ public extension HotdogProfile {
             addressText: "100 Queen St W, Toronto, ON",
             menuExcerpt: "Coney Classic with chili, onion, and mustard.",
             menuHighlights: ["Chili", "Mustard", "Onion"],
-            craveScore: 0.91
+            craveScore: 0.91,
+            addOns: [
+                DogSwipeOrderAddOn(id: "bacon", name: "Bacon", creditCost: 2),
+                DogSwipeOrderAddOn(id: "extra-pickle", name: "Extra Pickle", creditCost: 1)
+            ]
         ),
         HotdogProfile(
             id: "hotdog-kimchi",
             name: "Kimchi Crunch",
             style: "Korean street dog",
+            category: "fusion",
             creditCost: 9,
             signatureNotes: "Gochujang mayo, kimchi, scallion, and sesame crunch.",
             distanceMiles: 2.4,
@@ -475,12 +527,17 @@ public extension HotdogProfile {
             addressText: "200 King St W, Toronto, ON",
             menuExcerpt: "Kimchi Crunch with fermented cabbage, gochujang mayo, and sesame.",
             menuHighlights: ["Kimchi", "Spicy", "Sesame"],
-            craveScore: 0.88
+            craveScore: 0.88,
+            addOns: [
+                DogSwipeOrderAddOn(id: "sesame-crunch", name: "Sesame Crunch", creditCost: 1),
+                DogSwipeOrderAddOn(id: "extra-kimchi", name: "Extra Kimchi", creditCost: 2)
+            ]
         ),
         HotdogProfile(
             id: "hotdog-chicago",
             name: "Garden Snap",
             style: "Chicago dog",
+            category: "hotdog",
             creditCost: 7,
             signatureNotes: "Sport peppers, relish, tomato, pickle spear, and celery salt.",
             distanceMiles: 3.1,
@@ -490,12 +547,17 @@ public extension HotdogProfile {
             addressText: "860 Bloor St W, Toronto, ON",
             menuExcerpt: "Garden Snap with relish, pickle, sport peppers, and celery salt.",
             menuHighlights: ["Relish", "Pickle", "Sport peppers"],
-            craveScore: 0.82
+            craveScore: 0.82,
+            addOns: [
+                DogSwipeOrderAddOn(id: "cheese-sauce", name: "Cheese Sauce", creditCost: 2),
+                DogSwipeOrderAddOn(id: "jalapenos", name: "Jalapenos", creditCost: 1)
+            ]
         ),
         HotdogProfile(
             id: "hotdog-nightcap",
             name: "Nightcap Melt",
             style: "Chili cheese dog",
+            category: "loaded",
             creditCost: 9,
             signatureNotes: "Sharp cheddar, late-night chili, grilled onions, and jalapeno dust.",
             distanceMiles: 4.8,
@@ -505,7 +567,11 @@ public extension HotdogProfile {
             addressText: "65 Front St W, Toronto, ON",
             menuExcerpt: "Nightcap Melt with sharp cheddar, chili, grilled onions, and jalapeno.",
             menuHighlights: ["Cheddar", "Chili", "Jalapeno"],
-            craveScore: 0.69
+            craveScore: 0.69,
+            addOns: [
+                DogSwipeOrderAddOn(id: "extra-chili", name: "Extra Chili", creditCost: 1),
+                DogSwipeOrderAddOn(id: "onion-rings", name: "Onion Rings", creditCost: 3)
+            ]
         )
     ]
 }

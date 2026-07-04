@@ -148,7 +148,7 @@ private struct TopMatchCard: View {
                         .foregroundStyle(Color.dsSurface)
                         .lineLimit(1)
                         .minimumScaleFactor(0.78)
-                    Text("\(profile.creditLabel) · \(String(format: "%.1f mi", profile.distanceMiles)) · \(profile.walkingTimeLabel) walk")
+                    Text("\(profile.categoryLabel) · \(profile.creditLabel) · \(profile.walkingTimeLabel) walk")
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(Color.dsSurface.opacity(0.70))
                         .lineLimit(1)
@@ -218,7 +218,7 @@ private struct MatchDetailView: View {
                     .foregroundStyle(Color.dsInk)
 
                 LazyVGrid(columns: addOnColumns, alignment: .leading, spacing: .dsSpace2) {
-                    ForEach(OrderAddOn.matchDefaults) { addOn in
+                    ForEach(availableAddOns) { addOn in
                         addOnButton(addOn)
                     }
                 }
@@ -261,6 +261,11 @@ private struct MatchDetailView: View {
         }
         .padding(.dsSpace4)
         .dsCardSurface()
+    }
+
+    private var availableAddOns: [OrderAddOn] {
+        let profileAddOns = profile.addOns.map(OrderAddOn.init(orderAddOn:))
+        return profileAddOns.isEmpty ? OrderAddOn.matchDefaults : profileAddOns
     }
 
     private var orderTotalLabel: String {
@@ -328,7 +333,7 @@ private struct MatchDetailView: View {
         }
         orderError = nil
         DogSwipeAnalytics.shared.trackOrderCTA(profileID: profile.id)
-        let selected = OrderAddOn.matchDefaults.filter { selectedAddOns.contains($0) }
+        let selected = availableAddOns.filter { selectedAddOns.contains($0) }
         do {
             let item = try await orderStore.add(profile: profile, addOns: selected)
             confirmedItemID = item.id
@@ -417,11 +422,21 @@ struct MatchFeatureChip: Identifiable {
 }
 
 func featureChips(for profile: HotdogProfile) -> [MatchFeatureChip] {
-    _ = profile
-    return [
-        MatchFeatureChip(text: "Mild", systemImage: "flame"),
-        MatchFeatureChip(text: "All-Beef", systemImage: "fork.knife"),
-        MatchFeatureChip(text: "Crunchy", systemImage: "leaf.fill"),
-        MatchFeatureChip(text: "Popular", systemImage: "flame.fill")
-    ]
+    var chips: [MatchFeatureChip] = []
+    chips.append(MatchFeatureChip(text: profile.categoryLabel, systemImage: "tag.fill"))
+    for highlight in profile.menuHighlightLabels.prefix(3) {
+        chips.append(MatchFeatureChip(text: highlight, systemImage: chipIcon(for: highlight)))
+    }
+    if chips.count < 2 {
+        chips.append(MatchFeatureChip(text: "Street Pick", systemImage: "flame.fill"))
+    }
+    return chips
+}
+
+private func chipIcon(for value: String) -> String {
+    let lowered = value.lowercased()
+    if lowered.contains("pickle") || lowered.contains("relish") { return "leaf.fill" }
+    if lowered.contains("spicy") || lowered.contains("pepper") || lowered.contains("chili") { return "flame.fill" }
+    if lowered.contains("beef") || lowered.contains("dog") { return "fork.knife" }
+    return "sparkle"
 }

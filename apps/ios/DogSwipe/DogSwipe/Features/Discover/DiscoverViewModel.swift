@@ -17,6 +17,7 @@ final class DiscoverViewModel: ObservableObject {
     @Published private(set) var isUsingCurrentLocation = false
     @Published private(set) var currentLocation: DiscoveryLocation?
     @Published var menuQuery = ""
+    @Published var selectedCategory: String?
 
     private let apiClient: DogSwipeAPIClient
     private let preferencesStore: CravingPreferencesStore
@@ -56,6 +57,11 @@ final class DiscoverViewModel: ObservableObject {
         menuQueryParameter != nil
     }
 
+    var availableCategories: [String] {
+        let cats = Set(allProfiles.map(\.category))
+        return Array(cats).sorted()
+    }
+
     func load() async {
         state = .loading
         do {
@@ -68,7 +74,7 @@ final class DiscoverViewModel: ObservableObject {
                 menuQuery: menuQueryParameter
             )
             allProfiles = rank(profiles)
-            deck = SwipeDeckState(profiles: allProfiles)
+            deck = SwipeDeckState(profiles: filteredProfiles)
             lastMatch = nil
             state = .ready
         } catch {
@@ -76,7 +82,7 @@ final class DiscoverViewModel: ObservableObject {
             isUsingCurrentLocation = false
             if allProfiles.isEmpty || hasMenuQuery {
                 allProfiles = rank(HotdogProfile.samples)
-                deck = SwipeDeckState(profiles: allProfiles)
+                deck = SwipeDeckState(profiles: filteredProfiles)
             }
             state = .failed("Could not refresh profiles.")
         }
@@ -98,10 +104,11 @@ final class DiscoverViewModel: ObservableObject {
 
     func resetToSamples() {
         menuQuery = ""
+        selectedCategory = nil
         currentLocation = nil
         isUsingCurrentLocation = false
         allProfiles = rank(HotdogProfile.samples)
-        deck = SwipeDeckState(profiles: allProfiles)
+        deck = SwipeDeckState(profiles: filteredProfiles)
         lastMatch = nil
         state = .ready
     }
@@ -111,7 +118,18 @@ final class DiscoverViewModel: ObservableObject {
             return
         }
         allProfiles = rank(allProfiles)
-        deck = SwipeDeckState(profiles: allProfiles)
+        deck = SwipeDeckState(profiles: filteredProfiles)
+    }
+
+    func selectCategory(_ category: String?) {
+        selectedCategory = category
+        guard !allProfiles.isEmpty else { return }
+        deck = SwipeDeckState(profiles: filteredProfiles)
+    }
+
+    private var filteredProfiles: [HotdogProfile] {
+        guard let selectedCategory else { return allProfiles }
+        return allProfiles.filter { $0.category == selectedCategory }
     }
 
     @discardableResult

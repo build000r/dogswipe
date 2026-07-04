@@ -29,6 +29,8 @@ final class DogSwipeAPIClientTests: XCTestCase {
               "id": "hotdog-coney",
               "name": "Coney Classic",
               "style": "Chili dog",
+              "category": "hotdog",
+              "tags": ["chili", "classic"],
               "credit_cost": 7,
               "signature_notes": "Beef frank, snap casing, chili, onion, and yellow mustard.",
               "distance_miles": 1.2,
@@ -43,7 +45,11 @@ final class DogSwipeAPIClientTests: XCTestCase {
               "media_alt_text": "Coney hotdog with chili and onion",
               "crave_score": 0.91,
               "availability_status": "available",
-              "last_verified_at": "2026-05-05T13:30:00Z"
+              "last_verified_at": "2026-05-05T13:30:00Z",
+              "add_ons": [
+                {"id": "bacon", "name": "Bacon", "credit_cost": 2},
+                {"id": "extra-pickle", "name": "Extra Pickle", "credit_cost": 1}
+              ]
             }
           ]
         }
@@ -53,6 +59,9 @@ final class DogSwipeAPIClientTests: XCTestCase {
         let profiles = try await client.discovery(limit: 10)
 
         XCTAssertEqual(profiles.map(\.id), ["hotdog-coney"])
+        XCTAssertEqual(profiles.first?.category, "hotdog")
+        XCTAssertEqual(profiles.first?.categoryLabel, "Hotdog")
+        XCTAssertEqual(profiles.first?.tags, ["chili", "classic"])
         XCTAssertEqual(profiles.first?.creditLabel, "7 credits")
         XCTAssertEqual(profiles.first?.vendorName, "Franklin Cart")
         XCTAssertEqual(profiles.first?.latitude, 43.6539)
@@ -67,6 +76,9 @@ final class DogSwipeAPIClientTests: XCTestCase {
         XCTAssertEqual(profiles.first?.menuURL?.absoluteString, "https://franklin.example.com/menu")
         XCTAssertEqual(profiles.first?.menuHighlightLabels, ["7 credits", "Chili", "Mustard", "Onion"])
         XCTAssertEqual(profiles.first?.mediaAltText, "Coney hotdog with chili and onion")
+        XCTAssertEqual(profiles.first?.addOns.count, 2)
+        XCTAssertEqual(profiles.first?.addOns.first?.name, "Bacon")
+        XCTAssertEqual(profiles.first?.addOns.first?.creditCost, 2)
         XCTAssertEqual(http.requests.first?.url?.path, "/v1/discovery")
         XCTAssertEqual(http.requests.first?.url?.query, "limit=10")
     }
@@ -349,7 +361,7 @@ final class DogSwipeAPIClientTests: XCTestCase {
         let body = String(data: http.requests.first!.httpBody!, encoding: .utf8)!
         XCTAssertFalse(body.contains("user_id"))
         XCTAssertTrue(body.contains("\"name\":\"Boardwalk Snap\""))
-        XCTAssertTrue(body.contains("\"credit_cost\":6.25"))
+        XCTAssertTrue(body.contains("\"credit_cost\":6"))
         XCTAssertTrue(body.contains("\"latitude\":43.6532"))
         XCTAssertTrue(body.contains("\"longitude\":-79.3832"))
         XCTAssertTrue(body.contains("\"address_text\":\"100 Queen St W, Toronto, ON\""))
@@ -401,7 +413,7 @@ final class DogSwipeAPIClientTests: XCTestCase {
         XCTAssertEqual(http.requests.first?.url?.path, "/v1/vendor/submissions/submitted-hotdog")
         XCTAssertEqual(http.requests.first?.httpMethod, "PUT")
         let body = String(data: http.requests.first!.httpBody!, encoding: .utf8)!
-        XCTAssertTrue(body.contains("\"credit_cost\":6.5"))
+        XCTAssertTrue(body.contains("\"credit_cost\":7"))
         XCTAssertTrue(body.contains("\"address_text\":\"100 Queen St W, Toronto, ON\""))
     }
 

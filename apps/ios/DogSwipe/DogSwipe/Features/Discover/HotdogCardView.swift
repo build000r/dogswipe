@@ -174,10 +174,7 @@ struct HotdogCardView: View {
     }
 
     private var inlineStampText: String {
-        if profile.style.localizedCaseInsensitiveContains("chicago") {
-            return "CHICAGO"
-        }
-        return "STREET PICK"
+        profile.categoryLabel.uppercased()
     }
 
     private var fallbackHero: some View {

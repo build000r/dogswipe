@@ -172,6 +172,7 @@ private enum ScreenshotHotdogs {
         id: "screenshot-coney",
         name: "Chicago Classic",
         style: "Chicago style",
+        category: "hotdog",
         creditCost: 6,
         signatureNotes: "All-beef dog, mustard, relish, onions, tomato, sport peppers, pickle spear, celery salt.",
         distanceMiles: 0.3,
@@ -186,13 +187,18 @@ private enum ScreenshotHotdogs {
         menuHighlights: ["Mild", "All-Beef", "Crunchy", "Popular"],
         menuCheckedAt: "2026-05-05T16:30:00Z",
         mediaAltText: "Chicago style hotdog with mustard, relish, onion, tomato, pickle, and sport peppers",
-        craveScore: 0.94
+        craveScore: 0.94,
+        addOns: [
+            DogSwipeOrderAddOn(id: "bacon", name: "Bacon", creditCost: 2),
+            DogSwipeOrderAddOn(id: "extra-pickle", name: "Extra Pickle", creditCost: 1)
+        ]
     )
 
     static let kimchi = HotdogProfile(
         id: "screenshot-kimchi",
         name: "Kimchi Crunch",
         style: "Korean street dog",
+        category: "fusion",
         creditCost: 9,
         signatureNotes: "Gochujang mayo, kimchi, scallion, and sesame crunch.",
         distanceMiles: 1.8,
@@ -206,13 +212,18 @@ private enum ScreenshotHotdogs {
         menuExcerpt: "Kimchi Crunch with fermented cabbage, gochujang mayo, and sesame.",
         menuHighlights: ["Kimchi", "Spicy", "Sesame"],
         mediaAltText: "Korean hotdog with kimchi and scallions",
-        craveScore: 0.89
+        craveScore: 0.89,
+        addOns: [
+            DogSwipeOrderAddOn(id: "sesame-crunch", name: "Sesame Crunch", creditCost: 1),
+            DogSwipeOrderAddOn(id: "extra-kimchi", name: "Extra Kimchi", creditCost: 2)
+        ]
     )
 
     static let chicago = HotdogProfile(
         id: "screenshot-chicago",
         name: "Garden Snap",
         style: "Chicago dog",
+        category: "hotdog",
         creditCost: 7,
         signatureNotes: "Sport peppers, relish, tomato, pickle spear, and celery salt.",
         distanceMiles: 2.2,
@@ -222,13 +233,18 @@ private enum ScreenshotHotdogs {
         vendorName: "Northside Stand",
         addressText: "860 Bloor St W, Toronto, ON",
         menuHighlights: ["Relish", "Pickle", "Sport peppers"],
-        craveScore: 0.84
+        craveScore: 0.84,
+        addOns: [
+            DogSwipeOrderAddOn(id: "cheese-sauce", name: "Cheese Sauce", creditCost: 2),
+            DogSwipeOrderAddOn(id: "jalapenos", name: "Jalapenos", creditCost: 1)
+        ]
     )
 
     static let nightcap = HotdogProfile(
         id: "screenshot-nightcap",
         name: "Nightcap Melt",
         style: "Chili cheese dog",
+        category: "loaded",
         creditCost: 9,
         signatureNotes: "Sharp cheddar, late-night chili, grilled onions, and jalapeno dust.",
         distanceMiles: 3.4,
@@ -239,7 +255,11 @@ private enum ScreenshotHotdogs {
         addressText: "65 Front St W, Toronto, ON",
         menuHighlights: ["Cheddar", "Chili", "Jalapeno"],
         craveScore: 0.76,
-        availabilityStatus: .limited
+        availabilityStatus: .limited,
+        addOns: [
+            DogSwipeOrderAddOn(id: "extra-chili", name: "Extra Chili", creditCost: 1),
+            DogSwipeOrderAddOn(id: "onion-rings", name: "Onion Rings", creditCost: 3)
+        ]
     )
 
     static let pendingVendorSubmission = HotdogProfile(
@@ -347,6 +367,8 @@ private enum ScreenshotHotdogs {
             id: id ?? profile.id,
             name: profile.name,
             style: profile.style,
+            category: profile.category,
+            tags: profile.tags,
             creditCost: profile.creditCost,
             signatureNotes: profile.signatureNotes,
             distanceMiles: profile.distanceMiles,
@@ -366,7 +388,8 @@ private enum ScreenshotHotdogs {
             availabilityStatus: availabilityStatus ?? profile.availabilityStatus,
             reviewNote: reviewNote ?? profile.reviewNote,
             lastVerifiedAt: lastVerifiedAt ?? profile.lastVerifiedAt,
-            lastReviewedAt: lastReviewedAt ?? profile.lastReviewedAt
+            lastReviewedAt: lastReviewedAt ?? profile.lastReviewedAt,
+            addOns: profile.addOns
         )
     }
 }

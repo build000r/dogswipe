@@ -59,6 +59,10 @@ struct DiscoverView: View {
                         .transition(.move(edge: .top).combined(with: .opacity))
                 }
 
+                if viewModel.availableCategories.count > 1 {
+                    categoryFilter
+                }
+
                 if case .loading = viewModel.state {
                     loadingState
                 } else if let profile = viewModel.currentProfile {
@@ -161,6 +165,37 @@ struct DiscoverView: View {
         .frame(maxWidth: .infinity)
         .disabled(!viewModel.canSwipe || isCommittingSwipe)
         .opacity(viewModel.canSwipe && !isCommittingSwipe ? 1 : 0.45)
+    }
+
+    private var categoryFilter: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: .dsSpace2) {
+                categoryPill("All", isSelected: viewModel.selectedCategory == nil) {
+                    viewModel.selectCategory(nil)
+                }
+                ForEach(viewModel.availableCategories, id: \.self) { category in
+                    categoryPill(
+                        category.prefix(1).uppercased() + category.dropFirst(),
+                        isSelected: viewModel.selectedCategory == category
+                    ) {
+                        viewModel.selectCategory(category)
+                    }
+                }
+            }
+        }
+    }
+
+    private func categoryPill(_ label: String, isSelected: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(label)
+                .font(.caption.weight(.bold))
+                .foregroundStyle(isSelected ? Color.dsSurface : Color.dsInk)
+                .padding(.horizontal, .dsSpace3)
+                .padding(.vertical, .dsSpace2)
+                .background(isSelected ? Color.dsPrimary : Color.dsSurface, in: Capsule())
+                .overlay { Capsule().stroke(isSelected ? Color.clear : Color.dsDivider) }
+        }
+        .buttonStyle(.plain)
     }
 
     private var menuSearchBar: some View {
