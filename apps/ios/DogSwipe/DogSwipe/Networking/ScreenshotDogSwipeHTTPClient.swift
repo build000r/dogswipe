@@ -123,7 +123,7 @@ private enum ScreenshotHotdogs {
         coney,
         kimchi,
         chicago,
-        nightcap
+        streetTaco
     ]
 
     static let matches = [
@@ -335,25 +335,25 @@ private enum ScreenshotHotdogs {
         ]
     )
 
-    static let nightcap = HotdogProfile(
-        id: "screenshot-nightcap",
-        name: "Nightcap Melt",
-        style: "Chili cheese dog",
-        category: "loaded",
-        creditCost: 9,
-        signatureNotes: "Sharp cheddar, late-night chili, grilled onions, and jalapeno dust.",
+    static let streetTaco = HotdogProfile(
+        id: "screenshot-taco",
+        name: "Birria Crunch",
+        style: "Street taco",
+        category: "tacos",
+        creditCost: 8,
+        signatureNotes: "Braised beef birria, melted queso, consommé, cilantro, and onion on a crisp corn tortilla.",
         distanceMiles: 3.4,
         latitude: 43.647,
         longitude: -79.395,
         walkingTimeMinutes: 41,
-        vendorName: "Depot Dogs",
+        vendorName: "Taqueria Sol",
         addressText: "65 Front St W, Toronto, ON",
-        menuHighlights: ["Cheddar", "Chili", "Jalapeno"],
+        menuHighlights: ["Birria", "Queso", "Cilantro"],
         craveScore: 0.76,
         availabilityStatus: .limited,
         addOns: [
-            DogSwipeOrderAddOn(id: "extra-chili", name: "Extra Chili", creditCost: 1),
-            DogSwipeOrderAddOn(id: "onion-rings", name: "Onion Rings", creditCost: 3)
+            DogSwipeOrderAddOn(id: "extra-consomme", name: "Extra Consommé", creditCost: 1),
+            DogSwipeOrderAddOn(id: "guacamole", name: "Guacamole", creditCost: 2)
         ]
     )
 
@@ -572,7 +572,7 @@ private enum ScreenshotWallet {
                 entryType: .earn,
                 amount: 5,
                 balanceAfter: -2,
-                reason: "Sold Boardwalk Snap",
+                reason: "Sold Birria Crunch",
                 createdAt: "2026-06-20T11:30:00Z"
             )
         ]
