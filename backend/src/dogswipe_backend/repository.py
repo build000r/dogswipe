@@ -1151,6 +1151,24 @@ class SqlAlchemyHotdogRepository(HotdogRepository):
         rater_user_id: str,
         review: ReviewCreate,
     ) -> Review:
+        if rater_user_id == review.ratee_user_id:
+            raise PermissionError("Users cannot review themselves")
+        order = await self.session.get(OrderRecord, review.order_id)
+        if order is None or order.status not in {
+            OrderStatus.completed.value,
+            OrderStatus.delivered.value,
+            OrderStatus.reviewed.value,
+        }:
+            raise ValueError("Reviews are only allowed after order completion or delivery")
+        existing = await self.session.scalar(
+            select(ReviewRecord).where(
+                ReviewRecord.order_id == review.order_id,
+                ReviewRecord.direction == review.direction.value,
+            )
+        )
+        if existing is not None:
+            raise ValueError("Review already exists for this order direction")
+
         record = ReviewRecord(
             order_id=review.order_id,
             rater_user_id=rater_user_id,

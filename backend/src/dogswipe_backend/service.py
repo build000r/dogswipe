@@ -534,7 +534,18 @@ class DogSwipeService:
         user_id: str,
         request: ReviewCreate,
     ) -> ReviewResponse:
-        review = await self.repository.create_review(rater_user_id=user_id, review=request)
+        try:
+            review = await self.repository.create_review(rater_user_id=user_id, review=request)
+        except PermissionError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=str(exc),
+            ) from exc
+        except ValueError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=str(exc),
+            ) from exc
         return ReviewResponse(review=review)
 
     async def submit_vendor_profile(

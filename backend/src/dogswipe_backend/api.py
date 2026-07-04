@@ -29,6 +29,8 @@ from .schemas import (
     OrderDisputeResolutionRequest,
     OrderListResponse,
     OrderResponse,
+    ReviewCreate,
+    ReviewResponse,
     SwipeRequest,
     SwipeResponse,
     VendorSubmissionListResponse,
@@ -208,6 +210,14 @@ def build_api_router() -> APIRouter:
         user_id: str = Depends(get_current_user_id),
     ) -> OrderResponse:
         return await service.dispute_order(user_id=user_id, order_id=order_id, request=request)
+
+    @v1.post("/reviews", response_model=ReviewResponse, status_code=status.HTTP_201_CREATED)
+    async def create_review(
+        request: ReviewCreate,
+        service: DogSwipeService = Depends(get_service),
+        user_id: str = Depends(get_current_user_id),
+    ) -> ReviewResponse:
+        return await service.create_review(user_id=user_id, request=request)
 
     @v1.get("/vendor/submissions", response_model=VendorSubmissionListResponse)
     async def vendor_submissions(
