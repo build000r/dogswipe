@@ -273,6 +273,29 @@ class WalletResponse(BaseModel):
     account: CreditAccount
 
 
+class CreditLedgerEntryType(StrEnum):
+    purchase = "purchase"
+    spend = "spend"
+    earn = "earn"
+    refund_credit = "refund_credit"
+    admin_adjustment = "admin_adjustment"
+
+
+class CreditLedgerEntry(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str
+    user_id: str
+    entry_type: CreditLedgerEntryType
+    amount: int
+    balance_after: int
+    order_ref: str | None = None
+    purchase_ref: str | None = None
+    idempotency_key: str | None = None
+    reason: str | None = None
+    created_at: datetime
+
+
 class ReviewDirection(StrEnum):
     giver_reviews_receiver = "giver_reviews_receiver"
     receiver_reviews_giver = "receiver_reviews_giver"

@@ -5,12 +5,13 @@ from collections.abc import Iterable
 from datetime import UTC, datetime
 from math import cos, radians
 
-from sqlalchemy import Select, and_, or_, select
+from sqlalchemy import Select, and_, func as sa_func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.elements import ColumnElement
 
 from .models import (
     CreditAccountRecord,
+    CreditLedgerEntry as CreditLedgerEntryRecord,
     HotdogProfileRecord,
     OrderRecord,
     ReviewRecord,
@@ -20,6 +21,8 @@ from .models import (
 from .schemas import (
     CravingPreferences,
     CreditAccount,
+    CreditLedgerEntry,
+    CreditLedgerEntryType,
     HotdogProfile,
     OrderAddOn,
     OrderItem,
@@ -180,6 +183,22 @@ class HotdogRepository:
         raise NotImplementedError
 
     async def get_or_create_credit_account(self, *, user_id: str) -> CreditAccount:
+        raise NotImplementedError
+
+    async def create_ledger_entry(
+        self,
+        *,
+        user_id: str,
+        entry_type: CreditLedgerEntryType,
+        amount: int,
+        order_ref: str | None = None,
+        purchase_ref: str | None = None,
+        idempotency_key: str | None = None,
+        reason: str | None = None,
+    ) -> CreditLedgerEntry:
+        raise NotImplementedError
+
+    async def get_ledger_balance(self, *, user_id: str) -> int:
         raise NotImplementedError
 
     async def create_review(
@@ -623,6 +642,56 @@ class SqlAlchemyHotdogRepository(HotdogRepository):
             await self.session.flush()
         return CreditAccount.model_validate(record)
 
+    async def create_ledger_entry(
+        self,
+        *,
+        user_id: str,
+        entry_type: CreditLedgerEntryType,
+        amount: int,
+        order_ref: str | None = None,
+        purchase_ref: str | None = None,
+        idempotency_key: str | None = None,
+        reason: str | None = None,
+    ) -> CreditLedgerEntry:
+        if idempotency_key is not None:
+            existing = await self.session.scalar(
+                select(CreditLedgerEntryRecord).where(
+                    CreditLedgerEntryRecord.idempotency_key == idempotency_key
+                )
+            )
+            if existing is not None:
+                raise ValueError("credit ledger idempotency_key already exists")
+
+        account = await self.session.get(CreditAccountRecord, user_id)
+        if account is None:
+            account = CreditAccountRecord(user_id=user_id)
+            self.session.add(account)
+            await self.session.flush()
+
+        balance_after = await self.get_ledger_balance(user_id=user_id) + amount
+        record = CreditLedgerEntryRecord(
+            user_id=user_id,
+            entry_type=entry_type.value,
+            amount=amount,
+            balance_after=balance_after,
+            order_ref=order_ref,
+            purchase_ref=purchase_ref,
+            idempotency_key=idempotency_key,
+            reason=reason,
+        )
+        self.session.add(record)
+        self._apply_lifetime_counter(account, entry_type=entry_type, amount=amount)
+        await self.session.flush()
+        return CreditLedgerEntry.model_validate(record)
+
+    async def get_ledger_balance(self, *, user_id: str) -> int:
+        result = await self.session.scalar(
+            select(sa_func.coalesce(sa_func.sum(CreditLedgerEntryRecord.amount), 0)).where(
+                CreditLedgerEntryRecord.user_id == user_id
+            )
+        )
+        return int(result or 0)
+
     async def create_review(
         self,
         *,
@@ -640,6 +709,27 @@ class SqlAlchemyHotdogRepository(HotdogRepository):
         self.session.add(record)
         await self.session.flush()
         return Review.model_validate(record)
+
+    @staticmethod
+    def _apply_lifetime_counter(
+        account: CreditAccountRecord,
+        *,
+        entry_type: CreditLedgerEntryType,
+        amount: int,
+    ) -> None:
+        if entry_type == CreditLedgerEntryType.purchase and amount > 0:
+            account.lifetime_purchased += amount
+        elif entry_type in {
+            CreditLedgerEntryType.earn,
+            CreditLedgerEntryType.refund_credit,
+            CreditLedgerEntryType.admin_adjustment,
+        } and amount > 0:
+            account.lifetime_earned += amount
+        elif entry_type in {
+            CreditLedgerEntryType.spend,
+            CreditLedgerEntryType.admin_adjustment,
+        } and amount < 0:
+            account.lifetime_spent += abs(amount)
 
     @staticmethod
     def _distance_candidate_filter(

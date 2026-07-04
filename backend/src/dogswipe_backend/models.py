@@ -7,6 +7,7 @@ from sqlalchemy import (
     Boolean,
     CheckConstraint,
     DateTime,
+    event,
     Float,
     Index,
     Integer,
@@ -102,6 +103,43 @@ class CreditAccountRecord(Base):
         server_default=func.now(),
         onupdate=func.now(),
     )
+
+
+class CreditLedgerEntry(Base):
+    __tablename__ = "credit_ledger"
+    __table_args__ = (
+        Index("ix_credit_ledger_user", "user_id"),
+        UniqueConstraint("idempotency_key", name="uq_credit_ledger_idempotency_key"),
+        CheckConstraint(
+            "entry_type IN ('purchase', 'spend', 'earn', 'refund_credit', 'admin_adjustment')",
+            name="ck_credit_ledger_entry_type",
+        ),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    user_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    entry_type: Mapped[str] = mapped_column(String(32), nullable=False)
+    amount: Mapped[int] = mapped_column(Integer, nullable=False)
+    balance_after: Mapped[int] = mapped_column(Integer, nullable=False)
+    order_ref: Mapped[str | None] = mapped_column(String(36))
+    purchase_ref: Mapped[str | None] = mapped_column(String(128))
+    idempotency_key: Mapped[str | None] = mapped_column(String(128))
+    reason: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+        nullable=False,
+    )
+
+
+@event.listens_for(CreditLedgerEntry, "before_update")
+def _prevent_credit_ledger_update(*_args: object) -> None:
+    raise ValueError("credit ledger entries are append-only")
+
+
+@event.listens_for(CreditLedgerEntry, "before_delete")
+def _prevent_credit_ledger_delete(*_args: object) -> None:
+    raise ValueError("credit ledger entries are append-only")
 
 
 class OrderRecord(Base):
