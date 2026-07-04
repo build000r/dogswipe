@@ -4,7 +4,7 @@ import pytest
 from pydantic import ValidationError
 from sqlalchemy.exc import IntegrityError
 
-from dogswipe_backend.models import ReviewRecord
+from dogswipe_backend.models import HotdogProfileRecord, ReviewRecord
 from dogswipe_backend.repository import SqlAlchemyHotdogRepository
 from dogswipe_backend.schemas import ReviewCreate, ReviewDirection
 from dogswipe_backend.service import DogSwipeService
@@ -96,3 +96,66 @@ def test_review_create_rejects_out_of_range_rating(rating: int) -> None:
             direction=ReviewDirection.giver_reviews_receiver,
             rating=rating,
         )
+
+
+@pytest.mark.asyncio
+async def test_repository_aggregates_user_reputation(database) -> None:
+    async with database.session_factory() as session:
+        repository = SqlAlchemyHotdogRepository(session)
+        session.add_all(
+            [
+                ReviewRecord(
+                    order_id="order-rep-1",
+                    rater_user_id="reviewer-1",
+                    ratee_user_id="maker-rep",
+                    direction=ReviewDirection.giver_reviews_receiver.value,
+                    rating=5,
+                ),
+                ReviewRecord(
+                    order_id="order-rep-2",
+                    rater_user_id="reviewer-2",
+                    ratee_user_id="maker-rep",
+                    direction=ReviewDirection.receiver_reviews_giver.value,
+                    rating=3,
+                ),
+            ]
+        )
+        await session.flush()
+
+        reputation = await repository.get_user_reputation(user_id="maker-rep")
+
+        assert reputation.average_rating == 4
+        assert reputation.review_count == 2
+
+
+@pytest.mark.asyncio
+async def test_discovery_profiles_include_maker_reputation(database) -> None:
+    async with database.session_factory() as session:
+        profile = await session.get(HotdogProfileRecord, "hotdog-coney")
+        assert profile is not None
+        profile.vendor_owner_user_id = "maker-discovery"
+        session.add_all(
+            [
+                ReviewRecord(
+                    order_id="order-card-1",
+                    rater_user_id="reviewer-1",
+                    ratee_user_id="maker-discovery",
+                    direction=ReviewDirection.giver_reviews_receiver.value,
+                    rating=5,
+                ),
+                ReviewRecord(
+                    order_id="order-card-2",
+                    rater_user_id="reviewer-2",
+                    ratee_user_id="maker-discovery",
+                    direction=ReviewDirection.receiver_reviews_giver.value,
+                    rating=4,
+                ),
+            ]
+        )
+        await session.flush()
+
+        profiles = await SqlAlchemyHotdogRepository(session).list_available_profiles(limit=10)
+        coney = next(profile for profile in profiles if profile.id == "hotdog-coney")
+
+        assert coney.reputation_rating == 4.5
+        assert coney.reputation_review_count == 2

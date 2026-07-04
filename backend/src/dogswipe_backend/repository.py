@@ -33,6 +33,7 @@ from .schemas import (
     OfferingAddOnCreate,
     Review,
     ReviewCreate,
+    ReputationSummary,
     SwipeDecision,
     VendorSubmissionRequest,
 )
@@ -213,6 +214,9 @@ class HotdogRepository:
         rater_user_id: str,
         review: ReviewCreate,
     ) -> Review:
+        raise NotImplementedError
+
+    async def get_user_reputation(self, *, user_id: str) -> ReputationSummary:
         raise NotImplementedError
 
 
@@ -573,11 +577,27 @@ class SqlAlchemyHotdogRepository(HotdogRepository):
         add_ons_by_profile = await self._add_ons_by_profile(
             profile_ids=[record.id for record in materialized]
         )
+        owner_ids = [
+            record.vendor_owner_user_id
+            for record in materialized
+            if record.vendor_owner_user_id is not None
+        ]
+        reputation_by_user = await self._reputation_by_user(user_ids=owner_ids)
         return [
             HotdogProfile.model_validate(record).model_copy(
                 update={
                     "add_ons": add_ons_by_profile.get(record.id, []),
                     "tags": self._decode_tags(record.tags_json),
+                    "reputation_rating": (
+                        reputation_by_user[record.vendor_owner_user_id].average_rating
+                        if record.vendor_owner_user_id in reputation_by_user
+                        else None
+                    ),
+                    "reputation_review_count": (
+                        reputation_by_user[record.vendor_owner_user_id].review_count
+                        if record.vendor_owner_user_id in reputation_by_user
+                        else 0
+                    ),
                 }
             )
             for record in materialized
@@ -599,6 +619,35 @@ class SqlAlchemyHotdogRepository(HotdogRepository):
         for record in await self.session.scalars(statement):
             add_ons.setdefault(record.profile_id, []).append(OrderAddOn.model_validate(record))
         return add_ons
+
+    async def _reputation_by_user(
+        self,
+        *,
+        user_ids: list[str],
+    ) -> dict[str, ReputationSummary]:
+        if not user_ids:
+            return {}
+        unique_user_ids = list(dict.fromkeys(user_ids))
+        statement = (
+            select(
+                ReviewRecord.ratee_user_id,
+                sa_func.avg(ReviewRecord.rating),
+                sa_func.count(ReviewRecord.id),
+            )
+            .where(ReviewRecord.ratee_user_id.in_(unique_user_ids))
+            .group_by(ReviewRecord.ratee_user_id)
+        )
+        summaries = {
+            user_id: ReputationSummary(user_id=user_id)
+            for user_id in unique_user_ids
+        }
+        for user_id, average_rating, review_count in await self.session.execute(statement):
+            summaries[user_id] = ReputationSummary(
+                user_id=user_id,
+                average_rating=float(average_rating),
+                review_count=int(review_count),
+            )
+        return summaries
 
     def _record_from_submission(
         self,
@@ -803,6 +852,9 @@ class SqlAlchemyHotdogRepository(HotdogRepository):
         self.session.add(record)
         await self.session.flush()
         return Review.model_validate(record)
+
+    async def get_user_reputation(self, *, user_id: str) -> ReputationSummary:
+        return (await self._reputation_by_user(user_ids=[user_id]))[user_id]
 
     @staticmethod
     def _apply_lifetime_counter(

@@ -423,11 +423,13 @@ class DogSwipeService:
         classic_score = (
             1.0 if not preferences.classic_only or DogSwipeService._is_classic(profile) else 0.62
         )
+        reputation_score = DogSwipeService._reputation_score(profile)
         weighted_score = (
-            (profile.crave_score * 0.55)
+            (profile.crave_score * 0.50)
             + (distance_score * 0.25)
             + (spicy_score * 0.10)
             + (classic_score * 0.10)
+            + (reputation_score * 0.05)
         )
         if menu_query is not None:
             weighted_score = (weighted_score * 0.82) + (
@@ -442,6 +444,12 @@ class DogSwipeService:
     @staticmethod
     def _is_classic(profile: HotdogProfile) -> bool:
         return "classic" in profile.tags
+
+    @staticmethod
+    def _reputation_score(profile: HotdogProfile) -> float:
+        if profile.reputation_rating is None or profile.reputation_review_count == 0:
+            return 0.7
+        return max(0.0, min(profile.reputation_rating / 5.0, 1.0))
 
     @staticmethod
     def _matches_menu_query(profile: HotdogProfile, menu_query: str | None) -> bool:

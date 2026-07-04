@@ -81,6 +81,8 @@ class HotdogProfile(BaseModel):
     last_verified_at: datetime | None = None
     last_reviewed_at: datetime | None = None
     add_ons: list[OrderAddOn] = Field(default_factory=list)
+    reputation_rating: float | None = Field(default=None, ge=1, le=5)
+    reputation_review_count: int = Field(default=0, ge=0)
 
     @computed_field  # type: ignore[prop-decorator]
     @property
@@ -369,3 +371,9 @@ class ReviewCreate(BaseModel):
 
 class ReviewResponse(BaseModel):
     review: Review
+
+
+class ReputationSummary(BaseModel):
+    user_id: str
+    average_rating: float | None = None
+    review_count: int = Field(default=0, ge=0)

@@ -45,6 +45,8 @@ def _profile(
     crave_score: float = 0.8,
     add_ons: list[OrderAddOn] | None = None,
     tags: list[str] | None = None,
+    reputation_rating: float | None = None,
+    reputation_review_count: int = 0,
 ) -> HotdogProfile:
     return HotdogProfile(
         id=profile_id,
@@ -68,6 +70,8 @@ def _profile(
         crave_score=crave_score,
         availability_status="available",
         tags=tags or ["classic"],
+        reputation_rating=reputation_rating,
+        reputation_review_count=reputation_review_count,
         add_ons=add_ons
         if add_ons is not None
         else [
@@ -552,6 +556,61 @@ async def test_discovery_preferences_use_category_aware_tags() -> None:
         "classic-coffee",
         "classic-hotdog",
     ]
+
+
+@pytest.mark.asyncio
+async def test_discovery_uses_reputation_as_ranking_signal() -> None:
+    repository = FakeRepository()
+    repository.available_profiles = [
+        _profile(
+            "low-reputation",
+            distance_miles=1.2,
+            crave_score=0.8,
+            reputation_rating=2,
+            reputation_review_count=4,
+        ),
+        _profile(
+            "high-reputation",
+            distance_miles=1.2,
+            crave_score=0.8,
+            reputation_rating=5,
+            reputation_review_count=4,
+        ),
+    ]
+    service = DogSwipeService(repository)
+
+    response = await service.discovery(user_id="u1", limit=10)
+
+    assert [profile.id for profile in response.profiles] == [
+        "high-reputation",
+        "low-reputation",
+    ]
+
+
+@pytest.mark.asyncio
+async def test_reputation_ranking_does_not_override_proximity() -> None:
+    repository = FakeRepository()
+    repository.available_profiles = [
+        _profile(
+            "near-low-reputation",
+            distance_miles=1,
+            crave_score=0.8,
+            reputation_rating=1,
+            reputation_review_count=10,
+        ),
+        _profile(
+            "far-high-reputation",
+            distance_miles=9,
+            crave_score=0.8,
+            reputation_rating=5,
+            reputation_review_count=10,
+        ),
+    ]
+    service = DogSwipeService(repository)
+
+    response = await service.discovery(user_id="u1", limit=10)
+
+    assert response.profiles[0].id == "near-low-reputation"
 
 
 @pytest.mark.asyncio
