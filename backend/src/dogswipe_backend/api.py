@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request, status
 from spaps_server_quickstart.api.health import HealthRouterFactory
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -16,6 +16,9 @@ from .schemas import (
     AdminModerationResponse,
     AdminReviewQueueResponse,
     CravingPreferences,
+    CreditPurchaseRequest,
+    CreditPurchaseResponse,
+    CreditWebhookResponse,
     DiscoveryResponse,
     MatchResponse,
     MenuIngestionResponse,
@@ -124,6 +127,25 @@ def build_api_router() -> APIRouter:
         user_id: str = Depends(get_current_user_id),
     ) -> WalletResponse:
         return await service.wallet(user_id=user_id)
+
+    @v1.post("/credits/purchase", response_model=CreditPurchaseResponse)
+    async def purchase_credits(
+        request: CreditPurchaseRequest,
+        service: DogSwipeService = Depends(get_service),
+        user_id: str = Depends(get_current_user_id),
+    ) -> CreditPurchaseResponse:
+        return await service.create_credit_purchase(user_id=user_id, request=request)
+
+    @v1.post("/credits/webhook", response_model=CreditWebhookResponse)
+    async def credit_webhook(
+        request: Request,
+        stripe_signature: str | None = Header(default=None, alias="Stripe-Signature"),
+        service: DogSwipeService = Depends(get_service),
+    ) -> CreditWebhookResponse:
+        return await service.handle_credit_webhook(
+            payload=await request.body(),
+            stripe_signature=stripe_signature,
+        )
 
     @v1.get("/orders", response_model=OrderListResponse)
     async def orders(

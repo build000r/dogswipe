@@ -318,6 +318,25 @@ class WalletResponse(BaseModel):
     account: CreditAccount
 
 
+class CreditPurchaseRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    amount_cents: int = Field(ge=100, le=100_000)
+
+
+class CreditPurchaseResponse(BaseModel):
+    checkout_session_id: str
+    checkout_url: str
+    amount_cents: int = Field(ge=100)
+    credits: int = Field(ge=1)
+
+
+class CreditWebhookResponse(BaseModel):
+    received: bool = True
+    credited: bool = False
+    duplicate: bool = False
+
+
 class CreditLedgerEntryType(StrEnum):
     purchase = "purchase"
     spend = "spend"

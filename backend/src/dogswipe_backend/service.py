@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 from datetime import UTC, datetime, timedelta
 from math import asin, cos, radians, sin, sqrt
+from typing import Any, Mapping
 
 from fastapi import HTTPException, status
 
@@ -17,6 +18,10 @@ from .schemas import (
     AdminModerationResponse,
     AdminReviewQueueResponse,
     CravingPreferences,
+    CreditLedgerEntryType,
+    CreditPurchaseRequest,
+    CreditPurchaseResponse,
+    CreditWebhookResponse,
     DiscoveryResponse,
     FulfillmentMode,
     HotdogProfile,
@@ -37,9 +42,22 @@ from .schemas import (
     WalletResponse,
     validate_order_status_transition,
 )
+from .settings import get_settings
 
 EARTH_RADIUS_MILES = 3958.8
 MENU_QUERY_MAX_LENGTH = 64
+STRIPE_CENTS_PER_CREDIT = 100
+
+stripe: Any | None = None
+
+
+def _stripe_module() -> Any:
+    global stripe
+    if stripe is None:
+        import stripe as stripe_package
+
+        stripe = stripe_package
+    return stripe
 
 
 class DogSwipeService:
@@ -117,6 +135,113 @@ class DogSwipeService:
         account = await self.repository.get_or_create_credit_account(user_id=user_id)
         return WalletResponse(account=account)
 
+    async def create_credit_purchase(
+        self,
+        *,
+        user_id: str,
+        request: CreditPurchaseRequest,
+    ) -> CreditPurchaseResponse:
+        if request.amount_cents % STRIPE_CENTS_PER_CREDIT != 0:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail="amount_cents must convert to whole credits",
+            )
+
+        credits = request.amount_cents // STRIPE_CENTS_PER_CREDIT
+        settings = get_settings()
+        if not settings.stripe_secret_key:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Stripe checkout is not configured",
+            )
+
+        stripe_client = _stripe_module()
+        stripe_client.api_key = settings.stripe_secret_key
+        session = stripe_client.checkout.Session.create(
+            mode="payment",
+            success_url=settings.stripe_success_url,
+            cancel_url=settings.stripe_cancel_url,
+            client_reference_id=user_id,
+            metadata={
+                "user_id": user_id,
+                "credits": str(credits),
+                "amount_cents": str(request.amount_cents),
+            },
+            line_items=[
+                {
+                    "quantity": 1,
+                    "price_data": {
+                        "currency": "usd",
+                        "unit_amount": request.amount_cents,
+                        "product_data": {"name": f"{credits} DogSwipe credits"},
+                    },
+                }
+            ],
+        )
+        return CreditPurchaseResponse(
+            checkout_session_id=str(self._stripe_value(session, "id")),
+            checkout_url=str(self._stripe_value(session, "url")),
+            amount_cents=request.amount_cents,
+            credits=credits,
+        )
+
+    async def handle_credit_webhook(
+        self,
+        *,
+        payload: bytes,
+        stripe_signature: str | None,
+    ) -> CreditWebhookResponse:
+        settings = get_settings()
+        if not settings.stripe_webhook_secret:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Stripe webhook is not configured",
+            )
+        if not stripe_signature:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Missing Stripe-Signature header",
+            )
+
+        stripe_client = _stripe_module()
+        try:
+            event = stripe_client.Webhook.construct_event(
+                payload,
+                stripe_signature,
+                settings.stripe_webhook_secret,
+            )
+        except Exception as exc:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid Stripe webhook signature",
+            ) from exc
+
+        if self._stripe_value(event, "type") != "checkout.session.completed":
+            return CreditWebhookResponse(received=True)
+
+        event_id = str(self._stripe_value(event, "id"))
+        session = self._stripe_value(self._stripe_value(event, "data"), "object")
+        metadata = self._stripe_value(session, "metadata") or {}
+        user_id = str(self._stripe_metadata_value(metadata, "user_id"))
+        credits = int(self._stripe_metadata_value(metadata, "credits"))
+        purchase_ref = str(self._stripe_value(session, "id"))
+
+        try:
+            await self.repository.create_ledger_entry(
+                user_id=user_id,
+                entry_type=CreditLedgerEntryType.purchase,
+                amount=credits,
+                purchase_ref=purchase_ref,
+                idempotency_key=event_id,
+                reason="Stripe checkout.session.completed",
+            )
+        except ValueError as exc:
+            if "idempotency_key" in str(exc):
+                return CreditWebhookResponse(received=True, duplicate=True)
+            raise
+
+        return CreditWebhookResponse(received=True, credited=True)
+
     @staticmethod
     def _location_from_coordinates(
         latitude: float | None,
@@ -125,6 +250,22 @@ class DogSwipeService:
         if latitude is None or longitude is None:
             return None
         return (latitude, longitude)
+
+    @staticmethod
+    def _stripe_value(source: Any, key: str) -> Any:
+        if isinstance(source, Mapping):
+            return source.get(key)
+        return getattr(source, key, None)
+
+    @staticmethod
+    def _stripe_metadata_value(metadata: Any, key: str) -> Any:
+        value = DogSwipeService._stripe_value(metadata, key)
+        if value is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Stripe session metadata missing {key}",
+            )
+        return value
 
     @staticmethod
     def _profile_fetch_limit(
