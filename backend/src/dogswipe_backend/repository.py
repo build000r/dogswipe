@@ -13,6 +13,7 @@ from .models import (
     CreditAccountRecord,
     HotdogProfileRecord,
     OrderRecord,
+    ReviewRecord,
     SwipeEventRecord,
     UserPreferenceRecord,
 )
@@ -23,6 +24,8 @@ from .schemas import (
     OrderAddOn,
     OrderItem,
     OrderStatus,
+    Review,
+    ReviewCreate,
     SwipeDecision,
     VendorSubmissionRequest,
 )
@@ -177,6 +180,14 @@ class HotdogRepository:
         raise NotImplementedError
 
     async def get_or_create_credit_account(self, *, user_id: str) -> CreditAccount:
+        raise NotImplementedError
+
+    async def create_review(
+        self,
+        *,
+        rater_user_id: str,
+        review: ReviewCreate,
+    ) -> Review:
         raise NotImplementedError
 
 
@@ -611,6 +622,24 @@ class SqlAlchemyHotdogRepository(HotdogRepository):
             self.session.add(record)
             await self.session.flush()
         return CreditAccount.model_validate(record)
+
+    async def create_review(
+        self,
+        *,
+        rater_user_id: str,
+        review: ReviewCreate,
+    ) -> Review:
+        record = ReviewRecord(
+            order_id=review.order_id,
+            rater_user_id=rater_user_id,
+            ratee_user_id=review.ratee_user_id,
+            direction=review.direction.value,
+            rating=review.rating,
+            text=review.text,
+        )
+        self.session.add(record)
+        await self.session.flush()
+        return Review.model_validate(record)
 
     @staticmethod
     def _distance_candidate_filter(

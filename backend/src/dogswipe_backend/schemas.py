@@ -271,3 +271,35 @@ class CreditAccount(BaseModel):
 
 class WalletResponse(BaseModel):
     account: CreditAccount
+
+
+class ReviewDirection(StrEnum):
+    giver_reviews_receiver = "giver_reviews_receiver"
+    receiver_reviews_giver = "receiver_reviews_giver"
+
+
+class Review(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str
+    order_id: str
+    rater_user_id: str
+    ratee_user_id: str
+    direction: ReviewDirection
+    rating: int = Field(ge=1, le=5)
+    text: str | None = None
+    created_at: datetime
+
+
+class ReviewCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    order_id: str = Field(min_length=1, max_length=64)
+    ratee_user_id: str = Field(min_length=1, max_length=128)
+    direction: ReviewDirection
+    rating: int = Field(ge=1, le=5)
+    text: str | None = Field(default=None, max_length=2000)
+
+
+class ReviewResponse(BaseModel):
+    review: Review

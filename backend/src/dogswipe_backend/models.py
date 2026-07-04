@@ -3,7 +3,18 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from uuid import uuid4
 
-from sqlalchemy import Boolean, DateTime, Float, Index, Integer, String, Text, func
+from sqlalchemy import (
+    Boolean,
+    CheckConstraint,
+    DateTime,
+    Float,
+    Index,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+    func,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .db import Base
@@ -109,6 +120,31 @@ class OrderRecord(Base):
     add_ons_json: Mapped[str] = mapped_column(Text, nullable=False, default="[]")
     total_dollars: Mapped[float] = mapped_column(Float, nullable=False)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="draft")
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+        nullable=False,
+    )
+
+
+class ReviewRecord(Base):
+    __tablename__ = "reviews"
+    __table_args__ = (
+        UniqueConstraint("order_id", "direction", name="uq_reviews_order_direction"),
+        CheckConstraint(
+            "direction IN ('giver_reviews_receiver', 'receiver_reviews_giver')",
+            name="ck_reviews_direction",
+        ),
+        CheckConstraint("rating >= 1 AND rating <= 5", name="ck_reviews_rating_range"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    order_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    rater_user_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    ratee_user_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    direction: Mapped[str] = mapped_column(String(32), nullable=False)
+    rating: Mapped[int] = mapped_column(Integer, nullable=False)
+    text: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=lambda: datetime.now(UTC),

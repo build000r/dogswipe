@@ -26,6 +26,8 @@ from .schemas import (
     OrderListResponse,
     OrderResponse,
     OrderStatus,
+    ReviewCreate,
+    ReviewResponse,
     SwipeRequest,
     SwipeResponse,
     VendorSubmissionListResponse,
@@ -225,6 +227,15 @@ class DogSwipeService:
                 detail="Order not found",
             )
         return OrderResponse(order=updated)
+
+    async def create_review(
+        self,
+        *,
+        user_id: str,
+        request: ReviewCreate,
+    ) -> ReviewResponse:
+        review = await self.repository.create_review(rater_user_id=user_id, review=request)
+        return ReviewResponse(review=review)
 
     async def submit_vendor_profile(
         self,
