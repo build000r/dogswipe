@@ -163,10 +163,10 @@ final class DogSwipeSmokeTests: XCTestCase {
                 id: "order-hotdog-sample",
                 profile: HotdogProfile.samples[0],
                 addOns: [
-                    DogSwipeOrderAddOn(id: "bacon", name: "Bacon", priceDollars: 1.00),
-                    DogSwipeOrderAddOn(id: "extra-pickle", name: "Extra Pickle", priceDollars: 0.50)
+                    DogSwipeOrderAddOn(id: "bacon", name: "Bacon", creditCost: 2),
+                    DogSwipeOrderAddOn(id: "extra-pickle", name: "Extra Pickle", creditCost: 1)
                 ],
-                totalDollars: HotdogProfile.samples[0].priceDollars + 1.50
+                totalCredits: HotdogProfile.samples[0].creditCost + 3
             )
         ]
         let apiClient = DogSwipeAPIClient(
@@ -185,7 +185,7 @@ final class DogSwipeSmokeTests: XCTestCase {
         XCTAssertEqual(store.latestItem, item)
         XCTAssertEqual(item.profileID, HotdogProfile.samples[0].id)
         XCTAssertEqual(item.addOnSummary, "Bacon, Extra Pickle")
-        XCTAssertEqual(item.totalDollars, HotdogProfile.samples[0].priceDollars + 1.50, accuracy: 0.001)
+        XCTAssertEqual(item.totalCredits, HotdogProfile.samples[0].creditCost + 3)
         let request = try XCTUnwrap(http.requests.first)
         XCTAssertEqual(request.url?.path, "/v1/orders")
         XCTAssertEqual(request.httpMethod, "POST")
@@ -206,9 +206,9 @@ final class DogSwipeSmokeTests: XCTestCase {
                             id: "order-hotdog-sample",
                             profile: HotdogProfile.samples[0],
                             addOns: [
-                                DogSwipeOrderAddOn(id: "bacon", name: "Bacon", priceDollars: 1.00)
+                                DogSwipeOrderAddOn(id: "bacon", name: "Bacon", creditCost: 2)
                             ],
-                            totalDollars: HotdogProfile.samples[0].priceDollars + 1.00
+                            totalCredits: HotdogProfile.samples[0].creditCost + 2
                         )
                     ]
                 )
@@ -482,7 +482,7 @@ final class DogSwipeSmokeTests: XCTestCase {
             id: "no-coordinates",
             name: "No Coordinates",
             style: "Cart dog",
-            priceDollars: 6,
+            creditCost: 6,
             signatureNotes: "Mustard and onion.",
             distanceMiles: 1,
             vendorName: "Missing Map",
@@ -609,7 +609,7 @@ final class DogSwipeSmokeTests: XCTestCase {
         XCTAssertEqual(request.httpMethod, "POST")
         let body = try jsonBody(request)
         XCTAssertEqual(body["name"] as? String, "Boardwalk Snap")
-        XCTAssertEqual(body["price_dollars"] as? Double, 6.25)
+        XCTAssertEqual(body["credit_cost"] as? Int, 6)
         XCTAssertEqual(body["latitude"] as? Double, 43.6532)
         XCTAssertEqual(body["longitude"] as? Double, -79.3832)
         XCTAssertEqual(body["address_text"] as? String, "100 Queen St W, Toronto, ON")
@@ -624,7 +624,7 @@ final class DogSwipeSmokeTests: XCTestCase {
             id: "submitted-hotdog",
             name: "Boardwalk Snap",
             style: "Classic cart dog",
-            priceDollars: 6.25,
+            creditCost: 6,
             signatureNotes: "Mustard, relish, and onion.",
             distanceMiles: 1.8,
             vendorName: "Boardwalk Dogs",
@@ -637,7 +637,7 @@ final class DogSwipeSmokeTests: XCTestCase {
             id: changeRequest.id,
             name: "Boardwalk Snap",
             style: "Classic cart dog",
-            priceDollars: 6.25,
+            creditCost: 6,
             signatureNotes: "Mustard, relish, and onion.",
             distanceMiles: 1.8,
             vendorName: "Boardwalk Dogs",
@@ -720,7 +720,7 @@ final class DogSwipeSmokeTests: XCTestCase {
             id: "pending-hotdog",
             name: "Pending Snap",
             style: "Classic cart dog",
-            priceDollars: 6.25,
+            creditCost: 6,
             signatureNotes: "Mustard, relish, and onion.",
             distanceMiles: 1.8,
             vendorName: "Boardwalk Dogs",
@@ -731,7 +731,7 @@ final class DogSwipeSmokeTests: XCTestCase {
             id: pending.id,
             name: pending.name,
             style: pending.style,
-            priceDollars: pending.priceDollars,
+            creditCost: pending.creditCost,
             signatureNotes: pending.signatureNotes,
             distanceMiles: pending.distanceMiles,
             vendorName: pending.vendorName,
@@ -813,7 +813,7 @@ final class DogSwipeSmokeTests: XCTestCase {
             id: "edit-hotdog",
             name: "Edit Snap",
             style: "Classic cart dog",
-            priceDollars: 6.25,
+            creditCost: 6,
             signatureNotes: "Mustard, relish, and onion.",
             distanceMiles: 1.8,
             vendorName: "Boardwalk Dogs",
@@ -824,7 +824,7 @@ final class DogSwipeSmokeTests: XCTestCase {
             id: "reject-hotdog",
             name: "Reject Snap",
             style: "Classic cart dog",
-            priceDollars: 6.25,
+            creditCost: 6,
             signatureNotes: "Mustard, relish, and onion.",
             distanceMiles: 1.8,
             vendorName: "Boardwalk Dogs",
@@ -835,7 +835,7 @@ final class DogSwipeSmokeTests: XCTestCase {
             id: editCandidate.id,
             name: editCandidate.name,
             style: editCandidate.style,
-            priceDollars: editCandidate.priceDollars,
+            creditCost: editCandidate.creditCost,
             signatureNotes: editCandidate.signatureNotes,
             distanceMiles: editCandidate.distanceMiles,
             vendorName: editCandidate.vendorName,
@@ -847,7 +847,7 @@ final class DogSwipeSmokeTests: XCTestCase {
             id: rejectCandidate.id,
             name: rejectCandidate.name,
             style: rejectCandidate.style,
-            priceDollars: rejectCandidate.priceDollars,
+            creditCost: rejectCandidate.creditCost,
             signatureNotes: rejectCandidate.signatureNotes,
             distanceMiles: rejectCandidate.distanceMiles,
             vendorName: rejectCandidate.vendorName,
@@ -1148,7 +1148,7 @@ final class DogSwipeSmokeTests: XCTestCase {
             id: "pending-hotdog",
             name: "Boardwalk Snap",
             style: "Classic cart dog",
-            priceDollars: 6.25,
+            creditCost: 6,
             signatureNotes: "Mustard, relish, and onion.",
             distanceMiles: 1.8,
             vendorName: "Boardwalk Dogs",
@@ -1262,7 +1262,7 @@ final class DogSwipeSmokeTests: XCTestCase {
                     id: "submitted-hotdog",
                     name: "Boardwalk Snap",
                     style: "Classic cart dog",
-                    priceDollars: 6.25,
+                    creditCost: 6,
                     signatureNotes: "Mustard, relish, and onion.",
                     distanceMiles: 1.8,
                     vendorName: "Boardwalk Dogs",
@@ -1281,7 +1281,7 @@ final class DogSwipeSmokeTests: XCTestCase {
         id: String,
         profile: HotdogProfile,
         addOns: [DogSwipeOrderAddOn],
-        totalDollars: Double
+        totalCredits: Int
     ) throws -> Data {
         try JSONEncoder().encode(
             OrderResponse(
@@ -1289,7 +1289,7 @@ final class DogSwipeSmokeTests: XCTestCase {
                     id: id,
                     profile: profile,
                     addOns: addOns,
-                    totalDollars: totalDollars
+                    totalCredits: totalCredits
                 )
             )
         )
@@ -1299,16 +1299,16 @@ final class DogSwipeSmokeTests: XCTestCase {
         id: String,
         profile: HotdogProfile,
         addOns: [DogSwipeOrderAddOn],
-        totalDollars: Double
+        totalCredits: Int
     ) -> DogSwipeOrder {
         DogSwipeOrder(
             id: id,
             profileID: profile.id,
             hotdogName: profile.name,
             vendorName: profile.vendorName,
-            basePriceDollars: profile.priceDollars,
+            baseCreditCost: profile.creditCost,
             addOns: addOns,
-            totalDollars: totalDollars,
+            totalCredits: totalCredits,
             status: "draft",
             createdAt: "2026-05-06T14:10:00Z"
         )

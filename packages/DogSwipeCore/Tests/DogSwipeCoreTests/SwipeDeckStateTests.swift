@@ -7,7 +7,7 @@ final class SwipeDeckStateTests: XCTestCase {
             id: "sold-out",
             name: "Sold Out",
             style: "Classic",
-            priceDollars: 1,
+            creditCost: 1,
             signatureNotes: "Mustard and onion.",
             distanceMiles: 1,
             vendorName: "Test",

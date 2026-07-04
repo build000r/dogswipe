@@ -4,7 +4,7 @@ public struct HotdogProfile: Identifiable, Codable, Equatable, Sendable {
     public let id: String
     public let name: String
     public let style: String
-    public let priceDollars: Double
+    public let creditCost: Int
     public let signatureNotes: String
     public let distanceMiles: Double
     public let latitude: Double?
@@ -29,7 +29,7 @@ public struct HotdogProfile: Identifiable, Codable, Equatable, Sendable {
         id: String,
         name: String,
         style: String,
-        priceDollars: Double,
+        creditCost: Int,
         signatureNotes: String,
         distanceMiles: Double,
         latitude: Double? = nil,
@@ -53,7 +53,7 @@ public struct HotdogProfile: Identifiable, Codable, Equatable, Sendable {
         self.id = id
         self.name = name
         self.style = style
-        self.priceDollars = priceDollars
+        self.creditCost = creditCost
         self.signatureNotes = signatureNotes
         self.distanceMiles = distanceMiles
         self.latitude = latitude
@@ -75,11 +75,8 @@ public struct HotdogProfile: Identifiable, Codable, Equatable, Sendable {
         self.lastReviewedAt = lastReviewedAt
     }
 
-    public var priceLabel: String {
-        if priceDollars.rounded() == priceDollars {
-            return "$\(Int(priceDollars))"
-        }
-        return String(format: "$%.2f", priceDollars)
+    public var creditLabel: String {
+        "\(creditCost) credits"
     }
 
     public var walkingTimeLabel: String {
@@ -115,7 +112,7 @@ public struct HotdogProfile: Identifiable, Codable, Equatable, Sendable {
         case id
         case name
         case style
-        case priceDollars = "price_dollars"
+        case creditCost = "credit_cost"
         case signatureNotes = "signature_notes"
         case distanceMiles = "distance_miles"
         case latitude
@@ -166,26 +163,26 @@ public struct MatchResponse: Codable, Equatable, Sendable {
 public struct DogSwipeOrderAddOn: Identifiable, Codable, Equatable, Sendable {
     public let id: String
     public let name: String
-    public let priceDollars: Double
+    public let creditCost: Int
 
-    public init(id: String, name: String, priceDollars: Double) {
+    public init(id: String, name: String, creditCost: Int) {
         self.id = id
         self.name = name
-        self.priceDollars = priceDollars
+        self.creditCost = creditCost
     }
 
-    public var priceLabel: String {
-        Self.priceLabel(for: priceDollars)
+    public var creditLabel: String {
+        Self.creditLabel(for: creditCost)
     }
 
-    public static func priceLabel(for amount: Double) -> String {
-        String(format: "$%.2f", amount)
+    public static func creditLabel(for amount: Int) -> String {
+        "\(amount) credits"
     }
 
     enum CodingKeys: String, CodingKey {
         case id
         case name
-        case priceDollars = "price_dollars"
+        case creditCost = "credit_cost"
     }
 }
 
@@ -194,9 +191,9 @@ public struct DogSwipeOrder: Identifiable, Codable, Equatable, Sendable {
     public let profileID: String
     public let hotdogName: String
     public let vendorName: String
-    public let basePriceDollars: Double
+    public let baseCreditCost: Int
     public let addOns: [DogSwipeOrderAddOn]
-    public let totalDollars: Double
+    public let totalCredits: Int
     public let status: String
     public let createdAt: String
 
@@ -205,9 +202,9 @@ public struct DogSwipeOrder: Identifiable, Codable, Equatable, Sendable {
         profileID: String,
         hotdogName: String,
         vendorName: String,
-        basePriceDollars: Double,
+        baseCreditCost: Int,
         addOns: [DogSwipeOrderAddOn],
-        totalDollars: Double,
+        totalCredits: Int,
         status: String,
         createdAt: String
     ) {
@@ -215,15 +212,15 @@ public struct DogSwipeOrder: Identifiable, Codable, Equatable, Sendable {
         self.profileID = profileID
         self.hotdogName = hotdogName
         self.vendorName = vendorName
-        self.basePriceDollars = basePriceDollars
+        self.baseCreditCost = baseCreditCost
         self.addOns = addOns
-        self.totalDollars = totalDollars
+        self.totalCredits = totalCredits
         self.status = status
         self.createdAt = createdAt
     }
 
     public var totalLabel: String {
-        DogSwipeOrderAddOn.priceLabel(for: totalDollars)
+        DogSwipeOrderAddOn.creditLabel(for: totalCredits)
     }
 
     public var addOnSummary: String {
@@ -238,9 +235,9 @@ public struct DogSwipeOrder: Identifiable, Codable, Equatable, Sendable {
         case profileID = "profile_id"
         case hotdogName = "hotdog_name"
         case vendorName = "vendor_name"
-        case basePriceDollars = "base_price_dollars"
+        case baseCreditCost = "base_credit_cost"
         case addOns = "add_ons"
-        case totalDollars = "total_dollars"
+        case totalCredits = "total_credits"
         case status
         case createdAt = "created_at"
     }
@@ -284,7 +281,7 @@ public struct VendorSubmissionRequest: Codable, Equatable, Sendable {
     public let style: String
     public let menuURL: URL?
     public let addressText: String?
-    public let priceDollars: Double
+    public let creditCost: Int
     public let distanceMiles: Double
     public let imageURL: URL?
     public let latitude: Double?
@@ -298,7 +295,7 @@ public struct VendorSubmissionRequest: Codable, Equatable, Sendable {
         style: String,
         menuURL: URL? = nil,
         addressText: String? = nil,
-        priceDollars: Double,
+        creditCost: Int,
         distanceMiles: Double,
         imageURL: URL? = nil,
         latitude: Double? = nil,
@@ -311,7 +308,7 @@ public struct VendorSubmissionRequest: Codable, Equatable, Sendable {
         self.style = style
         self.menuURL = menuURL
         self.addressText = addressText
-        self.priceDollars = priceDollars
+        self.creditCost = creditCost
         self.distanceMiles = distanceMiles
         self.imageURL = imageURL
         self.latitude = latitude
@@ -326,7 +323,7 @@ public struct VendorSubmissionRequest: Codable, Equatable, Sendable {
         case style
         case menuURL = "menu_url"
         case addressText = "address_text"
-        case priceDollars = "price_dollars"
+        case creditCost = "credit_cost"
         case distanceMiles = "distance_miles"
         case imageURL = "image_url"
         case latitude
@@ -454,7 +451,7 @@ public extension HotdogProfile {
             id: "hotdog-coney",
             name: "Coney Classic",
             style: "Chili dog",
-            priceDollars: 6.5,
+            creditCost: 7,
             signatureNotes: "Beef frank, snap casing, chili, onion, and yellow mustard.",
             distanceMiles: 1.2,
             latitude: 43.6539,
@@ -469,7 +466,7 @@ public extension HotdogProfile {
             id: "hotdog-kimchi",
             name: "Kimchi Crunch",
             style: "Korean street dog",
-            priceDollars: 8.75,
+            creditCost: 9,
             signatureNotes: "Gochujang mayo, kimchi, scallion, and sesame crunch.",
             distanceMiles: 2.4,
             latitude: 43.6555,
@@ -484,7 +481,7 @@ public extension HotdogProfile {
             id: "hotdog-chicago",
             name: "Garden Snap",
             style: "Chicago dog",
-            priceDollars: 7.25,
+            creditCost: 7,
             signatureNotes: "Sport peppers, relish, tomato, pickle spear, and celery salt.",
             distanceMiles: 3.1,
             latitude: 43.665,
@@ -499,7 +496,7 @@ public extension HotdogProfile {
             id: "hotdog-nightcap",
             name: "Nightcap Melt",
             style: "Chili cheese dog",
-            priceDollars: 9,
+            creditCost: 9,
             signatureNotes: "Sharp cheddar, late-night chili, grilled onions, and jalapeno dust.",
             distanceMiles: 4.8,
             latitude: 43.647,

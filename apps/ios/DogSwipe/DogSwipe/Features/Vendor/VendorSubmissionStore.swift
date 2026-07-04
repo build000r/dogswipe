@@ -35,7 +35,7 @@ final class VendorSubmissionStore: ObservableObject {
     var canSubmit: Bool {
         !trimmed(name).isEmpty &&
             !trimmed(style).isEmpty &&
-            Double(trimmed(price)) != nil &&
+            Int(trimmed(price)) != nil &&
             !trimmed(signatureNotes).isEmpty &&
             Double(trimmed(distance)) != nil &&
             !trimmed(vendorName).isEmpty
@@ -92,7 +92,7 @@ final class VendorSubmissionStore: ObservableObject {
         editingSubmissionID = profile.id
         name = profile.name
         style = profile.style
-        price = String(format: "%.2f", profile.priceDollars)
+        price = String(profile.creditCost)
         signatureNotes = profile.signatureNotes
         distance = String(profile.distanceMiles)
         latitude = coordinateString(profile.latitude)
@@ -145,7 +145,7 @@ final class VendorSubmissionStore: ObservableObject {
     }
 
     private func submissionRequest() throws -> VendorSubmissionRequest {
-        guard let priceDollars = Double(trimmed(price)) else {
+        guard let creditCost = Int(trimmed(price)) else {
             throw VendorSubmissionDraftError.invalidPrice
         }
         guard let distanceMiles = Double(trimmed(distance)) else {
@@ -171,7 +171,7 @@ final class VendorSubmissionStore: ObservableObject {
             style: trimmed(style),
             menuURL: try optionalURL(menuURL, error: .invalidMenuURL),
             addressText: optionalString(addressText),
-            priceDollars: priceDollars,
+            creditCost: creditCost,
             distanceMiles: distanceMiles,
             imageURL: try optionalURL(imageURL, error: .invalidImageURL),
             latitude: latitude,
@@ -280,7 +280,7 @@ private enum VendorSubmissionDraftError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .invalidPrice:
-            "Price is required."
+            "Credit cost is required."
         case .invalidDistance:
             "Distance is required."
         case .invalidLatitude:

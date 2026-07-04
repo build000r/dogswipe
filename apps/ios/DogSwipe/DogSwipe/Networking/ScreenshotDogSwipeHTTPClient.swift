@@ -120,12 +120,12 @@ private enum ScreenshotHotdogs {
             profileID: coney.id,
             hotdogName: coney.name,
             vendorName: coney.vendorName,
-            basePriceDollars: coney.priceDollars,
+            baseCreditCost: coney.creditCost,
             addOns: [
-                DogSwipeOrderAddOn(id: "bacon", name: "Bacon", priceDollars: 1.00),
-                DogSwipeOrderAddOn(id: "extra-pickle", name: "Extra Pickle", priceDollars: 0.50)
+                DogSwipeOrderAddOn(id: "bacon", name: "Bacon", creditCost: 2),
+                DogSwipeOrderAddOn(id: "extra-pickle", name: "Extra Pickle", creditCost: 1)
             ],
-            totalDollars: 7.99,
+            totalCredits: 9,
             status: "draft",
             createdAt: "2026-05-06T14:00:00Z"
         ),
@@ -134,11 +134,11 @@ private enum ScreenshotHotdogs {
             profileID: chicago.id,
             hotdogName: chicago.name,
             vendorName: chicago.vendorName,
-            basePriceDollars: chicago.priceDollars,
+            baseCreditCost: chicago.creditCost,
             addOns: [
-                DogSwipeOrderAddOn(id: "jalapenos", name: "Jalapenos", priceDollars: 0.75)
+                DogSwipeOrderAddOn(id: "jalapenos", name: "Jalapenos", creditCost: 1)
             ],
-            totalDollars: 8.00,
+            totalCredits: 8,
             status: "draft",
             createdAt: "2026-05-06T13:40:00Z"
         )
@@ -149,11 +149,11 @@ private enum ScreenshotHotdogs {
         profileID: coney.id,
         hotdogName: coney.name,
         vendorName: coney.vendorName,
-        basePriceDollars: coney.priceDollars,
+        baseCreditCost: coney.creditCost,
         addOns: [
-            DogSwipeOrderAddOn(id: "bacon", name: "Bacon", priceDollars: 1.00)
+            DogSwipeOrderAddOn(id: "bacon", name: "Bacon", creditCost: 2)
         ],
-        totalDollars: 7.49,
+        totalCredits: 8,
         status: "draft",
         createdAt: "2026-05-06T14:10:00Z"
     )
@@ -172,7 +172,7 @@ private enum ScreenshotHotdogs {
         id: "screenshot-coney",
         name: "Chicago Classic",
         style: "Chicago style",
-        priceDollars: 6.49,
+        creditCost: 6,
         signatureNotes: "All-beef dog, mustard, relish, onions, tomato, sport peppers, pickle spear, celery salt.",
         distanceMiles: 0.3,
         latitude: 41.8842,
@@ -193,7 +193,7 @@ private enum ScreenshotHotdogs {
         id: "screenshot-kimchi",
         name: "Kimchi Crunch",
         style: "Korean street dog",
-        priceDollars: 8.75,
+        creditCost: 9,
         signatureNotes: "Gochujang mayo, kimchi, scallion, and sesame crunch.",
         distanceMiles: 1.8,
         latitude: 43.6555,
@@ -213,7 +213,7 @@ private enum ScreenshotHotdogs {
         id: "screenshot-chicago",
         name: "Garden Snap",
         style: "Chicago dog",
-        priceDollars: 7.25,
+        creditCost: 7,
         signatureNotes: "Sport peppers, relish, tomato, pickle spear, and celery salt.",
         distanceMiles: 2.2,
         latitude: 43.665,
@@ -229,7 +229,7 @@ private enum ScreenshotHotdogs {
         id: "screenshot-nightcap",
         name: "Nightcap Melt",
         style: "Chili cheese dog",
-        priceDollars: 9,
+        creditCost: 9,
         signatureNotes: "Sharp cheddar, late-night chili, grilled onions, and jalapeno dust.",
         distanceMiles: 3.4,
         latitude: 43.647,
@@ -246,7 +246,7 @@ private enum ScreenshotHotdogs {
         id: "screenshot-pending-vendor",
         name: "Boardwalk Snap",
         style: "Classic cart dog",
-        priceDollars: 6.25,
+        creditCost: 6,
         signatureNotes: "Mustard, relish, and onion on a griddled bun.",
         distanceMiles: 1.1,
         latitude: 43.6501,
@@ -276,7 +276,7 @@ private enum ScreenshotHotdogs {
         id: "screenshot-submitted",
         name: "Maple Crunch",
         style: "Canadian street dog",
-        priceDollars: 7.5,
+        creditCost: 8,
         signatureNotes: "Maple mustard, crisp onions, and a smoked beef frank.",
         distanceMiles: 1.4,
         vendorName: "Maple Cart",
@@ -306,7 +306,7 @@ private enum ScreenshotHotdogs {
         id: "screenshot-changes-requested",
         name: "Market Dog",
         style: "Classic cart dog",
-        priceDollars: 6.75,
+        creditCost: 7,
         signatureNotes: "Mustard, onion, relish, and poppyseed bun.",
         distanceMiles: 2.1,
         vendorName: "Market Dogs",
@@ -322,7 +322,7 @@ private enum ScreenshotHotdogs {
         id: "screenshot-rejected",
         name: "Off-menu Sandwich",
         style: "Not a hotdog",
-        priceDollars: 11,
+        creditCost: 11,
         signatureNotes: "Rejected fixture for moderation paths.",
         distanceMiles: 2.4,
         vendorName: "Wrong Bun",
@@ -347,7 +347,7 @@ private enum ScreenshotHotdogs {
             id: id ?? profile.id,
             name: profile.name,
             style: profile.style,
-            priceDollars: profile.priceDollars,
+            creditCost: profile.creditCost,
             signatureNotes: profile.signatureNotes,
             distanceMiles: profile.distanceMiles,
             latitude: profile.latitude,

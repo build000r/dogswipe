@@ -5,34 +5,34 @@ import Foundation
 struct OrderAddOn: Identifiable, Hashable {
     let id: String
     let name: String
-    let priceDollars: Double
+    let creditCost: Int
 
-    var priceLabel: String {
-        Self.priceLabel(for: priceDollars)
+    var creditLabel: String {
+        Self.creditLabel(for: creditCost)
     }
 
     static let matchDefaults = [
-        OrderAddOn(id: "bacon", name: "Bacon", priceDollars: 1.00),
-        OrderAddOn(id: "jalapenos", name: "Jalapenos", priceDollars: 0.75),
-        OrderAddOn(id: "cheese-sauce", name: "Cheese Sauce", priceDollars: 1.25),
-        OrderAddOn(id: "extra-pickle", name: "Extra Pickle", priceDollars: 0.50)
+        OrderAddOn(id: "bacon", name: "Bacon", creditCost: 2),
+        OrderAddOn(id: "jalapenos", name: "Jalapenos", creditCost: 1),
+        OrderAddOn(id: "cheese-sauce", name: "Cheese Sauce", creditCost: 2),
+        OrderAddOn(id: "extra-pickle", name: "Extra Pickle", creditCost: 1)
     ]
 
-    static func priceLabel(for amount: Double) -> String {
-        String(format: "$%.2f", amount)
+    static func creditLabel(for amount: Int) -> String {
+        "\(amount) credits"
     }
 
-    init(id: String, name: String, priceDollars: Double) {
+    init(id: String, name: String, creditCost: Int) {
         self.id = id
         self.name = name
-        self.priceDollars = priceDollars
+        self.creditCost = creditCost
     }
 
     init(orderAddOn: DogSwipeOrderAddOn) {
         self.init(
             id: orderAddOn.id,
             name: orderAddOn.name,
-            priceDollars: orderAddOn.priceDollars
+            creditCost: orderAddOn.creditCost
         )
     }
 }
@@ -42,9 +42,9 @@ struct OrderItem: Identifiable, Equatable {
     let profileID: String
     let hotdogName: String
     let vendorName: String
-    let basePriceDollars: Double
+    let baseCreditCost: Int
     let addOns: [OrderAddOn]
-    let totalDollars: Double
+    let totalCredits: Int
     let status: String
     let createdAt: String
 
@@ -53,15 +53,15 @@ struct OrderItem: Identifiable, Equatable {
         self.profileID = order.profileID
         self.hotdogName = order.hotdogName
         self.vendorName = order.vendorName
-        self.basePriceDollars = order.basePriceDollars
+        self.baseCreditCost = order.baseCreditCost
         self.addOns = order.addOns.map(OrderAddOn.init(orderAddOn:))
-        self.totalDollars = order.totalDollars
+        self.totalCredits = order.totalCredits
         self.status = order.status
         self.createdAt = order.createdAt
     }
 
     var totalLabel: String {
-        OrderAddOn.priceLabel(for: totalDollars)
+        OrderAddOn.creditLabel(for: totalCredits)
     }
 
     var addOnSummary: String {

@@ -116,7 +116,7 @@ final class DogSwipeScreenshotUITests: XCTestCase {
             requiredElements: [
                 .staticText("My Orders"),
                 .staticText("Chicago Classic"),
-                .staticText("$7.99")
+                .staticText("9 credits")
             ],
             screenshotName: "08-orders"
         )

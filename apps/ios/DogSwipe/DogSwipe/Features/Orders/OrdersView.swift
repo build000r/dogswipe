@@ -121,7 +121,7 @@ struct OrdersView: View {
     }
 
     private var totalLabel: String {
-        OrderAddOn.priceLabel(for: orderStore.items.reduce(0) { $0 + $1.totalDollars })
+        OrderAddOn.creditLabel(for: orderStore.items.reduce(0) { $0 + $1.totalCredits })
     }
 }
 
@@ -176,7 +176,7 @@ private struct OrderCardView: View {
             id: item.profileID,
             name: item.hotdogName,
             style: item.statusLabel,
-            priceDollars: item.basePriceDollars,
+            creditCost: item.baseCreditCost,
             signatureNotes: item.addOnSummary,
             distanceMiles: 0,
             vendorName: item.vendorName,

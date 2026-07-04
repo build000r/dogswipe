@@ -58,12 +58,12 @@ struct VendorView: View {
 
             ViewThatFits(in: .horizontal) {
                 HStack(spacing: .dsSpace3) {
-                    numericField("Price", text: $store.price, icon: "dollarsign.circle")
+                    numericField("Credits", text: $store.price, icon: "c.circle")
                     numericField("Distance", text: $store.distance, icon: "location")
                 }
 
                 VStack(spacing: .dsSpace3) {
-                    numericField("Price", text: $store.price, icon: "dollarsign.circle")
+                    numericField("Credits", text: $store.price, icon: "c.circle")
                     numericField("Distance", text: $store.distance, icon: "location")
                 }
             }

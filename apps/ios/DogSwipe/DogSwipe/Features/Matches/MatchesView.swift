@@ -148,7 +148,7 @@ private struct TopMatchCard: View {
                         .foregroundStyle(Color.dsSurface)
                         .lineLimit(1)
                         .minimumScaleFactor(0.78)
-                    Text("\(profile.priceLabel) · \(String(format: "%.1f mi", profile.distanceMiles)) · \(profile.walkingTimeLabel) walk")
+                    Text("\(profile.creditLabel) · \(String(format: "%.1f mi", profile.distanceMiles)) · \(profile.walkingTimeLabel) walk")
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(Color.dsSurface.opacity(0.70))
                         .lineLimit(1)
@@ -196,7 +196,7 @@ private struct MatchDetailView: View {
                         .foregroundStyle(Color.dsMuted)
                 }
                 Spacer()
-                Text(profile.priceLabel)
+                Text(profile.creditLabel)
                     .font(.title3.weight(.heavy).monospacedDigit())
                     .foregroundStyle(Color.dsAccent)
             }
@@ -264,9 +264,9 @@ private struct MatchDetailView: View {
     }
 
     private var orderTotalLabel: String {
-        OrderAddOn.priceLabel(
-            for: selectedAddOns.reduce(profile.priceDollars) { total, addOn in
-                total + addOn.priceDollars
+        OrderAddOn.creditLabel(
+            for: selectedAddOns.reduce(profile.creditCost) { total, addOn in
+                total + addOn.creditCost
             }
         )
     }
@@ -303,7 +303,7 @@ private struct MatchDetailView: View {
                     .font(.caption.weight(.bold))
                     .foregroundStyle(Color.dsInk)
                     .lineLimit(1)
-                Text("+ \(addOn.priceLabel)")
+                Text("+ \(addOn.creditLabel)")
                     .font(.caption2.weight(.semibold).monospacedDigit())
                     .foregroundStyle(Color.dsMuted)
             }
@@ -362,7 +362,7 @@ private struct MatchRowView: View {
                         .foregroundStyle(Color.dsMuted)
                 }
                 Spacer()
-                Text(profile.priceLabel)
+                Text(profile.creditLabel)
                     .font(.headline.monospacedDigit())
                     .foregroundStyle(Color.dsPrimary)
                 routeButtons

@@ -23,7 +23,7 @@ struct SubmissionSummaryView: View {
             }
 
             HStack(spacing: .dsSpace4) {
-                Text(profile.priceLabel)
+                Text(profile.creditLabel)
                     .font(.subheadline.monospacedDigit())
                     .foregroundStyle(Color.dsInk)
                 Text(profile.style)

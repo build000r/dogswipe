@@ -87,7 +87,7 @@ struct HotdogCardView: View {
 
                 VStack(spacing: 0) {
                     HStack(alignment: .top) {
-                        Text(profile.priceLabel)
+                        Text(profile.creditLabel)
                             .font(.title3.weight(.heavy).monospacedDigit())
                             .foregroundStyle(Color.dsSurface)
                             .padding(.horizontal, .dsSpace3)
