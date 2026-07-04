@@ -28,6 +28,7 @@ def _profile(
     *,
     name: str = "Test",
     style: str = "Classic",
+    category: str = "hotdog",
     signature_notes: str = "Gentle",
     distance_miles: float = 1,
     latitude: float | None = None,
@@ -37,11 +38,13 @@ def _profile(
     menu_excerpt: str | None = None,
     crave_score: float = 0.8,
     add_ons: list[OrderAddOn] | None = None,
+    tags: list[str] | None = None,
 ) -> HotdogProfile:
     return HotdogProfile(
         id=profile_id,
         name=name,
         style=style,
+        category=category,
         credit_cost=1,
         signature_notes=signature_notes,
         distance_miles=distance_miles,
@@ -53,6 +56,7 @@ def _profile(
         menu_excerpt=menu_excerpt,
         crave_score=crave_score,
         availability_status="available",
+        tags=tags or ["classic"],
         add_ons=add_ons
         if add_ons is not None
         else [
@@ -187,6 +191,7 @@ class FakeRepository(HotdogRepository):
             media_alt_text=submission.media_alt_text,
             crave_score=0.5,
             availability_status="pending_review",
+            tags=submission.tags,
             add_ons=[
                 OrderAddOn(
                     id=add_on.id or f"submitted-add-on-{index}",
@@ -232,6 +237,7 @@ class FakeRepository(HotdogRepository):
                 media_alt_text=submission.media_alt_text,
                 crave_score=0.5,
                 availability_status="pending_review",
+                tags=submission.tags,
                 add_ons=[
                     OrderAddOn(
                         id=add_on.id or f"updated-add-on-{add_on_index}",
@@ -347,6 +353,7 @@ class FakeRepository(HotdogRepository):
                     crave_score=crave_score,
                     availability_status="available",
                     review_note=None,
+                    tags=profile.tags,
                     add_ons=profile.add_ons,
                 )
                 self.submissions_by_user[user_id][index] = approved
@@ -405,6 +412,7 @@ class FakeRepository(HotdogRepository):
                     crave_score=profile.crave_score,
                     availability_status=availability_status,
                     review_note=review_note,
+                    tags=profile.tags,
                     add_ons=profile.add_ons,
                 )
                 self.submissions_by_user[user_id][index] = moderated
@@ -452,6 +460,7 @@ async def test_discovery_filters_by_classic_preference() -> None:
             signature_notes="Gochujang mayo and sesame crunch.",
             distance_miles=1.1,
             crave_score=0.99,
+            tags=["spicy"],
         ),
     ]
     repository.preferences_by_user["u1"] = CravingPreferences(classic_only=True)
@@ -460,6 +469,52 @@ async def test_discovery_filters_by_classic_preference() -> None:
     response = await service.discovery(user_id="u1", limit=10)
 
     assert [profile.id for profile in response.profiles] == ["classic"]
+
+
+@pytest.mark.asyncio
+async def test_discovery_preferences_use_category_aware_tags() -> None:
+    repository = FakeRepository()
+    repository.available_profiles = [
+        _profile(
+            "classic-hotdog",
+            name="Coney Classic",
+            category="hotdog",
+            tags=["classic"],
+            distance_miles=1.2,
+            crave_score=0.8,
+        ),
+        _profile(
+            "classic-coffee",
+            name="House Espresso",
+            style="Coffee",
+            category="coffee",
+            tags=["classic"],
+            signature_notes="Balanced roast with mustard-colored crema.",
+            distance_miles=1.1,
+            crave_score=0.9,
+        ),
+        _profile(
+            "spicy-coffee",
+            name="Chile Mocha",
+            style="Coffee",
+            category="coffee",
+            tags=["spicy"],
+            distance_miles=1.0,
+            crave_score=0.99,
+        ),
+    ]
+    repository.preferences_by_user["u1"] = CravingPreferences(
+        classic_only=True,
+        spicy_friendly=False,
+    )
+    service = DogSwipeService(repository)
+
+    response = await service.discovery(user_id="u1", limit=10)
+
+    assert [profile.id for profile in response.profiles] == [
+        "classic-coffee",
+        "classic-hotdog",
+    ]
 
 
 @pytest.mark.asyncio

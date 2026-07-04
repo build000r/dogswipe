@@ -35,6 +35,7 @@ class HotdogProfileRecord(Base):
         default="hotdog",
         server_default="hotdog",
     )
+    tags_json: Mapped[str] = mapped_column(Text, nullable=False, default="[]")
     credit_cost: Mapped[int] = mapped_column(Integer, nullable=False)
     signature_notes: Mapped[str] = mapped_column(String(120), nullable=False)
     distance_miles: Mapped[float] = mapped_column(Float, nullable=False)

@@ -432,17 +432,11 @@ class DogSwipeService:
 
     @staticmethod
     def _is_spicy(profile: HotdogProfile) -> bool:
-        flavor_text = DogSwipeService._flavor_text(profile)
-        return "jalapeno" in flavor_text or "gochujang" in flavor_text or "pepper" in flavor_text
+        return "spicy" in profile.tags
 
     @staticmethod
     def _is_classic(profile: HotdogProfile) -> bool:
-        flavor_text = DogSwipeService._flavor_text(profile)
-        return "classic" in flavor_text or "chicago" in flavor_text or "mustard" in flavor_text
-
-    @staticmethod
-    def _flavor_text(profile: HotdogProfile) -> str:
-        return DogSwipeService._menu_search_text(profile)
+        return "classic" in profile.tags
 
     @staticmethod
     def _matches_menu_query(profile: HotdogProfile, menu_query: str | None) -> bool:
@@ -476,6 +470,8 @@ class DogSwipeService:
                 profile.signature_notes,
                 profile.vendor_name,
                 profile.menu_excerpt or "",
+                " ".join(profile.tags),
+                " ".join(add_on.name for add_on in profile.add_ons),
                 " ".join(profile.menu_highlights),
             ]
         ).lower()

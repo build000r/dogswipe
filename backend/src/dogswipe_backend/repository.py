@@ -566,7 +566,10 @@ class SqlAlchemyHotdogRepository(HotdogRepository):
         )
         return [
             HotdogProfile.model_validate(record).model_copy(
-                update={"add_ons": add_ons_by_profile.get(record.id, [])}
+                update={
+                    "add_ons": add_ons_by_profile.get(record.id, []),
+                    "tags": self._decode_tags(record.tags_json),
+                }
             )
             for record in materialized
         ]
@@ -632,6 +635,7 @@ class SqlAlchemyHotdogRepository(HotdogRepository):
         record.name = submission.name
         record.style = submission.style
         record.category = submission.category
+        record.tags_json = self._encode_tags(submission.tags)
         record.credit_cost = submission.credit_cost
         record.signature_notes = submission.signature_notes
         record.distance_miles = submission.distance_miles
@@ -649,6 +653,24 @@ class SqlAlchemyHotdogRepository(HotdogRepository):
             return None
         stripped = value.strip()
         return stripped or None
+
+    @staticmethod
+    def _encode_tags(tags: list[str]) -> str:
+        normalized_tags: list[str] = []
+        for tag in tags:
+            normalized = tag.strip().lower()
+            if normalized and normalized not in normalized_tags:
+                normalized_tags.append(normalized)
+        return json.dumps(normalized_tags, separators=(",", ":"))
+
+    @staticmethod
+    def _decode_tags(value: str | None) -> list[str]:
+        if not value:
+            return []
+        raw_tags = json.loads(value)
+        if not isinstance(raw_tags, list):
+            return []
+        return [tag for tag in raw_tags if isinstance(tag, str)]
 
     @staticmethod
     def _is_swipeable_profile(record: HotdogProfileRecord) -> bool:

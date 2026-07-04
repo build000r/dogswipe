@@ -40,6 +40,7 @@ def test_migrations_upgrade_and_downgrade(clear_settings, tmp_path, monkeypatch)
             "name",
             "style",
             "category",
+            "tags_json",
             "credit_cost",
             "signature_notes",
             "distance_miles",
