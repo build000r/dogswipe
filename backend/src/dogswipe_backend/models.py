@@ -16,6 +16,12 @@ class HotdogProfileRecord(Base):
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
     name: Mapped[str] = mapped_column(String(80), nullable=False)
     style: Mapped[str] = mapped_column(String(120), nullable=False)
+    category: Mapped[str] = mapped_column(
+        String(32),
+        nullable=False,
+        default="hotdog",
+        server_default="hotdog",
+    )
     price_dollars: Mapped[float] = mapped_column(Float, nullable=False)
     signature_notes: Mapped[str] = mapped_column(String(120), nullable=False)
     distance_miles: Mapped[float] = mapped_column(Float, nullable=False)

@@ -514,6 +514,7 @@ class SqlAlchemyHotdogRepository(HotdogRepository):
     ) -> None:
         record.name = submission.name
         record.style = submission.style
+        record.category = submission.category
         record.price_dollars = submission.price_dollars
         record.signature_notes = submission.signature_notes
         record.distance_miles = submission.distance_miles

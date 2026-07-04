@@ -34,6 +34,7 @@ class HotdogProfile(BaseModel):
     id: str
     name: str
     style: str
+    category: str = Field(default="hotdog", min_length=1, max_length=32)
     price_dollars: float = Field(ge=0)
     signature_notes: str
     distance_miles: float = Field(ge=0)
@@ -136,6 +137,7 @@ class VendorSubmissionRequest(BaseModel):
 
     name: str = Field(min_length=1, max_length=80)
     style: str = Field(min_length=1, max_length=120)
+    category: str = Field(default="hotdog", min_length=1, max_length=32)
     price_dollars: float = Field(ge=0, le=50)
     signature_notes: str = Field(min_length=1, max_length=120)
     distance_miles: float = Field(ge=0, le=25)
