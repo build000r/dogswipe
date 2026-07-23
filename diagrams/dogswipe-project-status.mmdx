@@ -3,8 +3,14 @@
   "entry": "main",
   "shortLink": { "username": "buildooor", "slug": "dogswipe-project-status" },
   "links": [
-    { "from": "main", "label": "Open proof status", "to": "proof-status", "title": "Open DogSwipe proof status" },
+    { "from": "main", "label": "Open epic status", "to": "epic-gantt", "title": "Open DogSwipe epic status" },
+    { "from": "main", "label": "Open epic map", "to": "epic-map", "title": "Open DogSwipe epic dependency map" },
     { "from": "main", "label": "Open primary flows", "to": "primary-flows", "title": "Open DogSwipe primary flows" },
+    { "from": "main", "label": "Open order lifecycle", "to": "lifecycle", "title": "Open DogSwipe order state machine" },
+    { "from": "main", "label": "Open architecture boundary", "to": "architecture-boundary", "title": "Open DogSwipe architecture boundary" },
+    { "from": "main", "label": "Open proof status", "to": "proof-status", "title": "Open DogSwipe proof status" },
+    { "from": "main", "label": "Open drift map", "to": "drift", "title": "Open DogSwipe docs-vs-code-vs-beads drift" },
+    { "from": "main", "label": "Open data model", "to": "erd", "title": "Open DogSwipe ERD" },
     { "from": "main", "label": "Open next move", "to": "next-move", "title": "Open DogSwipe next move" }
   ]
 }
@@ -13,84 +19,276 @@
 ## chart main DogSwipe Project Status Crux
 ```mermaid
 flowchart LR
-  vision["DogSwipe: swipe-first local hotdog discovery"]:::gray
-  swift["GREEN Swift core tests passed 35 tests"]:::green
-  backend["GREEN backend 85 tests 90pct coverage migration through 0009"]:::green
-  testflight["YELLOW physical TestFlight SPAPS callback proof: pf5.8"]:::yellow
-  perf["GREEN all API hot paths under 50ms Swift under 1ms"]:::green
-  vision --> swift --> backend --> testflight
-  backend --> perf
+  vision["DogSwipe: swipe-first local barter economy, credits not cash, hotdog flagship (as of 2026-07-05)"]:::gray
+  economy["GREEN barter-credit backend: wallet, append-only ledger, claim, hand-off, dispute, reviews (migrations 0010-0020)"]:::green
+  discovery["GREEN discovery, swipe, match, preferences, vendor, admin, menu"]:::green
+  ios["GREEN iOS Wallet, Orders, claim-with-credits, hand-off, two-way Review surfaces shipped"]:::green
+  edge["GREEN prod: GHCR image, Worker edge health+AASA, SPAPS origin aligned, App Store build 2 VALID"]:::green
+  testflight["YELLOW physical-device TestFlight SPAPS auth smoke — bead pf5.8 BLOCKED (external, needs operator+iPhone)"]:::yellow
+  compliance["RED closed-loop credit compliance review gates public launch — NO bead"]:::red
+  payops["RED live Stripe purchase/webhook payment ops unproven in repo — NO bead"]:::red
+  next["Next move"]:::gray
+  vision --> economy --> ios
+  vision --> discovery --> ios
+  economy --> edge --> testflight
+  economy --> payops
+  vision --> compliance
+  testflight --> next
+  compliance --> next
+  payops --> next
   classDef green fill:#dff7df,stroke:#20833a,stroke-width:2px,color:#0f2f18
   classDef yellow fill:#fff3bf,stroke:#b7791f,stroke-width:2px,color:#3a2a00
+  classDef red fill:#ffd6d6,stroke:#c53030,stroke-width:2px,color:#3a0505
   classDef gray fill:#eef2f7,stroke:#64748b,stroke-width:1px,color:#111827
 ```
 
 ## chart epic-gantt DogSwipe Epic Status
 ```mermaid
 gantt
-  title DogSwipe status as of 2026-05-28
+  title DogSwipe status as of 2026-07-05
   dateFormat YYYY-MM-DD
-  section GREEN Proven
-  GREEN Swift package tests :done, 2026-05-28, 1d
-  GREEN backend 85 tests 90pct coverage :done, 2026-05-28, 1d
-  GREEN hot-path latency all under 50ms :done, 2026-05-28, 1d
-  GREEN status stack published :done, 2026-05-28, 1d
-  section YELLOW Planned
-  YELLOW physical TestFlight SPAPS proof pf5.8 :active, 2026-05-29, 2d
-  YELLOW contract fixture manifest pf5.10 :active, 2026-05-31, 2d
+  section GREEN Shipped
+  GREEN Discovery swipe match vendor admin :done, 2026-05-28, 1d
+  GREEN Barter-credit backend economy 0010-0020 :done, 2026-07-04, 1d
+  GREEN iOS wallet claim handoff review surfaces :done, 2026-07-04, 1d
+  GREEN Prod edge Worker health AASA build VALID :done, 2026-07-04, 1d
+  GREEN Backend proving tests committed 159 funcs :done, 2026-07-04, 1d
+  section YELLOW Bead-covered but BLOCKED
+  YELLOW Physical TestFlight auth smoke pf5.8 :active, 2026-07-05, 3d
+  YELLOW Viral-product-score growth flywheel zk6 :active, 2026-07-05, 3d
+  section RED No bead
+  RED Compliance review before public launch :crit, 2026-07-05, 2d
+  RED Live Stripe payment/webhook ops proof :crit, 2026-07-05, 2d
 ```
 
 ## chart epic-map DogSwipe Dependency Map
 ```mermaid
 flowchart TD
-  ios["GREEN Swift discovery match order contracts"]:::green
-  backend["GREEN backend 85 tests 90pct coverage pf5.7"]:::green
-  phone["YELLOW real iPhone TestFlight callback pf5.8"]:::yellow
-  perf["GREEN all hot paths under 50ms pf5.9"]:::green
-  manifest["YELLOW one contract manifest refactor pf5.10"]:::yellow
-  ios --> backend --> phone
-  backend --> perf --> manifest
+  discovery["GREEN discovery swipe match preferences vendor admin"]:::green
+  economy["GREEN credit accounts, append-only ledger, purchase 1:1"]:::green
+  orders["GREEN order state machine: claim, ready, hand-off, dispute, refund"]:::green
+  reviews["GREEN two-way reviews gated to completed orders"]:::green
+  iossurf["GREEN iOS Wallet, Orders, claim, hand-off, Review views"]:::green
+  edge["GREEN GHCR image, Worker edge, SPAPS origin, App Store build 2 VALID"]:::green
+  testflight["YELLOW physical-device auth smoke — bead pf5.8 BLOCKED external"]:::yellow
+  payops["RED live payment rail ops (Stripe purchase/webhook) — NO bead"]:::red
+  compliance["RED legal/compliance review gating launch — NO bead"]:::red
+  discovery --> economy --> orders --> reviews
+  economy --> iossurf
+  orders --> iossurf
+  reviews --> iossurf
+  economy --> edge --> testflight
+  economy --> payops
+  discovery --> compliance
   classDef green fill:#dff7df,stroke:#20833a,stroke-width:2px,color:#0f2f18
   classDef yellow fill:#fff3bf,stroke:#b7791f,stroke-width:2px,color:#3a2a00
+  classDef red fill:#ffd6d6,stroke:#c53030,stroke-width:2px,color:#3a0505
 ```
 
 ## chart primary-flows DogSwipe Primary Flows
 ```mermaid
 flowchart TD
-  eater["Hungry local user"]:::gray
-  discover["GREEN deck scorer and API client contracts"]:::green
-  swipe["GREEN deterministic swipe and match state"]:::green
-  order["GREEN order draft client contract"]:::green
-  auth["YELLOW SPAPS TestFlight auth callback pf5.8"]:::yellow
-  vendor["GREEN backend vendor admin 100pct API coverage"]:::green
-  eater --> discover --> swipe --> order --> auth
-  vendor --> discover
+  eater["Hungry neighbor"]:::gray
+  buy["GREEN buy credits 1:1 at par (POST /credits/purchase)"]:::green
+  discover["GREEN discover offerings ranked by crave/distance (GET /discovery)"]:::green
+  swipe["GREEN swipe like/pass/super-like (POST /swipes)"]:::green
+  match["GREEN matches with live distance/walk (GET /matches)"]:::green
+  claim["GREEN claim spends credits atomically (POST /orders, /orders/{id}/claim)"]:::green
+  handoff["GREEN mutual hand-off confirmation settles credits to maker"]:::green
+  review["GREEN two-way review after completed hand-off (POST /reviews)"]:::green
+  auth["YELLOW SPAPS magic-link auth — device smoke bead pf5.8 BLOCKED"]:::yellow
+  maker["GREEN maker submits/revises offerings (POST /vendor/submissions)"]:::green
+  admin["GREEN admin approve/reject/edit + dispute resolve"]:::green
+  eater --> buy --> discover --> swipe --> match --> claim --> handoff --> review
+  eater --> auth
+  maker --> admin --> discover
   classDef green fill:#dff7df,stroke:#20833a,stroke-width:2px,color:#0f2f18
   classDef yellow fill:#fff3bf,stroke:#b7791f,stroke-width:2px,color:#3a2a00
+  classDef gray fill:#eef2f7,stroke:#64748b,stroke-width:1px,color:#111827
+```
+
+## chart lifecycle DogSwipe Order State Machine
+```mermaid
+stateDiagram-v2
+  [*] --> draft: POST /orders (snapshot offering + add-ons + total)
+  draft --> claimed: POST /orders/{id}/claim (spend credits)
+  claimed --> ready: POST /orders/{id}/confirm-ready (maker)
+  ready --> handed_off: mutual confirm-hand-off (maker + claimer)
+  handed_off --> completed: hand-off settled, credits to maker
+  completed --> reviewed: POST /reviews (two-way, gated)
+  reviewed --> [*]
+  claimed --> disputed: POST /orders/{id}/dispute
+  handed_off --> disputed: POST /orders/{id}/dispute
+  disputed --> refunded_credit: admin resolve-dispute (refund credits, never cash)
+  refunded_credit --> [*]
+  draft --> canceled
+  canceled --> [*]
+```
+
+## chart architecture-boundary DogSwipe Architecture Boundary
+```mermaid
+flowchart TD
+  subgraph iOS["iOS app (apps/ios/DogSwipe) GREEN"]
+    ui["SwiftUI: Discover, Matches, Orders, Wallet, Review, Vendor, Admin, Profile"]:::green
+    keychain["Keychain access/refresh JWT"]:::green
+  end
+  subgraph pkg["Swift domain (packages/DogSwipeCore) GREEN"]
+    core["MatchScorer, SwipeDeckState, API contracts"]:::green
+  end
+  subgraph be["Backend (backend/ FastAPI) GREEN"]
+    api["29 routes: discovery/swipe/match/credits/orders/reviews/vendor/admin"]:::green
+    principal["Principal resolver (SPAPS bearer or local fallback)"]:::green
+    migrations["Alembic migrations 0001-0020"]:::green
+  end
+  db[("PostgreSQL — 8 tables")]:::green
+  spaps["SPAPS auth (Sweet Potato) — owned boundary"]:::gray
+  worker["Cloudflare Worker edge dogswipe.buildooor.com GREEN"]:::green
+  ghcr["GHCR image (prod pinned) GREEN"]:::green
+  ui --> core
+  ui --> keychain --> api
+  core --> api
+  api --> principal --> spaps
+  api --> migrations --> db
+  worker --> api
+  ghcr --> api
+  classDef green fill:#dff7df,stroke:#20833a,stroke-width:2px,color:#0f2f18
   classDef gray fill:#eef2f7,stroke:#64748b,stroke-width:1px,color:#111827
 ```
 
 ## chart proof-status DogSwipe Proof Status
 ```mermaid
 flowchart TD
-  read["GREEN README and VISION read"]:::green
-  swift["GREEN make swift-test passed 35 tests"]:::green
-  backend["GREEN 85 backend tests 90pct coverage migration 0009"]:::green
-  phone["YELLOW no physical TestFlight proof pf5.8"]:::yellow
-  perf["GREEN all API under 50ms Swift under 1ms"]:::green
-  read --> swift --> backend --> phone --> perf
+  read["GREEN README, VISION, WORKGRAPH, COMPLETION_AUDIT read"]:::green
+  code["GREEN code traced: models.py 8 tables, api.py 29 routes, iOS Wallet/Orders/Review views present"]:::green
+  tests["GREEN 159 backend test funcs committed incl. ledger-correctness, review-gating, fulfillment-lifecycle, reconciliation proving tests"]:::green
+  ledger["GREEN append-only ledger enforced in code (before_update/before_delete raise)"]:::green
+  notrun["YELLOW test/coverage suite NOT re-run this session (disk 94%, no installs) — last full green gate 2026-05-28"]:::yellow
+  device["YELLOW no physical-device TestFlight auth proof — bead pf5.8 BLOCKED external"]:::yellow
+  payops["RED live Stripe payment/webhook ops unproven in repo — NO bead"]:::red
+  compliance["RED compliance review not completed — gates launch — NO bead"]:::red
+  read --> code --> tests --> ledger
+  tests --> notrun
+  code --> device
+  code --> payops
+  read --> compliance
   classDef green fill:#dff7df,stroke:#20833a,stroke-width:2px,color:#0f2f18
   classDef yellow fill:#fff3bf,stroke:#b7791f,stroke-width:2px,color:#3a2a00
+  classDef red fill:#ffd6d6,stroke:#c53030,stroke-width:2px,color:#3a0505
+```
+
+## chart drift DogSwipe Drift Map
+```mermaid
+flowchart TD
+  subgraph docs["Docs (stale)"]
+    qg["RED docs/QUALITY_GATES.md: Last verified 2026-05-28, migration 0009, 85 tests"]:::red
+    scope["RED README Current Scope: iOS wallet/claim/review surfaces are next / under active build"]:::red
+    audit["YELLOW docs/COMPLETION_AUDIT.md dated 2026-05-07 predates barter economy"]:::yellow
+  end
+  subgraph code["Code (current)"]
+    mig["GREEN migrations through 0020; 159 backend test funcs"]:::green
+    iosdone["GREEN iOS Wallet/Orders/Review/claim/hand-off surfaces shipped (commits fc17c36, 88383ad, ac92fae)"]:::green
+  end
+  subgraph beads["Beads"]
+    closed["GREEN 52 closed incl. full barter-credit DAC burndown"]:::green
+    blocked["YELLOW 2 BLOCKED: pf5.8 device auth, zk6 viral-score"]:::yellow
+    nogap["RED 0 open beads for compliance review or live payment ops"]:::red
+  end
+  qg -. contradicted by .-> mig
+  scope -. contradicted by .-> iosdone
+  audit -. superseded by .-> mig
+  nogap -. real gaps untracked .-> blocked
+  classDef green fill:#dff7df,stroke:#20833a,stroke-width:2px,color:#0f2f18
+  classDef yellow fill:#fff3bf,stroke:#b7791f,stroke-width:2px,color:#3a2a00
+  classDef red fill:#ffd6d6,stroke:#c53030,stroke-width:2px,color:#3a0505
+```
+
+## chart erd DogSwipe Data Model
+```mermaid
+erDiagram
+  HOTDOG_PROFILES ||--o{ OFFERING_ADD_ONS : "profile_id FK"
+  HOTDOG_PROFILES ||--o{ SWIPE_EVENTS : "profile_id (logical)"
+  HOTDOG_PROFILES ||--o{ ORDER_ITEMS : "profile_id (logical)"
+  CREDIT_ACCOUNTS ||--o{ CREDIT_LEDGER : "user_id (logical)"
+  CREDIT_ACCOUNTS ||--o{ ORDER_ITEMS : "user_id (logical)"
+  ORDER_ITEMS ||--o{ CREDIT_LEDGER : "order_ref (logical)"
+  ORDER_ITEMS ||--o{ REVIEWS : "order_id (logical)"
+  CREDIT_ACCOUNTS ||--o| USER_PREFERENCES : "user_id (logical)"
+
+  HOTDOG_PROFILES {
+    string id PK
+    string name
+    string category
+    int credit_cost
+    float latitude
+    float longitude
+    string vendor_owner_user_id
+    string availability_status
+    float crave_score
+  }
+  OFFERING_ADD_ONS {
+    string id PK
+    string profile_id FK
+    string name
+    int credit_cost
+  }
+  SWIPE_EVENTS {
+    string id PK
+    string user_id
+    string profile_id
+    string decision
+  }
+  USER_PREFERENCES {
+    string user_id PK
+    float max_distance_miles
+    bool spicy_friendly
+    bool classic_only
+  }
+  CREDIT_ACCOUNTS {
+    string user_id PK
+    int lifetime_purchased
+    int lifetime_earned
+    int lifetime_spent
+  }
+  CREDIT_LEDGER {
+    string id PK
+    string user_id
+    string entry_type
+    int amount
+    int balance_after
+    string order_ref
+    string idempotency_key
+  }
+  ORDER_ITEMS {
+    string id PK
+    string user_id
+    string profile_id
+    int total_credits
+    string status
+    datetime maker_handoff_confirmed_at
+    datetime claimer_handoff_confirmed_at
+    datetime disputed_at
+  }
+  REVIEWS {
+    string id PK
+    string order_id
+    string rater_user_id
+    string ratee_user_id
+    string direction
+    int rating
+  }
 ```
 
 ## chart next-move DogSwipe Next Move
 ```mermaid
 flowchart TD
-  rank["Power-map: closest dollar is hungry user and vendor supply around a real order path"]:::gray
-  one["1 prove iPhone TestFlight SPAPS callback pf5.8"]:::yellow
-  two["2 consolidate iOS backend contract fixtures pf5.10"]:::yellow
-  rank --> one --> two
+  rank["Product/backend economy is shipped + code-proven; remaining gates are external or untracked"]:::gray
+  one["1 RED create a bead for the compliance/legal review that gates public launch (docs/COMPLIANCE_REVIEW.md, no bead today)"]:::red
+  two["2 RED create a bead for live Stripe purchase/webhook payment-ops proof (routes exist, live ops unproven)"]:::red
+  three["3 YELLOW operator: install TestFlight build 2 on iPhone, prove SPAPS auth callback — bead pf5.8 BLOCKED external"]:::yellow
+  four["4 GREEN refresh docs/QUALITY_GATES.md + README scope to barter-credit reality (re-run make test/coverage when disk allows)"]:::green
+  rank --> one --> two --> three --> four
+  classDef green fill:#dff7df,stroke:#20833a,stroke-width:2px,color:#0f2f18
   classDef yellow fill:#fff3bf,stroke:#b7791f,stroke-width:2px,color:#3a2a00
+  classDef red fill:#ffd6d6,stroke:#c53030,stroke-width:2px,color:#3a0505
   classDef gray fill:#eef2f7,stroke:#64748b,stroke-width:1px,color:#111827
 ```
-
