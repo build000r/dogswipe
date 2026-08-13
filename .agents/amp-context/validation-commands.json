@@ -1,0 +1,38 @@
+{
+  "protocol_version": "repo-validation-commands/v1",
+  "source": "Makefile and .github/workflows/ci.yml",
+  "commands": [
+    {
+      "id": "tests",
+      "cwd": ".",
+      "command": "make test",
+      "timeout_seconds": 1800
+    },
+    {
+      "id": "backend-lint",
+      "cwd": ".",
+      "command": "make lint",
+      "timeout_seconds": 600
+    },
+    {
+      "id": "backend-typecheck",
+      "cwd": ".",
+      "command": "make typecheck",
+      "timeout_seconds": 600
+    },
+    {
+      "id": "diff-check",
+      "cwd": ".",
+      "command": "git diff --check",
+      "timeout_seconds": 300
+    }
+  ],
+  "forbidden_commands": [
+    "make edge-deploy",
+    "make ios-testflight-upload",
+    "make ios-release-archive",
+    "git push",
+    "production",
+    "prod"
+  ]
+}
