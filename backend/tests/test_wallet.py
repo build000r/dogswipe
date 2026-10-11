@@ -68,3 +68,40 @@ async def test_get_wallet_api_returns_account(async_client) -> None:
     assert payload["lifetime_earned"] == 0
     assert payload["lifetime_spent"] == 0
     assert payload["balance"] == 0
+
+
+@pytest.mark.asyncio
+async def test_credit_account_idempotent_provisioning(database) -> None:
+    async with database.session_factory() as session:
+        repository = SqlAlchemyHotdogRepository(session)
+
+        first = await repository.get_or_create_credit_account(user_id="idempotent-user")
+        second = await repository.get_or_create_credit_account(user_id="idempotent-user")
+
+        assert first.user_id == second.user_id
+        assert first.created_at == second.created_at
+
+
+@pytest.mark.asyncio
+async def test_credit_account_separate_per_user(database) -> None:
+    async with database.session_factory() as session:
+        repository = SqlAlchemyHotdogRepository(session)
+
+        account_a = await repository.get_or_create_credit_account(user_id="user-a")
+        account_b = await repository.get_or_create_credit_account(user_id="user-b")
+
+        assert account_a.user_id == "user-a"
+        assert account_b.user_id == "user-b"
+        assert account_a.user_id != account_b.user_id
+
+
+@pytest.mark.asyncio
+async def test_wallet_api_returns_same_account_on_repeat(async_client) -> None:
+    headers = {"X-DogSwipe-User-ID": "wallet-repeat-user"}
+
+    first = await async_client.get("/v1/wallet", headers=headers)
+    second = await async_client.get("/v1/wallet", headers=headers)
+
+    assert first.status_code == 200
+    assert second.status_code == 200
+    assert first.json()["account"]["created_at"] == second.json()["account"]["created_at"]
