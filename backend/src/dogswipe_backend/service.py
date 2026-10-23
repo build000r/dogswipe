@@ -140,7 +140,8 @@ class DogSwipeService:
 
     async def wallet(self, *, user_id: str) -> WalletResponse:
         account = await self.repository.get_or_create_credit_account(user_id=user_id)
-        return WalletResponse(account=account)
+        entries = await self.repository.list_ledger_entries(user_id=user_id)
+        return WalletResponse(account=account, entries=entries)
 
     async def create_credit_purchase(
         self,

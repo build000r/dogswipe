@@ -6,7 +6,7 @@ import pytest
 from pydantic import ValidationError
 
 from dogswipe_backend.repository import SqlAlchemyHotdogRepository
-from dogswipe_backend.schemas import CreditAccount
+from dogswipe_backend.schemas import CreditAccount, CreditLedgerEntryType
 from dogswipe_backend.service import DogSwipeService
 
 
@@ -105,3 +105,50 @@ async def test_wallet_api_returns_same_account_on_repeat(async_client) -> None:
     assert first.status_code == 200
     assert second.status_code == 200
     assert first.json()["account"]["created_at"] == second.json()["account"]["created_at"]
+
+
+@pytest.mark.asyncio
+async def test_wallet_api_exposes_only_authenticated_users_ledger_history(
+    async_client, database,
+) -> None:
+    async with database.session_factory() as session:
+        repository = SqlAlchemyHotdogRepository(session)
+        purchase = await repository.create_ledger_entry(
+            user_id="history-api-owner",
+            entry_type=CreditLedgerEntryType.purchase,
+            amount=10,
+            purchase_ref="history-purchase",
+            reason="credits purchased",
+        )
+        spend = await repository.create_ledger_entry(
+            user_id="history-api-owner",
+            entry_type=CreditLedgerEntryType.spend,
+            amount=-3,
+            order_ref="history-order",
+            reason="order claimed",
+        )
+        private = await repository.create_ledger_entry(
+            user_id="history-api-other",
+            entry_type=CreditLedgerEntryType.purchase,
+            amount=80,
+        )
+        await session.commit()
+
+    for user_id, expected, balance in [
+        ("history-api-owner", [purchase, spend], 7),
+        ("history-api-other", [private], 80),
+        ("history-api-empty", [], 0),
+    ]:
+        response = await async_client.get(
+            "/v1/wallet", headers={"X-DogSwipe-User-ID": user_id},
+        )
+        assert response.status_code == 200
+        payload = response.json()
+        assert payload["account"]["user_id"] == user_id
+        assert payload["account"]["balance"] == balance
+        assert len(payload["entries"]) == len(expected)
+        for actual, entry in zip(payload["entries"], expected, strict=True):
+            # SQLite drops tzinfo on reload; compare the UTC instant separately.
+            timestamp = datetime.fromisoformat(actual.pop("created_at")).replace(tzinfo=UTC)
+            assert timestamp == entry.created_at
+            assert actual == entry.model_dump(mode="json", exclude={"created_at"})

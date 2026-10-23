@@ -346,6 +346,7 @@ class CreditAccount(BaseModel):
 
 class WalletResponse(BaseModel):
     account: CreditAccount
+    entries: list[CreditLedgerEntry] = Field(default_factory=list)
 
 
 class CreditPurchaseRequest(BaseModel):

@@ -93,12 +93,7 @@ public struct CreditLedgerEntry: Identifiable, Codable, Equatable, Sendable {
     public let createdAt: String
 
     public var amountLabel: String {
-        switch entryType {
-        case .spend:
-            return "-\(amount)"
-        case .purchase, .earn, .refundCredit, .adminAdjustment:
-            return "+\(amount)"
-        }
+        amount >= 0 ? "+\(amount)" : "\(amount)"
     }
 
     public init(

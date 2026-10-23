@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import UTC, datetime
+
 import pytest
 
 from dogswipe_backend.models import CreditLedgerEntry as CreditLedgerEntryRecord
@@ -97,3 +99,35 @@ async def test_credit_ledger_entries_are_append_only(database) -> None:
         await session.delete(record)
         with pytest.raises(ValueError):
             await session.flush()
+
+
+@pytest.mark.asyncio
+async def test_ledger_history_is_chronological_stable_and_user_scoped(database) -> None:
+    async with database.session_factory() as session:
+        # Deliberately insert out of order; equal timestamps need an ID tie-break.
+        for entry_id, user_id, day in [
+            ("history-c", "history-owner", 2),
+            ("history-private", "history-other", 1),
+            ("history-b", "history-owner", 2),
+            ("history-a", "history-owner", 1),
+        ]:
+            session.add(CreditLedgerEntryRecord(
+                id=entry_id,
+                user_id=user_id,
+                entry_type="purchase",
+                amount=1,
+                balance_after=1,
+                created_at=datetime(2026, 1, day, tzinfo=UTC),
+            ))
+        await session.flush()
+        repository = SqlAlchemyHotdogRepository(session)
+
+        entries = await repository.list_ledger_entries(user_id="history-owner")
+
+        assert [entry.id for entry in entries] == ["history-a", "history-b", "history-c"]
+        assert {entry.user_id for entry in entries} == {"history-owner"}
+        assert all(entry.entry_type == CreditLedgerEntryType.purchase for entry in entries)
+        assert [entry.id for entry in await repository.list_ledger_entries(
+            user_id="history-other",
+        )] == ["history-private"]
+        assert await repository.list_ledger_entries(user_id="history-empty") == []

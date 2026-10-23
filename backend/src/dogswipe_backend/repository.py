@@ -251,6 +251,9 @@ class HotdogRepository:
     ) -> CreditLedgerEntry:
         raise NotImplementedError
 
+    async def list_ledger_entries(self, *, user_id: str) -> list[CreditLedgerEntry]:
+        raise NotImplementedError
+
     async def get_ledger_balance(self, *, user_id: str) -> int:
         raise NotImplementedError
 
@@ -1069,6 +1072,17 @@ class SqlAlchemyHotdogRepository(HotdogRepository):
         self._apply_lifetime_counter(account, entry_type=entry_type, amount=amount)
         await self.session.flush()
         return CreditLedgerEntry.model_validate(record)
+
+    async def list_ledger_entries(self, *, user_id: str) -> list[CreditLedgerEntry]:
+        statement = (
+            select(CreditLedgerEntryRecord)
+            .where(CreditLedgerEntryRecord.user_id == user_id)
+            .order_by(CreditLedgerEntryRecord.created_at.asc(), CreditLedgerEntryRecord.id.asc())
+        )
+        return [
+            CreditLedgerEntry.model_validate(entry)
+            for entry in await self.session.scalars(statement)
+        ]
 
     async def get_ledger_balance(self, *, user_id: str) -> int:
         result = await self.session.scalar(

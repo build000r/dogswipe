@@ -503,7 +503,7 @@ final class DogSwipeAPIClientTests: XCTestCase {
               "id": "ledger-2",
               "user_id": "user-1",
               "entry_type": "spend",
-              "amount": 9,
+              "amount": -9,
               "balance_after": 14,
               "order_ref": "order-kimchi",
               "reason": "Kimchi Crunch order",
@@ -526,9 +526,29 @@ final class DogSwipeAPIClientTests: XCTestCase {
         XCTAssertEqual(response.entries[0].entryType, .purchase)
         XCTAssertEqual(response.entries[0].amountLabel, "+25")
         XCTAssertEqual(response.entries[1].entryType, .spend)
+        XCTAssertEqual(response.entries[1].amount, -9)
         XCTAssertEqual(response.entries[1].amountLabel, "-9")
         XCTAssertEqual(http.requests.first?.url?.path, "/v1/wallet")
         XCTAssertEqual(http.requests.first?.httpMethod, "GET")
+    }
+
+    func testLedgerAmountLabelsFollowSignedBackendAmounts() {
+        let cases: [(CreditLedgerEntryType, Int, String)] = [
+            (.purchase, 25, "+25"),
+            (.spend, -9, "-9"),
+            (.earn, 12, "+12"),
+            (.refundCredit, 3, "+3"),
+            (.adminAdjustment, -4, "-4"),
+            (.adminAdjustment, 4, "+4"),
+            (.adminAdjustment, 0, "+0")
+        ]
+        for (entryType, amount, expected) in cases {
+            let entry = CreditLedgerEntry(
+                id: "signed-entry", userID: "signed-user", entryType: entryType,
+                amount: amount, balanceAfter: 25, createdAt: "2026-07-03T14:30:00Z"
+            )
+            XCTAssertEqual(entry.amountLabel, expected)
+        }
     }
 
     func testWalletDecodesWithoutEntries() async throws {
